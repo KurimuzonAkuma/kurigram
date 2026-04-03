@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -39,9 +39,8 @@ class GiftAttribute(Object):
             Unique backdrop identifier.
             Available only if the backdrop attribute is available.
 
-        rarity (``int``, *optional*):
-            Rarity of the attribute in permilles.
-            For example, 15 means 1.5%. So only 1.5% of such collectibles have this attribute.
+        rarity (:obj:`~pyrogram.types.UpgradedGiftAttributeRarityPerMille` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityUncommon` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityRare` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityEpic` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityLegendary`, *optional*):
+            The rarity of the model.
 
         date (:py:obj:`~datetime.datetime`, *optional*):
             Date when the gift was received.
@@ -81,8 +80,6 @@ class GiftAttribute(Object):
 
         sticker (:obj:`~pyrogram.types.Sticker`, *optional*):
             Information about the sticker.
-
-
     """
 
     def __init__(
@@ -92,7 +89,15 @@ class GiftAttribute(Object):
         type: "enums.GiftAttributeType",
         name: Optional[str] = None,
         backdrop_id: Optional[int] = None,
-        rarity: Optional[int] = None,
+        rarity: Optional[
+            Union[
+                "types.UpgradedGiftAttributeRarityPerMille",
+                "types.UpgradedGiftAttributeRarityUncommon",
+                "types.UpgradedGiftAttributeRarityRare",
+                "types.UpgradedGiftAttributeRarityEpic",
+                "types.UpgradedGiftAttributeRarityLegendary",
+            ]
+        ] = None,
         date: Optional[datetime] = None,
         caption: Optional[str] = None,
         caption_entities: Optional[List["types.MessageEntity"]] = None,
@@ -102,7 +107,7 @@ class GiftAttribute(Object):
         center_color: Optional[int] = None,
         edge_color: Optional[int] = None,
         pattern_color: Optional[int] = None,
-        text_color: Optional[int] = None
+        text_color: Optional[int] = None,
     ):
         super().__init__(client)
 
@@ -126,13 +131,14 @@ class GiftAttribute(Object):
         client,
         attr: "raw.base.StarGiftAttribute",
         users: Dict[int, "raw.base.User"],
-        chats: Dict[int, "raw.base.Chat"]
+        chats: Dict[int, "raw.base.Chat"],
     ) -> "GiftAttribute":
         caption = None
         caption_entities = None
         sticker = None
         from_user = None
         to_user = None
+        rarity = None
 
         if hasattr(attr, "document"):
             doc = attr.document
@@ -140,9 +146,9 @@ class GiftAttribute(Object):
             sticker = await types.Sticker._parse(client, doc, attributes)
 
         if isinstance(attr, raw.types.StarGiftAttributeOriginalDetails):
-            caption, caption_entities = (utils.parse_text_with_entities(
-                client, attr.message, users
-            )).values()
+            caption, caption_entities = (
+                utils.parse_text_with_entities(client, attr.message, users)
+            ).values()
 
             sender_id = utils.get_raw_peer_id(attr.sender_id)
             recipient_id = utils.get_raw_peer_id(attr.recipient_id)
@@ -154,7 +160,7 @@ class GiftAttribute(Object):
             name=getattr(attr, "name", None),
             backdrop_id=getattr(attr, "backdrop_id", None),
             type=enums.GiftAttributeType(type(attr)),
-            rarity=getattr(attr, "rarity_permille", None),
+            rarity=types.UpgradedGiftAttributeRarity._parse(attr.rarity),
             date=utils.timestamp_to_datetime(getattr(attr, "date", None)),
             caption=caption,
             caption_entities=caption_entities,
@@ -165,5 +171,5 @@ class GiftAttribute(Object):
             edge_color=getattr(attr, "edge_color", None),
             pattern_color=getattr(attr, "pattern_color", None),
             text_color=getattr(attr, "text_color", None),
-            client=client
+            client=client,
         )

@@ -32,7 +32,9 @@ class EditMessageCaption:
         parse_mode: Optional["enums.ParseMode"] = None,
         caption_entities: List["types.MessageEntity"] = None,
         schedule_date: datetime = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        business_connection_id: str = None,
+        show_caption_above_media: bool = None,
+        reply_markup: "types.InlineKeyboardMarkup" = None,
     ) -> "types.Message":
         """Edit the caption of media messages.
 
@@ -60,6 +62,13 @@ class EditMessageCaption:
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+                Supported only for animation, photo and video messages.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
@@ -71,6 +80,11 @@ class EditMessageCaption:
 
                 await app.edit_message_caption(chat_id, message_id, "new media caption")
         """
+        link_preview_options = self.link_preview_options
+
+        if show_caption_above_media is not None:
+            link_preview_options = types.LinkPreviewOptions(show_above_text=show_caption_above_media)
+
         return await self.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
@@ -78,5 +92,7 @@ class EditMessageCaption:
             parse_mode=parse_mode,
             entities=caption_entities,
             schedule_date=schedule_date,
+            business_connection_id=business_connection_id,
+            link_preview_options=link_preview_options,
             reply_markup=reply_markup
         )

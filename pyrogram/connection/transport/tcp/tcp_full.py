@@ -20,9 +20,9 @@ import asyncio
 import logging
 from binascii import crc32
 from struct import pack, unpack
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
-from .tcp import TCP, Proxy
+from .tcp import TCP, ProxyDict
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ log = logging.getLogger(__name__)
 class TCPFull(TCP):
     def __init__(
         self,
-        ipv6: bool = False,
-        proxy: Proxy = None,
+        ipv6: bool,
+        proxy: Union[str, ProxyDict, None] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:

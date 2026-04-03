@@ -19,8 +19,7 @@
 from typing import Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import errors
+from pyrogram import errors, raw
 
 
 class ToggleForumTopics:
@@ -38,11 +37,14 @@ class ToggleForumTopics:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            enabled (``bool``):
-                The new status. Pass True to enable forum topics.
+            is_forum (``bool``):
+                The new status.
+                Pass True to enable forum topics.
+                Defaults to False.
 
             has_forum_tabs (``bool``):
-                Whether to enable or disable tabs in the forum. Defaults to False.
+                Whether to enable or disable tabs in the forum.
+                Defaults to False.
 
         Returns:
             ``bool``: True on success. False otherwise.
@@ -51,7 +53,7 @@ class ToggleForumTopics:
             .. code-block:: python
 
                 # Change status of topics to disabled
-                await app.toggle_forum_topics()
+                await app.toggle_forum_topics(is_forum=False)
 
                 # Change status of topics to enabled
                 await app.toggle_forum_topics(is_forum=True)

@@ -42,7 +42,8 @@ class BoostsStatus(Object):
             True, if you boost this channel.
 
         gift_boosts (``int``, *optional*):
-            N/A
+            The number of boosts acquired from created Telegram Premium gift codes and giveaways.
+            Only returned to channel/supergroup admins.
 
         next_level_boosts (``int``, *optional*):
             Number of boosts at which the next level will be reached.

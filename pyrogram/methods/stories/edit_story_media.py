@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Union, BinaryIO, Callable
+from typing import List, Union, BinaryIO, Callable
 
 import pyrogram
 from pyrogram import raw, types, utils, StopTransmission
@@ -29,6 +29,7 @@ class EditStoryMedia:
         chat_id: Union[int, str],
         story_id: int,
         media: Union[str, BinaryIO] = None,
+        media_areas: List["types.MediaArea"] = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
@@ -55,6 +56,9 @@ class EditStoryMedia:
                 Pass a file_id as string to send a animation that exists on the Telegram servers,
                 pass a file path as string to upload a new animation that exists on your local machine, or
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
+
+            media_areas (List of :obj:`~pyrogram.types.MediaArea`, *optional*):
+                List of media areas to edit in the story.
 
             duration (``int``, *optional*):
                 Duration of sent video in seconds.
@@ -94,8 +98,6 @@ class EditStoryMedia:
                 # Replace the current media with a local video
                 await app.edit_story_media(chat_id, story_id, "new_video.mp4")
         """
-        # TODO: media_areas
-
         try:
             if isinstance(media, str):
                 if os.path.isfile(media):
@@ -153,6 +155,7 @@ class EditStoryMedia:
                             peer=await self.resolve_peer(chat_id),
                             id=story_id,
                             media=media,
+                            media_areas=[await area.write(self) for area in (media_areas or [])] or None,
                         )
                     )
                 except FilePartMissing as e:

@@ -29,8 +29,11 @@ class CheckedGiftCode(Object):
         date (:py:obj:`~datetime.datetime`):
             Date when the giveaway was launched.
 
-        months (``int``):
-            Number of months of subscription.
+        month_count (``int``):
+            Number of months the Telegram Premium subscription will be active after code activation.
+
+        day_count (``int``):
+            Number of days the Telegram Premium subscription will be active after code activation.
 
         via_giveaway (``bool``, *optional*):
             True if the gift code is received via giveaway.
@@ -52,7 +55,8 @@ class CheckedGiftCode(Object):
         self,
         *,
         date: datetime,
-        months: int,
+        month_count: int,
+        day_count: int,
         via_giveaway: bool = None,
         from_chat: "types.Chat" = None,
         winner: "types.User" = None,
@@ -62,7 +66,8 @@ class CheckedGiftCode(Object):
         super().__init__()
 
         self.date = date
-        self.months = months
+        self.month_count = month_count
+        self.day_count = day_count
         self.via_giveaway = via_giveaway
         self.from_chat = from_chat
         self.winner = winner
@@ -83,7 +88,8 @@ class CheckedGiftCode(Object):
 
         return CheckedGiftCode(
             date=utils.timestamp_to_datetime(checked_gift_code.date),
-            months=checked_gift_code.months,
+            month_count=utils.get_premium_duration_month_count(checked_gift_code.days),
+            day_count=checked_gift_code.days,
             via_giveaway=getattr(checked_gift_code, "via_giveaway", None),
             from_chat=from_chat,
             winner=winner,

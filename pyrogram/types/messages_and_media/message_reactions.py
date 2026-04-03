@@ -47,7 +47,7 @@ class MessageReactions(Object):
         self,
         *,
         client: "pyrogram.Client" = None,
-        reactions: Optional[List["types.Reaction"]] = None,
+        reactions: List["types.Reaction"],
         are_tags: Optional[bool] = None,
         paid_reactors: Optional[List["types.PaidReactor"]] = None,
         can_get_added_reactions: Optional[bool] = None,

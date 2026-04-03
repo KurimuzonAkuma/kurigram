@@ -32,6 +32,7 @@ class ForwardStory:
         disable_notification: bool = None,
         message_thread_id: int = None,
         schedule_date: datetime = None,
+        repeat_period: int = None,
         paid_message_star_count: int = None,
         protect_content: bool = None,
         allow_paid_broadcast: bool = None,
@@ -73,6 +74,9 @@ class ForwardStory:
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
+
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
@@ -111,6 +115,7 @@ class ForwardStory:
                 silent=disable_notification or None,
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                schedule_repeat_period=repeat_period,
                 message="",
                 reply_to=await utils.get_reply_to(
                     self,

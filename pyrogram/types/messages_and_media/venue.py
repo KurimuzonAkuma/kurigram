@@ -65,7 +65,7 @@ class Venue(Object):
     @staticmethod
     def _parse(client, venue: "raw.types.MessageMediaVenue"):
         return Venue(
-            location=types.Location._parse(client, venue.geo),
+            location=types.Location._parse(venue.geo),
             title=venue.title,
             address=venue.address,
             foursquare_id=venue.venue_id or None,

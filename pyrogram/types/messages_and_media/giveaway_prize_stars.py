@@ -101,7 +101,7 @@ class GiveawayPrizeStars(Object):
             star_count=action.stars,
             transaction_id=action.transaction_id,
             boosted_chat=types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(action.boost_peer))),
-            giveaway_message_id=action.message_id,
+            giveaway_message_id=action.giveaway_msg_id,
             giveaway_message=parsed_message,
             sticker=random.choice(
                 types.List(

@@ -5,11 +5,11 @@
     <br>
     <b>Telegram MTProto API Framework for Python</b>
     <br>
-    <a href="https://kurigram.live">
+    <a href="https://kurigram.icu">
         Homepage
     </a>
     •
-    <a href="https://docs.kurigram.live">
+    <a href="https://docs.kurigram.icu">
         Documentation
     </a>
     •
@@ -23,9 +23,6 @@
 </p>
 
 ## Pyrogram
-
-> [!NOTE]
-> Unfortunately, the original pyrogram is no longer supported. I will try to be your @delivrance.
 
 > Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots
 
@@ -43,7 +40,7 @@ async def hello(client, message):
 app.run()
 ```
 
-**Pyrogram** is a modern, elegant and asynchronous [MTProto API](https://docs.kurigram.live/topics/mtproto-vs-botapi)
+**Pyrogram** is a modern, elegant and asynchronous [MTProto API](https://docs.kurigram.icu/topics/mtproto-vs-botapi)
 framework. It enables you to easily interact with the main Telegram API through a user account (custom client) or a bot
 identity (bot API alternative) using Python.
 
@@ -74,12 +71,12 @@ pip3 install kurigram
 
 Dev version
 ``` bash
-pip3 install https://github.com/KurimuzonAkuma/pyrogram/archive/dev.zip --force-reinstall
+pip3 install https://github.com/KurimuzonAkuma/kurigram/archive/dev.zip --force-reinstall
 ```
 
 ### Resources
 
-- Check out the [docs](https://docs.kurigram.live) to learn more about Pyrogram, get started right
+- Check out the [docs](https://docs.kurigram.icu) to learn more about Pyrogram, get started right
 away and discover more in-depth material for building your client applications.
 - Join the [official channel](https://t.me/kurigram_news) and stay tuned for news, updates and announcements.
 - Join the [official chat](https://t.me/kurigram_chat) to communicate with people.

@@ -16,10 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import pyrogram
-from pyrogram import raw
-from pyrogram import types
 from typing import Union
+
+import pyrogram
+from pyrogram import raw, types
 
 
 class CreateForumTopic:
@@ -56,8 +56,8 @@ class CreateForumTopic:
                 await app.create_forum_topic(chat_id=chat_id, title="Topic Title")
         """
         r = await self.invoke(
-            raw.functions.channels.CreateForumTopic(
-                channel=await self.resolve_peer(chat_id),
+            raw.functions.messages.CreateForumTopic(
+                peer=await self.resolve_peer(chat_id),
                 title=title,
                 random_id=self.rnd_id(),
                 icon_color=icon_color,

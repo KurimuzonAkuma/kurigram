@@ -29,7 +29,7 @@ class EmojiStatus(Object):
     """A user emoji status.
 
     Parameters:
-        custom_emoji_id (``int``, *optional*):
+        custom_emoji_id (``str``, *optional*):
             Custom emoji id.
 
         until_date (:py:obj:`~datetime.datetime`, *optional*):
@@ -44,7 +44,7 @@ class EmojiStatus(Object):
         name (``str``, *optional*):
             Name of the collectible.
 
-        pattern_custom_emoji_id (``int``, *optional*):
+        pattern_custom_emoji_id (``str``, *optional*):
             Pattern emoji id.
 
         center_color (``int``, *optional*):
@@ -64,12 +64,12 @@ class EmojiStatus(Object):
         self,
         *,
         client: "pyrogram.Client" = None,
-        custom_emoji_id: Optional[int] = None,
+        custom_emoji_id: Optional[str] = None,
         gift_id: Optional[int] = None,
         until_date: Optional[datetime] = None,
         title: Optional[str] = None,
         name: Optional[str] = None,
-        pattern_custom_emoji_id: Optional[int] = None,
+        pattern_custom_emoji_id: Optional[str] = None,
         center_color: Optional[int] = None,
         edge_color: Optional[int] = None,
         pattern_color: Optional[int] = None,
@@ -93,19 +93,19 @@ class EmojiStatus(Object):
         if isinstance(emoji_status, raw.types.EmojiStatus):
             return EmojiStatus(
                 client=client,
-                custom_emoji_id=emoji_status.document_id,
+                custom_emoji_id=str(emoji_status.document_id),
                 until_date=utils.timestamp_to_datetime(getattr(emoji_status, "until", None))
             )
 
         if isinstance(emoji_status, raw.types.EmojiStatusCollectible):
             return EmojiStatus(
                 client=client,
-                custom_emoji_id=emoji_status.document_id,
+                custom_emoji_id=str(emoji_status.document_id),
                 gift_id=emoji_status.collectible_id,
                 until_date=utils.timestamp_to_datetime(getattr(emoji_status, "until", None)),
                 title=emoji_status.title,
                 name=emoji_status.slug,
-                pattern_custom_emoji_id=emoji_status.pattern_document_id,
+                pattern_custom_emoji_id=str(emoji_status.pattern_document_id),
                 center_color=emoji_status.center_color,
                 edge_color=emoji_status.edge_color,
                 pattern_color=emoji_status.pattern_color,
@@ -122,6 +122,6 @@ class EmojiStatus(Object):
             )
 
         return raw.types.EmojiStatus(
-            document_id=self.custom_emoji_id,
+            document_id=int(self.custom_emoji_id),
             until=utils.datetime_to_timestamp(self.until_date)
         )

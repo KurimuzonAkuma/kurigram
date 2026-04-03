@@ -19,15 +19,14 @@
 from typing import Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types
 
 
 class GetBoostsStatus:
     async def get_boosts_status(
         self: "pyrogram.Client",
         chat_id: Union[int, str]
-    ) -> bool:
+    ) -> "types.BoostsStatus":
         """Get boosts status of channel
 
         .. include:: /_includes/usable-by/users.rst
@@ -38,12 +37,6 @@ class GetBoostsStatus:
 
         Returns:
             :obj:`~pyrogram.types.BoostsStatus`: On success.
-
-        Example:
-            .. code-block:: python
-
-                # get boosts list
-                await app.get_boosts()
         """
         r = await self.invoke(
             raw.functions.premium.GetBoostsStatus(peer=await self.resolve_peer(chat_id))

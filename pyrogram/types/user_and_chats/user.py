@@ -147,8 +147,19 @@ class User(Object, Update):
         phone_number (``str``, *optional*):
             User's phone number.
 
+        personal_photo (:obj:`~pyrogram.types.ChatPhoto`, *optional*):
+            Personal profile photo, to be shown instead of profile photo.
+            This photo isn't returned in the list of user photos.
+            Suitable for downloads only.
+
         photo (:obj:`~pyrogram.types.ChatPhoto`, *optional*):
-            User's or bot's current profile photo. Suitable for downloads only.
+            User's or bot's current profile photo.
+            Suitable for downloads only.
+
+        public_photo (:obj:`~pyrogram.types.ChatPhoto`, *optional*):
+            Fallback profile photo, displayed if no photo is present in photo or personal_photo, due to privacy settings.
+            This photo isn't returned in the list of user photos.
+            Suitable for downloads only.
 
         restrictions (List of :obj:`~pyrogram.types.Restriction`, *optional*):
             The list of reasons why this bot might be unavailable to some users.
@@ -189,6 +200,12 @@ class User(Object, Update):
 
         has_main_web_app (``bool``, *optional*):
             True, if the bot has a main Web App. Returned only in get_me.
+
+        has_topics (``bool``, *optional*):
+            True, if the bot has topics.
+
+        allows_users_to_create_topics (``bool``, *optional*):
+            True, if users can create and delete topics in the chat with the bot.
 
         paid_message_star_count (``int``, *optional*):
             Number of Telegram Stars that must be paid by user for each sent message to the user.
@@ -281,19 +298,19 @@ class User(Object, Update):
             The time after which all messages sent to the chat will be automatically deleted; in seconds.
             Returned only in :meth:`~pyrogram.Client.get_me`.
 
-        theme_emoji (``str``, *optional*):
-            Emoji representing a specific chat theme.
+        theme (:obj:`~pyrogram.types.ChatTheme`, *optional*):
+            Theme set for the chat.
             Returned only in :meth:`~pyrogram.Client.get_me`
 
         private_forward_name (``str``, *optional*):
             Anonymized text to be shown instead of the user's name on forwarded messages.
             Returned only in :meth:`~pyrogram.Client.get_me`
 
-        chat_admin_rights (:obj:`~pyrogram.types.ChatPrivileges`, *optional*):
+        chat_admin_rights (:obj:`~pyrogram.types.ChatAdministratorRights`, *optional*):
             A suggested set of administrator rights for the bot, to be shown when adding the bot as admin to a group.
             Returned only in :meth:`~pyrogram.Client.get_me`
 
-        channel_admin_rights (:obj:`~pyrogram.types.ChatPrivileges`, *optional*):
+        channel_admin_rights (:obj:`~pyrogram.types.ChatAdministratorRights`, *optional*):
             A suggested set of administrator rights for the bot, to be shown when adding the bot as admin to a channel.
             Returned only in :meth:`~pyrogram.Client.get_me`
 
@@ -345,6 +362,14 @@ class User(Object, Update):
             Information about bot verification.
             Returned only in :meth:`~pyrogram.Client.get_me`.
 
+        main_profile_tab (:obj:`~pyrogram.enums.ProfileTab`, *optional*):
+            The main tab chosen by the user.
+            Returned only in :meth:`~pyrogram.Client.get_me`
+
+        first_profile_audio (:obj:`~pyrogram.types.Audio`, *optional*):
+            The first audio file added to the user's profile.
+            Returned only in :meth:`~pyrogram.Client.get_me`
+
         rating (:obj:`~pyrogram.types.UserRating`, *optional*):
             Description of the current rating of the user.
 
@@ -357,6 +382,9 @@ class User(Object, Update):
         accepted_gift_types (:obj:`~pyrogram.types.AcceptedGiftTypes`, *optional*):
             Information about gifts that can be received by the user.
             Returned only in :meth:`~pyrogram.Client.get_me`
+
+        note (:obj:`~pyrogram.types.FormattedText`, *optional*):
+            Note added to the user's contact.
 
         raw (:obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.UserStatus`, *optional*):
             The raw user or user status object, as received from the Telegram API.
@@ -401,7 +429,9 @@ class User(Object, Update):
         emoji_status: Optional["types.EmojiStatus"] = None,
         dc_id: Optional[int] = None,
         phone_number: Optional[str] = None,
+        personal_photo: Optional["types.ChatPhoto"] = None,
         photo: Optional["types.ChatPhoto"] = None,
+        public_photo: Optional["types.ChatPhoto"] = None,
         restrictions: Optional[List["types.Restriction"]] = None,
         reply_color: Optional["types.ChatColor"] = None,
         profile_color: Optional["types.ChatColor"] = None,
@@ -415,6 +445,8 @@ class User(Object, Update):
         can_read_all_group_messages: Optional[bool] = None,
         can_connect_to_business: Optional[bool] = None,
         has_main_web_app: Optional[bool] = None,
+        has_topics: Optional[bool] = None,
+        allows_users_to_create_topics: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None,
         settings: Optional["types.ChatSettings"] = None,
         common_chats: Optional[int] = None,
@@ -438,10 +470,10 @@ class User(Object, Update):
         pinned_message: Optional["types.Message"] = None,
         folder_id: Optional[int] = None,
         message_auto_delete_time: Optional[int] = None,
-        theme_emoji: Optional[str] = None,
+        theme: Optional[str] = None,
         private_forward_name: Optional[str] = None,
-        chat_admin_rights: Optional["types.ChatPrivileges"] = None,
-        channel_admin_rights: Optional["types.ChatPrivileges"] = None,
+        chat_admin_rights: Optional["types.ChatAdministratorRights"] = None,
+        channel_admin_rights: Optional["types.ChatAdministratorRights"] = None,
         chat_background: Optional["types.ChatBackground"] = None,
         stories: Optional[List["types.Story"]] = None,
         business_away_message: Optional["types.BusinessMessage"] = None,
@@ -454,10 +486,13 @@ class User(Object, Update):
         personal_channel_message: Optional["types.Message"] = None,
         gift_count: Optional[int] = None,
         bot_verification: Optional["types.BotVerification"] = None,
+        main_profile_tab: Optional["enums.ProfileTab"] = None,
+        first_profile_audio: Optional["types.Audio"] = None,
         rating: Optional["types.UserRating"] = None,
         pending_rating: Optional["types.UserRating"] = None,
         pending_rating_date: Optional[datetime] = None,
         accepted_gift_types: Optional["types.AcceptedGiftTypes"] = None,
+        note: Optional["types.FormattedText"] = None,
         raw: Optional[Union["raw.base.User", "raw.base.UserStatus"]] = None
     ):
         super().__init__(client)
@@ -488,7 +523,9 @@ class User(Object, Update):
         self.emoji_status = emoji_status
         self.dc_id = dc_id
         self.phone_number = phone_number
+        self.personal_photo = personal_photo
         self.photo = photo
+        self.public_photo = public_photo
         self.restrictions = restrictions
         self.reply_color = reply_color
         self.profile_color = profile_color
@@ -502,6 +539,8 @@ class User(Object, Update):
         self.can_read_all_group_messages = can_read_all_group_messages
         self.can_connect_to_business = can_connect_to_business
         self.has_main_web_app = has_main_web_app
+        self.has_topics = has_topics
+        self.allows_users_to_create_topics = allows_users_to_create_topics
         self.paid_message_star_count = paid_message_star_count
         self.settings = settings
         self.common_chats = common_chats
@@ -525,7 +564,7 @@ class User(Object, Update):
         self.pinned_message = pinned_message
         self.folder_id = folder_id
         self.message_auto_delete_time = message_auto_delete_time
-        self.theme_emoji = theme_emoji
+        self.theme = theme
         self.private_forward_name = private_forward_name
         self.chat_admin_rights = chat_admin_rights
         self.channel_admin_rights = channel_admin_rights
@@ -541,10 +580,13 @@ class User(Object, Update):
         self.personal_channel_message = personal_channel_message
         self.gift_count = gift_count
         self.bot_verification = bot_verification
+        self.main_profile_tab = main_profile_tab
+        self.first_profile_audio = first_profile_audio
         self.rating = rating
         self.pending_rating = pending_rating
         self.pending_rating_date = pending_rating_date
         self.accepted_gift_types = accepted_gift_types
+        self.note = note
         self.raw = raw
 
     @property
@@ -629,6 +671,8 @@ class User(Object, Update):
             can_read_all_group_messages=user.bot_chat_history,
             can_connect_to_business=user.bot_business,
             has_main_web_app=user.bot_has_main_app,
+            has_topics=user.bot_forum_view,
+            allows_users_to_create_topics=user.bot_forum_can_manage_topics,
             paid_message_star_count=user.send_paid_messages_stars,
             raw=user,
             client=client
@@ -659,23 +703,21 @@ class User(Object, Update):
         parsed_user.bot_can_manage_emoji_status = user.bot_can_manage_emoji_status
         parsed_user.display_gifts_button = user.display_gifts_button
         parsed_user.bio = user.about or None
-        # parsed_user.personal_photo = user.personal_photo
-        # parsed_user.profile_photo = user.profile_photo
-        # parsed_user.fallback_photo = user.fallback_photo
+        parsed_user.personal_photo = types.ChatPhoto._parse(client, user.personal_photo, users[user.id].id, users[user.id].access_hash)
+        # parsed_user.photo = types.ChatPhoto._parse(client, user.profile_photo, users[user.id].id, users[user.id].access_hash)
+        parsed_user.public_photo = types.ChatPhoto._parse(client, user.fallback_photo, users[user.id].id, users[user.id].access_hash)
         # parsed_user.bot_info = user.bot_info
+        # parsed_user.bot_forum_view
 
         if user.pinned_msg_id:
             parsed_user.pinned_message = await client.get_messages(chat_id=parsed_user.id, pinned=True)
 
         parsed_user.folder_id = user.folder_id
         parsed_user.message_auto_delete_time = user.ttl_period
-
-        if isinstance(user.theme, raw.types.ChatTheme):
-            parsed_user.theme_emoji = user.theme.emoticon
-
+        parsed_user.theme = await types.ChatTheme._parse(client, user.theme)
         parsed_user.private_forward_name = user.private_forward_name
-        parsed_user.bot_group_admin_rights = types.ChatPrivileges._parse(user.bot_group_admin_rights)
-        parsed_user.bot_broadcast_admin_rights = types.ChatPrivileges._parse(user.bot_broadcast_admin_rights)
+        parsed_user.bot_group_admin_rights = types.ChatAdministratorRights._parse(user.bot_group_admin_rights)
+        parsed_user.bot_broadcast_admin_rights = types.ChatAdministratorRights._parse(user.bot_broadcast_admin_rights)
         parsed_user.chat_background = types.ChatBackground._parse(client, user.wallpaper)
 
         if user.stories:
@@ -689,7 +731,7 @@ class User(Object, Update):
             ) or None
 
         parsed_user.business_work_hours = types.BusinessWorkingHours._parse(user.business_work_hours)
-        parsed_user.business_location = types.Location._parse(client, user.business_location)
+        parsed_user.business_location = types.Location._parse_business(user.business_location)
         parsed_user.business_greeting_message = types.BusinessMessage._parse(client, user.business_greeting_message, users)
         parsed_user.business_away_message = types.BusinessMessage._parse(client, user.business_away_message, users)
         parsed_user.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
@@ -709,10 +751,28 @@ class User(Object, Update):
             user.bot_verification,
             users
         )
+        parsed_user.main_profile_tab = enums.ProfileTab(type(user.main_tab)) if user.main_tab else None
+
+        if user.saved_music:
+            attributes = {type(i): i for i in user.saved_music.attributes}
+
+            if raw.types.DocumentAttributeAudio in attributes:
+                parsed_user.first_profile_audio = types.Audio._parse(
+                    client,
+                    user.saved_music,
+                    attributes[raw.types.DocumentAttributeAudio],
+                    getattr(
+                        attributes.get(raw.types.DocumentAttributeFilename, None),
+                        "file_name",
+                        None,
+                    ),
+                )
+
         parsed_user.rating = types.UserRating._parse(user.stars_rating)
         parsed_user.pending_rating = types.UserRating._parse(user.stars_my_pending_rating)
         parsed_user.pending_rating_date = utils.timestamp_to_datetime(user.stars_my_pending_rating_date)
         parsed_user.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+        parsed_user.note = types.FormattedText._parse(client, user.note)
 
         return parsed_user
 

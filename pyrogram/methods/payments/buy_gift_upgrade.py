@@ -17,10 +17,10 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import pyrogram
-from pyrogram import enums, raw, types, utils
+from pyrogram import raw, types
 
 
 class BuyGiftUpgrade:

@@ -16,10 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Union
+
 import pyrogram
 from pyrogram import raw
-from pyrogram import types
-from typing import Union
 
 
 class CloseForumTopic:
@@ -48,8 +48,8 @@ class CloseForumTopic:
                 await app.close_forum_topic(chat_id, topic_id)
         """
         await self.invoke(
-            raw.functions.channels.EditForumTopic(
-                channel=await self.resolve_peer(chat_id),
+            raw.functions.messages.EditForumTopic(
+                peer=await self.resolve_peer(chat_id),
                 topic_id=topic_id,
                 closed=True
             )

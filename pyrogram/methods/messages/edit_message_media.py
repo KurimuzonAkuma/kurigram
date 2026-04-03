@@ -37,6 +37,7 @@ class EditMessageMedia:
         media: "types.InputMedia",
         show_caption_above_media: bool = None,
         schedule_date: datetime = None,
+        business_connection_id: str = None,
         reply_markup: "types.InlineKeyboardMarkup" = None,
         file_name: str = None
     ) -> "types.Message":
@@ -68,6 +69,9 @@ class EditMessageMedia:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
@@ -291,7 +295,8 @@ class EditMessageMedia:
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,
                 entities=entities
-            )
+            ),
+            business_connection_id=business_connection_id
         )
 
         for i in r.updates:

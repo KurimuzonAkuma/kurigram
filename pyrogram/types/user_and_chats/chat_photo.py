@@ -21,6 +21,7 @@ from typing import Union
 import pyrogram
 from pyrogram import raw
 from pyrogram.file_id import FileId, FileType, FileUniqueId, FileUniqueType, ThumbnailSource
+
 from ..object import Object
 
 
@@ -60,7 +61,7 @@ class ChatPhoto(Object):
         big_file_id: str,
         big_photo_unique_id: str,
         has_animation: bool,
-        is_personal: bool
+        is_personal: bool,
     ):
         super().__init__(client)
 
@@ -74,45 +75,51 @@ class ChatPhoto(Object):
     @staticmethod
     def _parse(
         client,
-        chat_photo: Union["raw.types.UserProfilePhoto", "raw.types.ChatPhoto"],
+        chat_photo: Union["raw.types.UserProfilePhoto", "raw.types.ChatPhoto", "raw.types.Photo"],
         peer_id: int,
-        peer_access_hash: int
+        peer_access_hash: int,
     ):
-        if not isinstance(chat_photo, (raw.types.UserProfilePhoto, raw.types.ChatPhoto)):
+        if not isinstance(
+            chat_photo, (raw.types.UserProfilePhoto, raw.types.ChatPhoto, raw.types.Photo)
+        ):
             return None
+
+        photo_id = (
+            chat_photo.photo_id
+            if isinstance(chat_photo, (raw.types.UserProfilePhoto, raw.types.ChatPhoto))
+            else chat_photo.id
+        )
 
         return ChatPhoto(
             small_file_id=FileId(
                 file_type=FileType.CHAT_PHOTO,
                 dc_id=chat_photo.dc_id,
-                media_id=chat_photo.photo_id,
+                media_id=photo_id,
                 access_hash=0,
                 volume_id=0,
                 thumbnail_source=ThumbnailSource.CHAT_PHOTO_SMALL,
                 local_id=0,
                 chat_id=peer_id,
-                chat_access_hash=peer_access_hash
+                chat_access_hash=peer_access_hash,
             ).encode(),
             small_photo_unique_id=FileUniqueId(
-                file_unique_type=FileUniqueType.DOCUMENT,
-                media_id=chat_photo.photo_id
+                file_unique_type=FileUniqueType.DOCUMENT, media_id=photo_id
             ).encode(),
             big_file_id=FileId(
                 file_type=FileType.CHAT_PHOTO,
                 dc_id=chat_photo.dc_id,
-                media_id=chat_photo.photo_id,
+                media_id=photo_id,
                 access_hash=0,
                 volume_id=0,
                 thumbnail_source=ThumbnailSource.CHAT_PHOTO_BIG,
                 local_id=0,
                 chat_id=peer_id,
-                chat_access_hash=peer_access_hash
+                chat_access_hash=peer_access_hash,
             ).encode(),
             big_photo_unique_id=FileUniqueId(
-                file_unique_type=FileUniqueType.DOCUMENT,
-                media_id=chat_photo.photo_id
+                file_unique_type=FileUniqueType.DOCUMENT, media_id=photo_id
             ).encode(),
-            has_animation=chat_photo.has_video,
-            is_personal=getattr(chat_photo, "personal", False),
-            client=client
+            has_animation=getattr(chat_photo, "has_video", None),
+            is_personal=getattr(chat_photo, "personal", None),
+            client=client,
         )

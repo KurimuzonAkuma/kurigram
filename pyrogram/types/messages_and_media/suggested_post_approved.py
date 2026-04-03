@@ -66,7 +66,7 @@ class SuggestedPostApproved(Object):
         if not isinstance(action, raw.types.MessageActionSuggestedPostApproval):
             return None
 
-        from_id = utils.get_peer_id(message.from_id)
+        from_id = utils.get_peer_id(message.from_id) if message.from_id else None
         peer_id = utils.get_peer_id(message.peer_id)
         chat_id = peer_id or from_id
 

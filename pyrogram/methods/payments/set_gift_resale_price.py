@@ -16,10 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class SetGiftResalePrice:
@@ -64,29 +62,9 @@ class SetGiftResalePrice:
                 # Disallow resale of a unique gift
                 await app.set_gift_resale_price(owned_gift_id="123456")
         """
-        if not isinstance(owned_gift_id, str):
-            raise ValueError(f"owned_gift_id has to be str, but {type(owned_gift_id)} was provided")
-
-        saved_gift_match = re.match(r"^(-\d+)_(\d+)$", owned_gift_id)
-        slug_match = self.UPGRADED_GIFT_RE.match(owned_gift_id)
-
-        if saved_gift_match:
-            stargift = raw.types.InputSavedStarGiftChat(
-                peer=await self.resolve_peer(saved_gift_match.group(1)),
-                saved_id=int(saved_gift_match.group(2))
-            )
-        elif slug_match:
-            stargift = raw.types.InputSavedStarGiftSlug(
-                slug=slug_match.group(1)
-            )
-        else:
-            stargift = raw.types.InputSavedStarGiftUser(
-                msg_id=int(owned_gift_id)
-            )
-
         await self.invoke(
             raw.functions.payments.UpdateStarGiftPrice(
-                stargift=stargift,
+                stargift=await utils.get_input_stargift(self, owned_gift_id),
                 resell_amount=raw.types.StarsAmount(amount=0, nanos=0) if price is None else price.write()
             )
         )

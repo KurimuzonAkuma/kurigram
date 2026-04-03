@@ -17,14 +17,16 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+from collections import OrderedDict
 import inspect
 import logging
-from collections import OrderedDict
+from typing import Dict
 
 import pyrogram
 from pyrogram import utils
 from pyrogram.handlers import (
-    CallbackQueryHandler, MessageHandler, EditedMessageHandler, DeletedMessagesHandler,
+    Handler,
+    ErrorHandler, CallbackQueryHandler, MessageHandler, EditedMessageHandler, DeletedMessagesHandler,
     UserStatusHandler, RawUpdateHandler, InlineQueryHandler, PollHandler, PreCheckoutQueryHandler,
     ChosenInlineResultHandler, ChatMemberUpdatedHandler, ChatJoinRequestHandler, StoryHandler,
     ShippingQueryHandler, MessageReactionHandler, MessageReactionCountHandler, ChatBoostHandler,
@@ -294,7 +296,7 @@ class Dispatcher:
 
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
-    def add_handler(self, handler, group: int):
+    def add_handler(self, handler: Handler, group: int):
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
@@ -311,16 +313,21 @@ class Dispatcher:
 
         self.client.loop.create_task(fn())
 
-    def remove_handler(self, handler, group: int):
+    def remove_handler(self, handler: Handler, group: int):
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
 
             try:
                 if group not in self.groups:
-                    raise ValueError(f"Group {group} does not exist. Handler was not removed.")
+                    raise ValueError(
+                        f"Group {group} does not exist. Handler was not removed."
+                    )
 
                 self.groups[group].remove(handler)
+
+                if not self.groups[group]:
+                    del self.groups[group]
             finally:
                 for lock in self.locks_list:
                     lock.release()
@@ -347,6 +354,9 @@ class Dispatcher:
                 async with lock:
                     for group in self.groups.values():
                         for handler in group:
+                            if isinstance(handler, ErrorHandler):
+                                continue
+
                             args = None
 
                             if isinstance(handler, handler_type):
@@ -382,11 +392,62 @@ class Dispatcher:
                                 raise
                             except pyrogram.ContinuePropagation:
                                 continue
-                            except Exception as e:
-                                log.exception(e)
+                            except Exception as exc:
+                                await self.handle_update_handler_exception(
+                                    exc, handler, update, users, chats
+                                )
 
                             break
             except pyrogram.StopPropagation:
                 pass
             except Exception as e:
                 log.exception(e)
+
+    async def handle_update_handler_exception(
+        self,
+        exc: Exception,
+        update_handler: Handler,
+        update: "pyrogram.raw.base.Update",
+        users: Dict[int, "pyrogram.raw.base.User"],
+        chats: Dict[int, "pyrogram.raw.base.Chat"]
+    ) -> None:
+        handled = False
+        try:
+            for group in self.groups.values():
+                for handler in group:
+                    if not isinstance(handler, ErrorHandler):
+                        continue
+
+                    if not isinstance(exc, handler.exceptions):
+                        continue
+
+                    try:
+                        if inspect.iscoroutinefunction(handler.callback):
+                            await handler.callback(
+                                self.client, exc, update_handler, update, users, chats
+                            )
+                        else:
+                            await self.client.loop.run_in_executor(
+                                self.client.executor, handler.callback,
+                                self.client, exc, update_handler, update, users, chats
+                            )
+                    except pyrogram.StopPropagation:
+                        handled = True
+                        raise
+                    except pyrogram.ContinuePropagation:
+                        handled = True
+                        continue
+                    except Exception:
+                        log.exception("Error handler raised an exception:")
+                    else:
+                        handled = True
+
+                    break
+        except pyrogram.StopPropagation:
+            pass
+        finally:
+            if not handled:
+                log.error(
+                    f"Unexpected exception raised in {type(update_handler).__name__}:",
+                    exc_info=(type(exc), exc, exc.__traceback__)
+                )

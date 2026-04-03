@@ -76,8 +76,21 @@ class QRLogin:
         )
 
         if isinstance(r, raw.types.auth.LoginTokenMigrateTo):
+            dc_option = await self.client.get_dc_option(r.dc_id, ipv6=self.client.ipv6)
+            await self.client.session.stop()
+
+            self.client.session = await self.client.get_session(
+                dc_id=r.dc_id,
+                server_address=dc_option.ip_address,
+                port=dc_option.port,
+                export_authorization=False,
+                temporary=True
+            )
+
             await self.client.storage.dc_id(r.dc_id)
-            self.client.session = await self.client.get_session(r.dc_id, export_authorization=False)
+            await self.client.storage.server_address(dc_option.ip_address)
+            await self.client.storage.port(dc_option.port)
+            await self.client.storage.auth_key(self.client.session.auth_key)       
 
             r = await self.client.invoke(
                 raw.functions.auth.ImportLoginToken(token=r.token)

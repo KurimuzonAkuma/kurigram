@@ -34,9 +34,11 @@ class ReplyParameters(Object):
             Unique identifier for the story in the chat.
 
         chat_id (``int`` | ``str``, *optional*):
+            If the message to be replied to is from a different chat.
             Unique identifier (int) or username (str) of the target chat.
             For your personal cloud (Saved Messages) you can simply use "me" or "self".
             For a contact that exists in your Telegram address book you can use his phone number (str).
+            Not supported for messages sent on behalf of a business account and messages from channel direct messages chats.
 
         quote (``str``, *optional*):
             Quoted part of the message to be replied to, 0-1024 characters after entities parsing.

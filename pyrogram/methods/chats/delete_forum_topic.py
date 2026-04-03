@@ -16,10 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Union
+
 import pyrogram
 from pyrogram import raw
-from pyrogram import types
-from typing import Union
 
 
 class DeleteForumTopic:
@@ -48,8 +48,8 @@ class DeleteForumTopic:
                 await app.delete_forum_topic(chat_id, topic_id)
         """
         await self.invoke(
-            raw.functions.channels.DeleteTopicHistory(
-                channel=await self.resolve_peer(chat_id),
+            raw.functions.messages.DeleteTopicHistory(
+                peer=await self.resolve_peer(chat_id),
                 top_msg_id=topic_id
             )
         )

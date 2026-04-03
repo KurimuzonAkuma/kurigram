@@ -16,11 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 from typing import List, Union
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetPinnedGifts:
@@ -58,39 +57,10 @@ class SetPinnedGifts:
                 # Set pinned gifts in channel
                 await app.set_pinned_gifts(owner_id="pyrogram", received_gift_ids=["-1001292933413_123", "-1001292933413_456"])
         """
-        stargifts = []
-
-        for gift in owned_gift_ids:
-            if not isinstance(gift, str):
-                raise ValueError(f"gift id has to be str, but {type(gift)} was provided")
-
-            saved_gift_match = re.match(r"^(-\d+)_(\d+)$", gift)
-            slug_match = self.UPGRADED_GIFT_RE.match(gift)
-
-            if saved_gift_match:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftChat(
-                        peer=await self.resolve_peer(saved_gift_match.group(1)),
-                        saved_id=int(saved_gift_match.group(2))
-                    )
-                )
-            elif slug_match:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftSlug(
-                        slug=slug_match.group(1)
-                    )
-                )
-            else:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftUser(
-                        msg_id=int(gift)
-                    )
-                )
-
         r = await self.invoke(
             raw.functions.payments.ToggleStarGiftsPinnedToTop(
                 peer=await self.resolve_peer(owner_id),
-                stargift=stargifts
+                stargift=[await utils.get_input_stargift(self, owned_gift_id) for owned_gift_id in owned_gift_ids],
             )
         )
 

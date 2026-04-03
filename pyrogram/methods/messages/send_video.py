@@ -55,6 +55,7 @@ class SendVideo:
         show_caption_above_media: bool = None,
         reply_parameters: "types.ReplyParameters" = None,
         schedule_date: datetime = None,
+        repeat_period: int = None,
         protect_content: bool = None,
         no_sound: bool = True,
         business_connection_id: str = None,
@@ -178,6 +179,9 @@ class SendVideo:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.

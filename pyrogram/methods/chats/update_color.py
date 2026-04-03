@@ -19,8 +19,8 @@
 from typing import Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import enums
+from pyrogram import enums, raw
+
 
 class UpdateColor:
     async def update_color(
@@ -46,7 +46,7 @@ class UpdateColor:
                 Unique identifier of the custom emoji.
 
         Returns:
-            ``bool``: On success, in case the passed-in session is authorized, True is returned.
+            ``bool``: On success, True is returned.
 
         Example:
             .. code-block:: python
@@ -59,8 +59,10 @@ class UpdateColor:
             r = await self.invoke(
                 raw.functions.account.UpdateColor(
                     for_profile=isinstance(color, enums.ProfileColor),
-                    color=color.value,
-                    background_emoji_id=background_emoji_id
+                    color=raw.types.PeerColor(
+                        color=color.value,
+                        background_emoji_id=background_emoji_id
+                    )
                 )
             )
         else:

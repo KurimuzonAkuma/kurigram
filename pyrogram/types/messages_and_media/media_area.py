@@ -176,7 +176,7 @@ class MediaArea(Object):
             except (ChannelPrivate, ChannelInvalid):
                 pass
         elif isinstance(area, raw.types.MediaAreaGeoPoint):
-            location = types.Location._parse(client, area.geo)
+            location = types.Location._parse(area.geo)
         elif isinstance(area, raw.types.MediaAreaSuggestedReaction):
             reaction = types.Reaction._parse(client, area.reaction)
             is_dark = getattr(area, "dark", None)

@@ -65,11 +65,10 @@ class RestrictChatMember:
                 from pyrogram.types import ChatPermissions
 
                 # Completely restrict chat member (mute) forever
-                await app.restrict_chat_member(chat_id, user_id, ChatPermissions())
+                await app.restrict_chat_member(chat_id, user_id)
 
                 # Chat member muted for 24h
-                await app.restrict_chat_member(chat_id, user_id, ChatPermissions(),
-                    datetime.now() + timedelta(days=1))
+                await app.restrict_chat_member(chat_id, user_id, timedelta(days=1))
 
                 # Chat member can only send text messages
                 await app.restrict_chat_member(chat_id, user_id,
@@ -79,21 +78,7 @@ class RestrictChatMember:
             raw.functions.channels.EditBanned(
                 channel=await self.resolve_peer(chat_id),
                 participant=await self.resolve_peer(user_id),
-                banned_rights=raw.types.ChatBannedRights(
-                    until_date=utils.datetime_to_timestamp(until_date),
-                    send_messages=not permissions.can_send_messages,
-                    send_media=not permissions.can_send_media_messages,
-                    send_stickers=not permissions.can_send_other_messages,
-                    send_gifs=not permissions.can_send_other_messages,
-                    send_games=not permissions.can_send_other_messages,
-                    send_inline=not permissions.can_send_other_messages,
-                    embed_links=not permissions.can_add_web_page_previews,
-                    send_polls=not permissions.can_send_polls,
-                    change_info=not permissions.can_change_info,
-                    invite_users=not permissions.can_invite_users,
-                    pin_messages=not permissions.can_pin_messages,
-                    manage_topics=not permissions.can_manage_topics,
-                )
+                banned_rights=permissions.write(until_date)
             )
         )
 

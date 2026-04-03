@@ -37,7 +37,7 @@ class PaidMediaInfo(Object):
     def __init__(
         self,
         *,
-        stars_amount: str,
+        stars_amount: int,
         media: List[Union["types.Photo", "types.Video", "types.PaidMediaPreview"]]
     ):
         super().__init__()

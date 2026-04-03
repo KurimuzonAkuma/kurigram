@@ -68,7 +68,7 @@ class EditStoryCaption:
                 peer=await self.resolve_peer(chat_id),
                 id=story_id,
                 caption=message,
-                entities=entities,
+                entities=entities or [],
             )
         )
 

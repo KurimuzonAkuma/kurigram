@@ -39,7 +39,7 @@ class GetGiftUpgradePreview:
             .. code-block:: python
 
                 # Get information about upgraded gift preview
-                await client.get_gift_upgrade_preview("https://t.me/nft/SignetRing-903")
+                await client.get_gift_upgrade_preview(5936085638515261992)
         """
         r = await self.invoke(
             raw.functions.payments.GetStarGiftUpgradePreview(

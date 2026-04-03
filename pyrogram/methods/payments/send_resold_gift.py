@@ -47,7 +47,7 @@ class SendResoldGift:
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            price (:obj:`~pyrogram.types.GiftResalePrice`, *optional*):
+            price (:obj:`~pyrogram.types.GiftResalePrice`):
                 The price that the user agreed to pay for the gift.
 
         Returns:
@@ -61,6 +61,17 @@ class SendResoldGift:
                     gift_link="https://t.me/nft/NekoHelmet-9215",
                     new_owner_chat_id=123,
                     price=types.GiftResalePriceStar(star_count=100_000)
+                )
+
+                # Buy ton gift
+                from pyrogram import utils
+
+                await app.send_resold_gift(
+                    gift_link="https://t.me/nft/NekoHelmet-9215",
+                    new_owner_chat_id=123,
+                    price=types.GiftResalePriceTon(
+                        toncoin_cent_count=utils.to_nano(5) # 5 ton
+                    )
                 )
         """
         match = self.UPGRADED_GIFT_RE.match(gift_link)

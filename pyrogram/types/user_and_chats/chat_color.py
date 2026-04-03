@@ -45,7 +45,7 @@ class ChatColor(Object):
 
     @staticmethod
     def _parse(color: "raw.types.PeerColor" = None) -> Optional["ChatColor"]:
-        if not color:
+        if not isinstance(color, raw.types.PeerColor):
             return None
 
         return ChatColor(
@@ -55,7 +55,7 @@ class ChatColor(Object):
 
     @staticmethod
     def _parse_profile_color(color: "raw.types.PeerColor" = None) -> Optional["ChatColor"]:
-        if not color:
+        if not isinstance(color, raw.types.PeerColor):
             return None
 
         return ChatColor(

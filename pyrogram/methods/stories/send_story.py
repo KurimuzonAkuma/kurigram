@@ -31,6 +31,7 @@ class SendStory:
         media: Union[str, BinaryIO],
         caption: str = None,
         period: int = None,
+        media_areas: List["types.MediaArea"] = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
@@ -46,7 +47,6 @@ class SendStory:
         caption_entities: List["types.MessageEntity"] = None,
         progress: Callable = None,
         progress_args: tuple = (),
-        media_areas: List["types.MediaArea"] = None
     ) -> "types.Story":
         """Post new story.
 
@@ -70,6 +70,9 @@ class SendStory:
                 Period after which the story is moved to archive (and to the profile if pinned is set), in seconds.
                 Must be one of ``6 * 3600``, ``12 * 3600``, ``86400``, or ``2 * 86400`` for Telegram Premium users,
                 and 86400 otherwise.
+
+            media_areas (List of :obj:`~pyrogram.types.MediaArea`, *optional*):
+                List of media areas to add to the story.
 
             duration (``int``, *optional*):
                 Duration of sent video in seconds.
@@ -132,9 +135,6 @@ class SendStory:
                 You can pass anything you need to be available in the progress callback scope; for example, a Message
                 object or a Client instance in order to edit the message with the updated progress status.
 
-            media_areas (List of :obj:`~pyrogram.types.MediaArea`, *optional*):
-                List of media areas to add to the story.
-
         Returns:
             :obj:`~pyrogram.types.Story` a single story is returned.
 
@@ -150,8 +150,6 @@ class SendStory:
         Raises:
             ValueError: In case of invalid arguments.
         """
-        # TODO: media_areas
-
         message, entities = (await utils.parse_text_entities(self, caption, parse_mode, caption_entities)).values()
 
         try:

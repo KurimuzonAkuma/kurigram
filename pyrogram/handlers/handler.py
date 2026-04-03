@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import inspect
-from typing import Callable
+from typing import Callable, Optional
 
 import pyrogram
 from pyrogram.filters import Filter
@@ -25,7 +25,7 @@ from pyrogram.types import Update
 
 
 class Handler:
-    def __init__(self, callback: Callable, filters: Filter = None):
+    def __init__(self, callback: Callable, filters: Optional[Filter] = None):
         self.callback = callback
         self.filters = filters
 

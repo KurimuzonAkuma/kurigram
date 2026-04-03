@@ -43,13 +43,13 @@ class GetMediaGroup:
 
             message_id (``int``):
                 The id of one of the messages that belong to the media group.
-                
+
         Returns:
             List of :obj:`~pyrogram.types.Message`: On success, a list of messages of the media group is returned.
-            
+
         Raises:
-            ValueError: 
-                In case the passed message_id is negative or equal 0. 
+            ValueError:
+                In case the passed message_id is negative or equal 0.
                 In case target message doesn't belong to a media group.
         """
 
@@ -63,9 +63,8 @@ class GetMediaGroup:
             replies=0
         )
 
-        # There can be maximum 10 items in a media group.
-        # If/else condition to fix the problem of getting correct `media_group_id` when `message_id` is less than 10.
-        media_group_id = messages[9].media_group_id if len(messages) == 19 else messages[message_id - 1].media_group_id
+        # Get media group id from message with selected message id
+        media_group_id = next((msg.media_group_id) for msg in messages if msg.id == message_id)
 
         if media_group_id is None:
             raise ValueError("The message doesn't belong to a media group")

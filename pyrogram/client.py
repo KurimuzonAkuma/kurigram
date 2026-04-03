@@ -50,6 +50,7 @@ from pyrogram.errors import (
     SessionPasswordNeeded,
     Unauthorized,
     VolumeLocNotFound,
+    AuthTokenExpired
 )
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
@@ -116,9 +117,10 @@ class Client(Methods):
             after which the server address will be updated (works both ways).
             Defaults to False (IPv4).
 
-        proxy (``dict``, *optional*):
+        proxy (``dict`` | ``str``, *optional*):
             The Proxy settings as dict.
-            E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*.
+            E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*
+            or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"*.
             The *username* and *password* can be omitted if the proxy doesn't require authorization.
 
         test_mode (``bool``, *optional*):
@@ -177,6 +179,7 @@ class Client(Methods):
 
         skip_updates (``bool``, *optional*):
             Pass True to skip pending updates that arrived while the client was offline.
+            Doesn't work if *in_memory* is set to True.
             Defaults to True.
 
         takeout (``bool``, *optional*):
@@ -257,6 +260,8 @@ class Client(Methods):
 
     INVITE_LINK_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:joinchat/|\+))([\w-]+)$")
     UPGRADED_GIFT_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:nft/|\+))([\w-]+)$")
+    SAVED_GIFT_RE = re.compile(r"^(-\d+)_(\d+)$")
+    CHANNEL_MESSAGE_LINK_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:c/)?)([\w]+)(?:.+)?$")
     WORKERS = min(32, (os.cpu_count() or 0) + 4)  # os.cpu_count() can be None
     WORKDIR = PARENT_DIR
 
@@ -282,7 +287,7 @@ class Client(Methods):
         lang_code: str = LANG_CODE,
         system_lang_code: str = SYSTEM_LANG_CODE,
         ipv6: Optional[bool] = False,
-        proxy: Optional[dict] = None,
+        proxy: Optional[Union[dict, str]] = None,
         test_mode: Optional[bool] = False,
         bot_token: Optional[str] = None,
         session_string: Optional[str] = None,
@@ -377,10 +382,7 @@ class Client(Methods):
         self.dispatcher: Dispatcher = Dispatcher(self)
 
         self.rnd_id = MsgId
-        self._last_sync_time = time.time()
-        self._last_monotonic = time.monotonic()
-
-        self._is_server_time_synced = False
+        self._server_time_offset = 0.0
 
         self.parser: Parser = Parser(self)
 
@@ -420,9 +422,19 @@ class Client(Methods):
         if isinstance(loop, asyncio.AbstractEventLoop):
             self.loop = loop
         else:
-            self.loop = asyncio.get_event_loop()
+            self.loop = None
 
         self.__config: "raw.types.Config" = None
+
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        if not self._loop:
+            self._loop = utils.get_event_loop()
+        return self._loop
+
+    @loop.setter
+    def loop(self, value: asyncio.AbstractEventLoop):
+        self._loop = value
 
     def __enter__(self):
         return self.start()
@@ -483,7 +495,7 @@ class Client(Methods):
                     else:
                         self.phone_number = value
 
-                sent_code = await self.send_code(self.phone_number)
+                sent_code = await self.send_phone_number_code(self.phone_number)
             except BadRequest as e:
                 print(e.MESSAGE)
                 self.phone_number = None
@@ -531,8 +543,9 @@ class Client(Methods):
 
                     if isinstance(email_sent_code, raw.types.account.EmailVerifiedLogin):
                         if isinstance(email_sent_code.sent_code, raw.types.auth.SentCodePaymentRequired):
+                            # TODO: raw.functions.auth.CheckPaidAuth
                             raise Unauthorized(
-                                "You need to pay for or purchase premium to continue authorization "
+                                f"You need to pay {email_sent_code.sent_code.amount}{email_sent_code.sent_code.currency} or purchase premium to continue authorization "
                                 "process, which is currently not supported by Pyrogram."
                             )
                 except BadRequest as e:
@@ -654,6 +667,9 @@ class Client(Methods):
                     return signed_in
             except asyncio.TimeoutError:
                 log.info("Recreating QR code.")
+                await qr_login.recreate()
+            except AuthTokenExpired:
+                log.info("Auth token expired. Recreating QR code.")
                 await qr_login.recreate()
             except SessionPasswordNeeded as e:
                 print(e.MESSAGE)
@@ -809,7 +825,7 @@ class Client(Methods):
                 pts = getattr(update, "pts", None)
                 pts_count = getattr(update, "pts_count", None)
 
-                if pts and not self.skip_updates:
+                if pts:
                     await self.storage.update_state(
                         (
                             utils.get_channel_id(channel_id) if channel_id else 0,
@@ -851,16 +867,15 @@ class Client(Methods):
 
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
-            if not self.skip_updates:
-                await self.storage.update_state(
-                    (
-                        0,
-                        updates.pts,
-                        None,
-                        updates.date,
-                        None
-                    )
+            await self.storage.update_state(
+                (
+                    0,
+                    updates.pts,
+                    None,
+                    updates.date,
+                    None
                 )
+            )
 
             diff = await self.invoke(
                 raw.functions.updates.GetDifference(
@@ -1153,49 +1168,7 @@ class Client(Methods):
             dc_id = file_id.dc_id
 
             try:
-                session = self.media_sessions.get(dc_id)
-                if not session:
-                    dc_option = await self.get_dc_option(dc_id, is_media=True, ipv6=self.ipv6)
-
-                    session = self.media_sessions[dc_id] = Session(
-                        self,
-                        dc_id,
-                        dc_option.ip_address,
-                        dc_option.port,
-                        await Auth(
-                            self,
-                            dc_id,
-                            dc_option.ip_address,
-                            dc_option.port,
-                            await self.storage.test_mode()
-                        ).create() if dc_id != await self.storage.dc_id()
-                        else await self.storage.auth_key(),
-                        await self.storage.test_mode(),
-                        is_media=True
-                    )
-                    await session.start()
-
-                    if dc_id != await self.storage.dc_id():
-                        for _ in range(3):
-                            exported_auth = await self.invoke(
-                                raw.functions.auth.ExportAuthorization(
-                                    dc_id=dc_id
-                                )
-                            )
-
-                            try:
-                                await session.invoke(
-                                    raw.functions.auth.ImportAuthorization(
-                                        id=exported_auth.id,
-                                        bytes=exported_auth.bytes
-                                    )
-                                )
-                            except AuthBytesInvalid:
-                                continue
-                            else:
-                                break
-                        else:
-                            raise AuthBytesInvalid
+                session = await self.get_session(dc_id, is_media=True)
 
                 r = await session.invoke(
                     raw.functions.upload.GetFile(
@@ -1243,28 +1216,10 @@ class Client(Methods):
                         )
 
                 elif isinstance(r, raw.types.upload.FileCdnRedirect):
-                    dc_option = await self.get_dc_option(dc_id, is_cdn=True, ipv6=self.ipv6)
 
-                    cdn_session = Session(
-                        self,
-                        r.dc_id,
-                        dc_option.ip_address,
-                        dc_option.port,
-                        await Auth(
-                            self,
-                            r.dc_id,
-                            dc_option.ip_address,
-                            dc_option.port,
-                            await self.storage.test_mode()
-                        ).create(),
-                        await self.storage.test_mode(),
-                        is_media=True,
-                        is_cdn=True
-                    )
+                    cdn_session = await self.get_session(dc_id, is_cdn=True, temporary=True)
 
                     try:
-                        await cdn_session.start()
-
                         while True:
                             r2 = await cdn_session.invoke(
                                 raw.functions.upload.GetCdnFile(
@@ -1290,13 +1245,12 @@ class Client(Methods):
                             chunk = r2.bytes
 
                             # https://core.telegram.org/cdn#decrypting-files
-                            decrypted_chunk = aes.ctr256_decrypt(
+                            decrypted_chunk = await self.loop.run_in_executor(
+                                self.executor,
+                                aes.ctr256_decrypt,
                                 chunk,
                                 r.encryption_key,
-                                bytearray(
-                                    r.encryption_iv[:-4]
-                                    + (offset_bytes // 16).to_bytes(4, "big")
-                                )
+                                bytearray(r.encryption_iv[:-4] + (offset_bytes // 16).to_bytes(4, "big"))
                             )
 
                             hashes = await session.invoke(
@@ -1307,12 +1261,15 @@ class Client(Methods):
                             )
 
                             # https://core.telegram.org/cdn#verifying-files
-                            for i, h in enumerate(hashes):
-                                cdn_chunk = decrypted_chunk[h.limit * i: h.limit * (i + 1)]
-                                CDNFileHashMismatch.check(
-                                    h.hash == sha256(cdn_chunk).digest(),
-                                    "h.hash == sha256(cdn_chunk).digest()"
-                                )
+                            def _check_all_hashes():
+                                for i, h in enumerate(hashes):
+                                    cdn_chunk = decrypted_chunk[h.limit * i: h.limit * (i + 1)]
+                                    CDNFileHashMismatch.check(
+                                        h.hash == sha256(cdn_chunk).digest(),
+                                        "h.hash == sha256(cdn_chunk).digest()"
+                                    )
+
+                            await self.loop.run_in_executor(self.executor, _check_all_hashes)
 
                             yield decrypted_chunk
 
@@ -1347,20 +1304,29 @@ class Client(Methods):
 
     async def get_session(
         self,
-        dc_id: int,
+        dc_id: Optional[int] = None,
         is_media: Optional[bool] = False,
+        is_cdn: Optional[bool] = False,
+        business_connection_id: Optional[str] = None,
         export_authorization: Optional[bool] = True,
         server_address: Optional[str] = None,
-        port: Optional[int] = None
+        port: Optional[int] = None,
+        temporary: Optional[bool] = False
     ) -> "Session":
         """Get existing session or create a new one.
 
         Parameters:
-            dc_id (``int``):
+            dc_id (``int``, *optional*):
                 Datacenter identifier.
 
             is_media (``bool``, *optional*):
                 Pass True to get or create a media session.
+
+            is_cdn (``bool``, *optional*):
+                Pass True to get or create a cdn session.
+
+            business_connection_id (``str``, *optional*):
+                Business connection identifier.
 
             export_authorization (``bool``, *optional*):
                 Pass True to export authorization after creating the session.
@@ -1373,61 +1339,95 @@ class Client(Methods):
             port (``int``, *optional*):
                 Custom port to connect to.
                 Used only when creating a new session.
+
+            temporary (``bool``, *optional*):
+                Create temporary session instead of getting from storage.
+                Used only when uploading/downloading and don't forget to stop it.
         """
-        if dc_id == await self.storage.dc_id() and not is_media:
+        if not dc_id:
+            dc_id = await self.storage.dc_id()
+
+        if business_connection_id:
+            dc_id = self.business_connections.get(business_connection_id)
+
+            if dc_id is None:
+                connection = await self.session.invoke(
+                    raw.functions.account.GetBotBusinessConnection(
+                        connection_id=business_connection_id
+                    )
+                )
+
+                dc_id = self.business_connections[business_connection_id] = connection.updates[0].connection.dc_id
+
+        is_current_dc = await self.storage.dc_id() == dc_id
+
+        if not temporary and is_current_dc and not is_media:
             return self.session
 
         sessions = self.media_sessions if is_media else self.sessions
 
-        async with self.sessions_lock:
-            if sessions.get(dc_id):
-                return sessions[dc_id]
+        if not temporary and sessions.get(dc_id):
+            return sessions[dc_id]
 
-            dc_option = await self.get_dc_option(dc_id, is_media=is_media, ipv6=self.ipv6)
+        if not server_address or not port:
+            dc_option = await self.get_dc_option(dc_id, is_media=is_media, ipv6=self.ipv6, is_cdn=is_cdn)
 
-            session = sessions[dc_id] = Session(
-                self,
-                dc_id,
-                server_address or dc_option.ip_address,
-                port or dc_option.port,
-                await Auth(
+            server_address = server_address or dc_option.ip_address
+            port = port or dc_option.port
+
+        if is_media:
+            auth_key = (await self.get_session(dc_id)).auth_key
+        else:
+            if not is_current_dc:
+                auth_key = await Auth(
                     self,
                     dc_id,
-                    server_address or dc_option.ip_address,
-                    port or dc_option.port,
+                    server_address,
+                    port,
                     await self.storage.test_mode()
-                ).create() if dc_id != await self.storage.dc_id()
-                else await self.storage.auth_key(),
-                await self.storage.test_mode(),
-                is_media=is_media
-            )
+                ).create()
+            else:
+                auth_key = await self.storage.auth_key()
 
-            await session.start()
+        session = Session(
+            self,
+            dc_id,
+            server_address,
+            port,
+            auth_key,
+            await self.storage.test_mode(),
+            is_media=is_media
+        )
 
-            if dc_id != await self.storage.dc_id() and export_authorization:
-                for _ in range(3):
-                    exported_auth = await self.invoke(
-                        raw.functions.auth.ExportAuthorization(
-                            dc_id=dc_id
+        if not temporary:
+            sessions[dc_id] = session
+
+        await session.start()
+
+        if not is_current_dc and export_authorization:
+            for _ in range(3):
+                exported_auth = await self.invoke(
+                    raw.functions.auth.ExportAuthorization(
+                        dc_id=dc_id
+                    )
+                )
+
+                try:
+                    await session.invoke(
+                        raw.functions.auth.ImportAuthorization(
+                            id=exported_auth.id,
+                            bytes=exported_auth.bytes
                         )
                     )
-
-                    try:
-                        await session.invoke(
-                            raw.functions.auth.ImportAuthorization(
-                                id=exported_auth.id,
-                                bytes=exported_auth.bytes
-                            )
-                        )
-                    except AuthBytesInvalid:
-                        continue
-                    else:
-                        break
+                except AuthBytesInvalid:
+                    continue
                 else:
-                    await session.stop()
-                    raise AuthBytesInvalid
+                    break
+            else:
+                await session.stop()
+                raise AuthBytesInvalid
 
-            return session
+        return session
 
     async def get_dc_option(
         self,
@@ -1436,8 +1436,7 @@ class Client(Methods):
         is_cdn: bool = False,
         ipv6: bool = False
     ) -> "raw.types.DcOption":
-        if not self.__config:
-            self.__config = await self.invoke(raw.functions.help.GetConfig())
+        self.__config = await self.invoke(raw.functions.help.GetConfig())
 
         if dc_id is None:
             dc_id = self.__config.this_dc
@@ -1454,7 +1453,7 @@ class Client(Methods):
                 return cdn_options[0]
 
             log.debug(
-                "No CDN datacenter found for DC%s, falling back to prod DC",
+                "No CDN datacenter found for DC%s, falling back to media DC",
                 dc_id
             )
 
@@ -1525,16 +1524,12 @@ class Client(Methods):
 
     @property
     def server_time(self) -> float:
-        return self._last_sync_time + (time.monotonic() - self._last_monotonic)
+        return time.time() + self._server_time_offset
 
     def _set_server_time(self, msg_id: int):
-        if self._is_server_time_synced:
-            return
-
-        self._last_sync_time = msg_id / float(2**32)
-        self._last_monotonic = time.monotonic()
-        self._is_server_time_synced = True
-        log.info(f"Time synced: {utils.timestamp_to_datetime(self._last_sync_time)}")
+        server_ts = msg_id / float(2**32)
+        self._server_time_offset = server_ts - time.time()
+        log.info(f"Time synced: offset={self._server_time_offset:.3f}s, server_time={utils.timestamp_to_datetime(server_ts)}")
 
     def guess_mime_type(self, filename: Union[str, BytesIO]) -> Optional[str]:
         if isinstance(filename, BytesIO):

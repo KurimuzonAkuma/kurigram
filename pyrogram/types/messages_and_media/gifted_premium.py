@@ -50,6 +50,9 @@ class GiftedPremium(Object):
         month_count (``int``):
             Number of months the Telegram Premium subscription will be active.
 
+        day_count (``int``):
+            Number of days the Telegram Premium subscription will be active.
+
         sticker (:obj:`~pyrogram.types.Sticker`):
             A sticker to be shown in the message.
 
@@ -69,6 +72,7 @@ class GiftedPremium(Object):
         cryptocurrency: Optional[str] = None,
         cryptocurrency_amount: Optional[int] = None,
         month_count: Optional[int] = None,
+        day_count: Optional[int] = None,
         sticker: Optional["types.Sticker"] = None,
         caption: Optional[str] = None,
         caption_entities: Optional[List["types.MessageEntity"]] = None
@@ -82,6 +86,7 @@ class GiftedPremium(Object):
         self.cryptocurrency = cryptocurrency
         self.cryptocurrency_amount = cryptocurrency_amount
         self.month_count = month_count
+        self.day_count = day_count
         self.sticker = sticker
         self.caption = caption
         self.caption_entities = caption_entities
@@ -110,7 +115,8 @@ class GiftedPremium(Object):
             amount=action.amount,
             cryptocurrency=getattr(action, "crypto_currency", None),
             cryptocurrency_amount=getattr(action, "crypto_amount", None),
-            month_count=action.months,
+            day_count=action.days,
+            month_count=utils.get_premium_duration_month_count(action.days),
             sticker=random.choice(
                 types.List(
                     [

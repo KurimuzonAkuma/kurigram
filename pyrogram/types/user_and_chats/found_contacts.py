@@ -16,12 +16,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
+from typing import List, Optional
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import utils
-from pyrogram import types
+from pyrogram import raw, types, utils
+
 from ..object import Object
 
 
@@ -40,8 +39,8 @@ class FoundContacts(Object):
         self,
         *,
         client: "pyrogram.Client" = None,
-        my_results: Optional["types.Chat"] = None,
-        global_results: Optional["types.Chat"] = None
+        my_results: Optional[List["types.Chat"]] = None,
+        global_results: Optional[List["types.Chat"]] = None
     ):
         super().__init__(client)
 

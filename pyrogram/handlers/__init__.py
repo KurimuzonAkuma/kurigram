@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from .handler import Handler
+from .error_handler import ErrorHandler
 from .business_connection_handler import BusinessConnectionHandler
 from .business_message_handler import BusinessMessageHandler
 from .callback_query_handler import CallbackQueryHandler

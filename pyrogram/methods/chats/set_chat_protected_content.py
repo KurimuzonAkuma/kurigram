@@ -19,15 +19,13 @@
 from typing import Union
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, types, utils
 
 
 class SetChatProtectedContent:
     async def set_chat_protected_content(
-        self: "pyrogram.Client",
-        chat_id: Union[int, str],
-        enabled: bool
-    ) -> bool:
+        self: "pyrogram.Client", chat_id: Union[int, str], enabled: bool
+    ) -> Union["types.Message", bool]:
         """Set the chat protected content setting.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -40,14 +38,14 @@ class SetChatProtectedContent:
                 Pass True to enable the protected content setting, False to disable.
 
         Returns:
-            ``bool``: On success, True is returned.
+            :obj:`~pyrogram.types.Message` | ``bool``: On success, a service message will be returned (when applicable),
+            otherwise, in case a message object couldn't be returned, True is returned.
         """
 
-        await self.invoke(
+        r = await self.invoke(
             raw.functions.messages.ToggleNoForwards(
-                peer=await self.resolve_peer(chat_id),
-                enabled=enabled
+                peer=await self.resolve_peer(chat_id), enabled=enabled
             )
         )
 
-        return True
+        return next(iter(await utils.parse_messages(client=self, messages=r)), True)

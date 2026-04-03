@@ -19,7 +19,7 @@
 from typing import AsyncGenerator, Optional
 
 import pyrogram
-from pyrogram import types, raw, utils
+from pyrogram import raw, types, utils
 
 
 class GetDialogs:
@@ -91,9 +91,9 @@ class GetDialogs:
                 if isinstance(message, raw.types.MessageEmpty):
                     continue
 
-                chat_id = utils.get_peer_id(message.peer_id)
-
-                messages[chat_id] = await types.Message._parse(self, message, users, chats)
+                messages[utils.get_peer_id(message.peer_id)] = await types.Message._parse(
+                    self, message, users, chats
+                )
 
             dialogs = []
 
@@ -116,9 +116,9 @@ class GetDialogs:
             if not dialogs:
                 return
 
-            last_message = next(filter(None, (
-                messages.get(utils.get_raw_peer_id(d.chat.id)) for d in reversed(dialogs)
-            )), None)
+            last_message = next(
+                filter(None, (messages.get(d.chat.id) for d in reversed(dialogs))), None
+            )
 
             offset_id = last_message.id if last_message else 0
             offset_date = utils.datetime_to_timestamp(last_message.date) if last_message else 0

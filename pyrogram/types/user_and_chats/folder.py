@@ -154,9 +154,8 @@ class Folder(Object):
         for peer in folder.include_peers:
             included_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
 
-        if getattr(folder, "exclude_peers", None):
-            for peer in folder.exclude_peers:
-                excluded_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
+        for peer in getattr(folder, "exclude_peers", []):
+            excluded_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
 
         name, entities = (utils.parse_text_with_entities(client, folder.title, {})).values()
 
@@ -183,7 +182,7 @@ class Folder(Object):
             client=client
         )
 
-    async def delete(self):
+    async def delete(self) -> bool:
         """Bound method *delete* of :obj:`~pyrogram.types.Folder`.
 
         Use as a shortcut for:
@@ -210,9 +209,9 @@ class Folder(Object):
         animate_custom_emoji: Optional[bool] = None,
         icon: Optional[str] = None,
         color: Optional["enums.FolderColor"] = None,
-        pinned_chats: Optional[List["types.Chat"]] = None,
-        included_chats: Optional[List["types.Chat"]] = None,
-        excluded_chats: Optional[List["types.Chat"]] = None,
+        pinned_chats: Optional[List[Union[int, str]]] = None,
+        included_chats: Optional[List[Union[int, str]]] = None,
+        excluded_chats: Optional[List[Union[int, str]]] = None,
         exclude_muted: Optional[bool] = None,
         exclude_read: Optional[bool] = None,
         exclude_archived: Optional[bool] = None,
@@ -221,7 +220,7 @@ class Folder(Object):
         include_bots: Optional[bool] = None,
         include_groups: Optional[bool] = None,
         include_channels: Optional[bool] = None
-    ):
+    ) -> bool:
         """Bound method *update_peers* of :obj:`~pyrogram.types.Folder`.
 
         Use as a shortcut for:
@@ -263,15 +262,15 @@ class Folder(Object):
             is_shareable (``bool``, *optional*):
                 True, if at least one link has been created for the folder.
 
-            pinned_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
+            pinned_chats (List of ``int`` | ``str``, *optional*):
                 The pinned chats in the folder.
                 There can be up to getOption("chat_folder_chosen_chat_count_max") pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
 
-            included_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
+            included_chats (List of ``int`` | ``str``, *optional*):
                 The always included chats in the folder.
                 There can be up to getOption("chat_folder_chosen_chat_count_max") pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
 
-            excluded_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
+            excluded_chats (List of ``int`` | ``str``, *optional*):
                 The always excluded chats in the folder.
                 There can be up to getOption("chat_folder_chosen_chat_count_max") always excluded non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
 
@@ -306,15 +305,6 @@ class Folder(Object):
             name, entities = (await utils.parse_text_entities(self, name, parse_mode, entities)).values()
             entities = entities or []
 
-        if pinned_chats and self.pinned_chats:
-            pinned_chats = [i.id for i in self.pinned_chats or []] + pinned_chats
-
-        if included_chats and self.included_chats:
-            included_chats = [i.id for i in self.included_chats or []] + included_chats
-
-        if excluded_chats and self.excluded_chats:
-            excluded_chats = [i.id for i in self.excluded_chats or []] + excluded_chats
-
         return await self._client.edit_folder(
             folder_id=self.id,
             name=name or self.name,
@@ -323,9 +313,9 @@ class Folder(Object):
             animate_custom_emoji=animate_custom_emoji or self.animate_custom_emoji,
             icon=icon or self.icon,
             color=color or self.color,
-            pinned_chats=pinned_chats or self.pinned_chats,
-            included_chats=included_chats or self.included_chats,
-            excluded_chats=excluded_chats or self.excluded_chats,
+            pinned_chats=[i.id for i in self.included_chats or []] if pinned_chats is None else pinned_chats,
+            included_chats=[i.id for i in self.included_chats or []] if included_chats is None else included_chats,
+            excluded_chats=[i.id for i in self.excluded_chats or []] if excluded_chats is None else excluded_chats,
             exclude_muted=exclude_muted or self.exclude_muted,
             exclude_read=exclude_read or self.exclude_read,
             exclude_archived=exclude_archived or self.exclude_archived,
@@ -336,15 +326,17 @@ class Folder(Object):
             include_channels=include_channels or self.include_channels
         )
 
-    async def include_chat(self, chat_id: Union[int, str]):
+    async def include_chat(self, chat_id: Union[int, str]) -> bool:
         """Bound method *include_chat* of :obj:`~pyrogram.types.Folder`.
+
+        Always include a chat in the folder.
 
         Use as a shortcut for:
 
         .. code-block:: python
 
             await client.edit_folder(
-                folder_id=123456789,
+                folder_id=folder_id,
                 included_chats=[chat_id]
             )
 
@@ -355,8 +347,9 @@ class Folder(Object):
 
         Parameters:
             chat_id (``int`` | ``str``):
-                Unique identifier for the target chat or username of the target user/channel/supergroup
-                (in the format @username).
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
 
         Returns:
             True on success.
@@ -365,15 +358,17 @@ class Folder(Object):
             included_chats=[i.id for i in self.included_chats or []] + [chat_id],
         )
 
-    async def exclude_chat(self, chat_id: Union[int, str]):
+    async def exclude_chat(self, chat_id: Union[int, str]) -> bool:
         """Bound method *exclude_chat* of :obj:`~pyrogram.types.Folder`.
+
+        Always exclude a chat from the folder.
 
         Use as a shortcut for:
 
         .. code-block:: python
 
             await client.edit_folder(
-                folder_id=123456789,
+                folder_id=folder_id,
                 excluded_chats=[chat_id],
             )
 
@@ -384,8 +379,9 @@ class Folder(Object):
 
         Parameters:
             chat_id (``int`` | ``str``):
-                Unique identifier for the target chat or username of the target user/channel/supergroup
-                (in the format @username).
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
 
         Returns:
             True on success.
@@ -393,6 +389,67 @@ class Folder(Object):
         return await self.edit(
             excluded_chats=[i.id for i in self.excluded_chats or []] + [chat_id],
         )
+
+    async def pin_chat(self, chat_id: Union[int, str]):
+        """Bound method *pin_chat* of :obj:`~pyrogram.types.Folder`.
+
+        Use as a shortcut for:
+
+        .. code-block:: python
+
+            await client.edit_folder(
+                folder_id=folder_id,
+                included_chats=[chat_id],
+                pinned_chats=[chat_id]
+            )
+
+        Example:
+            .. code-block:: python
+
+               await folder.pin_chat(chat_id)
+
+        Parameters:
+            chat_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
+
+        Returns:
+            True on success.
+        """
+        return await self.edit(
+            included_chats=[i.id for i in self.included_chats or []] + [chat_id],
+            pinned_chats=[i.id for i in self.pinned_chats or []] + [chat_id]
+        )
+
+    async def remove_chat(self, chat_id: Union[int, str]):
+        """Bound method *remove_chat* of :obj:`~pyrogram.types.Folder`.
+
+        Remove chat in folder from included/excluded/pinned chats.
+
+        Example:
+            .. code-block:: python
+
+               await folder.remove_chat(chat_id)
+
+        Parameters:
+            chat_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
+
+        Returns:
+            True on success.
+        """
+        peer = await self._client.resolve_peer(chat_id)
+        peer_id = utils.get_peer_id(peer)
+
+        return await self.edit(
+            pinned_chats=[i.id for i in self.pinned_chats or [] if peer_id != i.id],
+            included_chats=[i.id for i in self.included_chats or [] if peer_id != i.id],
+            excluded_chats=[i.id for i in self.excluded_chats or [] if peer_id != i.id]
+        )
+
 
     async def update_color(self, color: "enums.FolderColor"):
         """Bound method *update_color* of :obj:`~pyrogram.types.Folder`.
@@ -402,7 +459,7 @@ class Folder(Object):
         .. code-block:: python
 
             await client.edit_folder(
-                folder_id=123456789,
+                folder_id=folder_id,
                 color=color
             )
 
@@ -421,64 +478,6 @@ class Folder(Object):
         """
         return await self.edit(
             color=color
-        )
-
-    async def pin_chat(self, chat_id: Union[int, str]):
-        """Bound method *pin_chat* of :obj:`~pyrogram.types.Folder`.
-
-        Use as a shortcut for:
-
-        .. code-block:: python
-
-            await client.edit_folder(
-                folder_id=123456789,
-                included_chats=[chat_id],
-                pinned_chats=[chat_id]
-            )
-
-        Example:
-            .. code-block:: python
-
-               await folder.pin_chat(chat_id)
-
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier for the target chat or username of the target user/channel/supergroup
-                (in the format @username).
-
-        Returns:
-            True on success.
-        """
-        return await self.edit(
-            included_chats=[i.id for i in self.included_chats or []] + [chat_id],
-            pinned_chats=[i.id for i in self.pinned_chats or []] + [chat_id]
-        )
-
-    async def remove_chat(self, chat_id: Union[int, str]):
-        """Bound method *remove_chat* of :obj:`~pyrogram.types.Folder`.
-
-        Remove chat from folder.
-
-        Example:
-            .. code-block:: python
-
-               await folder.remove_chat(chat_id)
-
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier for the target chat or username of the target user/channel/supergroup
-                (in the format @username).
-
-        Returns:
-            True on success.
-        """
-        peer = await self._client.resolve_peer(chat_id)
-        peer_id = utils.get_peer_id(peer)
-
-        return await self.edit(
-            pinned_chats=[i.id for i in self.pinned_chats or [] if peer_id != i.id],
-            included_chats=[i.id for i in self.included_chats or [] if peer_id != i.id],
-            excluded_chats=[i.id for i in self.excluded_chats or [] if peer_id != i.id]
         )
 
     async def create_invite_link(self, name: str = None, chat_ids: List[Union[int, str]] = None) -> "types.FolderInviteLink":

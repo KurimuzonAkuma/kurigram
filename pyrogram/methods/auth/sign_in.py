@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import re
 from typing import Union
 
 import pyrogram
@@ -42,7 +43,7 @@ class SignIn:
                 Phone number in international format (includes the country prefix).
 
             phone_code_hash (``str``):
-                Code identifier taken from the result of :meth:`~pyrogram.Client.send_code`.
+                Code identifier taken from the result of :meth:`~pyrogram.Client.send_phone_number_code`.
 
             phone_code (``str``):
                 The valid confirmation code you received (either as Telegram message or as SMS in your phone number).
@@ -58,7 +59,7 @@ class SignIn:
             BadRequest: In case the arguments are invalid.
             SessionPasswordNeeded: In case a password is needed to sign in.
         """
-        phone_number = phone_number.strip(" +")
+        phone_number = re.sub(r"\D", "", phone_number)
 
         r = await self.invoke(
             raw.functions.auth.SignIn(

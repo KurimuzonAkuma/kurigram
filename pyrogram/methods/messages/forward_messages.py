@@ -32,6 +32,7 @@ class ForwardMessages:
         message_thread_id: int = None,
         disable_notification: bool = None,
         schedule_date: datetime = None,
+        repeat_period: int = None,
         hide_sender_name: bool = None,
         hide_captions: bool = None,
         protect_content: bool = None,
@@ -68,6 +69,9 @@ class ForwardMessages:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
 
             hide_sender_name (``bool``, *optional*):
                 If True, the original author of the message will not be shown.
@@ -117,6 +121,7 @@ class ForwardMessages:
                 silent=disable_notification or None,
                 random_id=[self.rnd_id() for _ in message_ids],
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                schedule_repeat_period=repeat_period,
                 drop_author=hide_sender_name,
                 drop_media_captions=hide_captions,
                 noforwards=protect_content,

@@ -19,7 +19,7 @@ import re
 from typing import List, Union
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class AddCollectionGifts:
@@ -58,31 +58,7 @@ class AddCollectionGifts:
         stargifts = []
 
         for gift in gift_ids:
-            if not isinstance(gift, str):
-                raise ValueError(f"gift id has to be str, but {type(gift)} was provided")
-
-            saved_gift_match = re.match(r"^(-\d+)_(\d+)$", gift)
-            slug_match = self.UPGRADED_GIFT_RE.match(gift)
-
-            if saved_gift_match:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftChat(
-                        peer=await self.resolve_peer(saved_gift_match.group(1)),
-                        saved_id=int(saved_gift_match.group(2))
-                    )
-                )
-            elif slug_match:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftSlug(
-                        slug=slug_match.group(1)
-                    )
-                )
-            else:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftUser(
-                        msg_id=int(gift)
-                    )
-                )
+            stargifts.append(await utils.get_input_stargift(self, gift))
 
         r = await self.invoke(
             raw.functions.payments.UpdateStarGiftCollection(

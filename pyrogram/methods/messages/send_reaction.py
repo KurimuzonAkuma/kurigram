@@ -29,7 +29,8 @@ class SendReaction:
         message_id: int = None,
         emoji: Union[int, str, List[Union[int, str]]] = None,
         story_id: int = None,
-        big: bool = False
+        big: bool = False,
+        business_connection_id: str = None
     ) -> bool:
         """Send a reaction to a message or story.
 
@@ -53,6 +54,9 @@ class SendReaction:
             big (``bool``, *optional*):
                 Pass True to show a bigger and longer reaction.
                 Defaults to False.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be reacted.
 
         Returns:
             ``bool``: On success, True is returned.
@@ -102,6 +106,6 @@ class SendReaction:
                 big=big
             )
 
-        await self.invoke(rpc)
+        await self.invoke(rpc, business_connection_id=business_connection_id)
 
         return True

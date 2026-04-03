@@ -61,3 +61,6 @@ class PrivacyKey(AutoName):
 
     NO_PAID_MESSAGES = raw.types.InputPrivacyKeyNoPaidMessages
     "Whether people who won't have to pay to send you messages"
+
+    SAVED_MUSIC = raw.types.InputPrivacyKeySavedMusic
+    "Whether people can see your saved music list"

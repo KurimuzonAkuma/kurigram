@@ -33,7 +33,7 @@ class RecoverGaps:
 
         .. note::
 
-            To use this method, you must set the ``Client.skip_updates`` parameter to False, otherwise updates state saving and recovery will not work.
+            To use this method, you must set the ``Client.skip_updates`` and ``Client.in_memory`` parameter to False, otherwise updates state saving and recovery will not work.
 
         .. include:: /_includes/usable-by/users-bots.rst
 

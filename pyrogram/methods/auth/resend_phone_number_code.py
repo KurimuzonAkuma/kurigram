@@ -17,24 +17,22 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import re
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types
 
 log = logging.getLogger(__name__)
 
 
-class ResendCode:
-    async def resend_code(
-        self: "pyrogram.Client",
-        phone_number: str,
-        phone_code_hash: str
+class ResendPhoneNumberCode:
+    async def resend_phone_number_code(
+        self: "pyrogram.Client", phone_number: str, phone_code_hash: str
     ) -> "types.SentCode":
         """Re-send the confirmation code using a different type.
 
         The type of the code to be re-sent is specified in the *next_type* attribute of the
-        :obj:`~pyrogram.types.SentCode` object returned by :meth:`send_code`.
+        :obj:`~pyrogram.types.SentCode` object returned by :meth:`send_phone_number_code`.
 
         .. include:: /_includes/usable-by/users.rst
 
@@ -52,13 +50,14 @@ class ResendCode:
         Raises:
             BadRequest: In case the arguments are invalid.
         """
-        phone_number = phone_number.strip(" +")
+        phone_number = re.sub(r"\D", "", phone_number)
 
         r = await self.invoke(
             raw.functions.auth.ResendCode(
-                phone_number=phone_number,
-                phone_code_hash=phone_code_hash
+                phone_number=phone_number, phone_code_hash=phone_code_hash
             )
         )
 
         return types.SentCode._parse(r)
+
+    resend_code = resend_phone_number_code

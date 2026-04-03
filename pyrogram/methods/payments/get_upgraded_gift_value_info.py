@@ -24,14 +24,14 @@ class GetUpgradedGiftValueInfo:
     async def get_upgraded_gift_value_info(
         self: "pyrogram.Client",
         link: str
-    ) -> "types.Gift":
+    ) -> "types.UpgradedGiftValueInfo":
         """Returns information about value of an upgraded gift by its name.
 
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
             link (``str``):
-                The gift code link or slug itself.
+                The gift link or slug itself.
 
         Returns:
             :obj:`~pyrogram.types.UpgradedGiftValueInfo`: Information about the gift value is returned.
@@ -60,4 +60,4 @@ class GetUpgradedGiftValueInfo:
             )
         )
 
-        return await types.UpgradedGiftValueInfo._parse(r)
+        return types.UpgradedGiftValueInfo._parse(r)

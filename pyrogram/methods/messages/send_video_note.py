@@ -45,6 +45,7 @@ class SendVideoNote:
         effect_id: int = None,
         reply_parameters: "types.ReplyParameters" = None,
         schedule_date: datetime = None,
+        repeat_period: int = None,
         protect_content: bool = None,
         view_once: bool = None,
         business_connection_id: str = None,
@@ -122,6 +123,9 @@ class SendVideoNote:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -311,6 +315,7 @@ class SendVideoNote:
                             ),
                             random_id=self.rnd_id(),
                             schedule_date=utils.datetime_to_timestamp(schedule_date),
+                            schedule_repeat_period=repeat_period,
                             noforwards=protect_content,
                             allow_paid_floodskip=allow_paid_broadcast,
                             allow_paid_stars=paid_message_star_count,

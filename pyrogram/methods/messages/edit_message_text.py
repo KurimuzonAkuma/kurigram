@@ -35,9 +35,11 @@ class EditMessageText:
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         link_preview_options: "types.LinkPreviewOptions" = None,
-        show_caption_above_media: bool = None,
         schedule_date: datetime = None,
+        business_connection_id: str = None,
         reply_markup: "types.InlineKeyboardMarkup" = None,
+
+        show_caption_above_media: bool = None,
         disable_web_page_preview: bool = None,
     ) -> "types.Message":
         """Edit the text of messages.
@@ -66,11 +68,11 @@ class EditMessageText:
             link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
                 Options used for link preview generation for the message.
 
-            show_caption_above_media (``bool``, *optional*):
-                Pass True, if the caption must be shown above the message media.
-
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
@@ -86,29 +88,55 @@ class EditMessageText:
 
                 # Take the same text message, remove the web page preview only
                 from pyrogram import types
-                
+
                 await app.edit_message_text(
                     chat_id, message_id, message.text,
                     link_preview_options=types.LinkPreviewOptions(is_disabled=True))
         """
-        link_preview_options = link_preview_options or self.link_preview_options
-
-        if disable_web_page_preview is not None:
-            log.warning(
-                "`disable_web_page_preview` is deprecated and will be removed in future updates. Use `link_preview_options` instead."
+        if any(
+            (
+                disable_web_page_preview is not None,
+                show_caption_above_media is not None,
             )
-            link_preview_options = types.LinkPreviewOptions(is_disabled=disable_web_page_preview)
+        ):
+            if disable_web_page_preview is not None:
+                log.warning(
+                    "`disable_web_page_preview` is deprecated and will be removed in future updates. Use `link_preview_options` instead."
+                )
+
+            if show_caption_above_media is not None:
+                log.warning(
+                    "`show_caption_above_media` is deprecated and will be removed in future updates. Use `link_preview_options` instead."
+                )
+
+            link_preview_options = types.LinkPreviewOptions(
+                is_disabled=disable_web_page_preview,
+                show_above_text=show_caption_above_media
+            )
+
+        link_preview_options = link_preview_options or self.link_preview_options
 
         r = await self.invoke(
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
-                no_webpage=getattr(link_preview_options, "is_disabled", None) or None,
-                invert_media=show_caption_above_media or None,
+                no_webpage=getattr(link_preview_options, "is_disabled", None),
+                invert_media=getattr(link_preview_options, "show_above_text", None),
+                media=(
+                    raw.types.InputMediaWebPage(
+                        url=link_preview_options.url,
+                        force_large_media=link_preview_options.prefer_large_media,
+                        force_small_media=link_preview_options.prefer_small_media,
+                        optional=True
+                    )
+                    if link_preview_options and link_preview_options.url
+                    else None
+                ),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 **await utils.parse_text_entities(self, text, parse_mode, entities)
-            )
+            ),
+            business_connection_id=business_connection_id
         )
 
         for i in r.updates:

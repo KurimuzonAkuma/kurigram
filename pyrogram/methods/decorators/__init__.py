@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from .on_error import OnError
 from .on_business_connection import OnBusinessConnection
 from .on_business_message import OnBusinessMessage
 from .on_callback_query import OnCallbackQuery
@@ -45,6 +46,7 @@ from .on_story import OnStory
 
 
 class Decorators(
+    OnError,
     OnBusinessConnection,
     OnBusinessMessage,
     OnMessage,

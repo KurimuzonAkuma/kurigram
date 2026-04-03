@@ -17,24 +17,20 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-import ipaddress
 import logging
 import socket
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Optional, Tuple, TypedDict
+from typing import Optional, Tuple, TypedDict, Union
 
-import socks
+from python_socks import ProxyType
+from python_socks.async_.asyncio import Proxy
+
+from pyrogram import utils
 
 log = logging.getLogger(__name__)
 
-proxy_type_by_scheme: Dict[str, int] = {
-    "SOCKS4": socks.SOCKS4,
-    "SOCKS5": socks.SOCKS5,
-    "HTTP": socks.HTTP,
-}
 
-
-class Proxy(TypedDict):
+class ProxyDict(TypedDict):
     scheme: str
     hostname: str
     port: int
@@ -48,7 +44,7 @@ class TCP:
     def __init__(
         self,
         ipv6: bool = False,
-        proxy: Proxy = None,
+        proxy: Union[str, ProxyDict, None] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
@@ -56,75 +52,83 @@ class TCP:
         self.proxy = proxy
 
         self.crypto_executor_workers = crypto_executor_workers
-        self.crypto_executor = ThreadPoolExecutor(max_workers=self.crypto_executor_workers, thread_name_prefix="CryptoWorker")
+        self.crypto_executor = ThreadPoolExecutor(
+            max_workers=self.crypto_executor_workers, thread_name_prefix="CryptoWorker"
+        )
 
         self.reader: Optional[asyncio.StreamReader] = None
         self.writer: Optional[asyncio.StreamWriter] = None
 
         self.marker_event = asyncio.Event()
-
         self.lock = asyncio.Lock()
 
         if isinstance(loop, asyncio.AbstractEventLoop):
             self.loop = loop
         else:
-            self.loop = asyncio.get_event_loop()
+            self.loop = utils.get_event_loop()
 
-    async def _connect_via_proxy(
-        self,
-        destination: Tuple[str, int]
-    ) -> None:
-        scheme = self.proxy.get("scheme")
-        if scheme is None:
-            raise ValueError("No scheme specified")
+    async def _build_proxy(self) -> Proxy:
+        if isinstance(self.proxy, str):
+            return Proxy.from_url(self.proxy)
 
-        proxy_type = proxy_type_by_scheme.get(scheme.upper())
-        if proxy_type is None:
-            raise ValueError(f"Unknown proxy type {scheme}")
-
+        scheme = self.proxy.get("scheme", "").lower()
         hostname = self.proxy.get("hostname")
         port = self.proxy.get("port")
         username = self.proxy.get("username")
         password = self.proxy.get("password")
 
-        try:
-            ip_address = ipaddress.ip_address(hostname)
-        except ValueError:
-            is_proxy_ipv6 = False
+        if not scheme or not hostname or not port:
+            raise ValueError("Proxy dict must contain 'scheme', 'hostname', and 'port'")
+
+        if username and password:
+            url = f"{scheme}://{username}:{password}@{hostname}:{port}"
         else:
-            is_proxy_ipv6 = isinstance(ip_address, ipaddress.IPv6Address)
+            url = f"{scheme}://{hostname}:{port}"
 
-        proxy_family = socket.AF_INET6 if is_proxy_ipv6 else socket.AF_INET
-        sock = socks.socksocket(proxy_family)
+        return Proxy.from_url(url)
 
-        sock.set_proxy(
-            proxy_type=proxy_type,
-            addr=hostname,
-            port=port,
-            username=username,
-            password=password
-        )
-        sock.settimeout(TCP.TIMEOUT)
+    async def _connect_via_proxy(self, destination: Tuple[str, int]) -> None:
+        dest_host, dest_port = destination
+        proxy = await self._build_proxy()
 
-        await self.loop.run_in_executor(self.crypto_executor, sock.connect, destination)
-
-        sock.setblocking(False)
-
-        self.reader, self.writer = await asyncio.open_connection(
-            sock=sock
+        log.info(
+            "Connecting to %s:%s via proxy %s",
+            dest_host,
+            dest_port,
+            self.proxy,
         )
 
-    async def _connect_via_direct(
-        self,
-        destination: Tuple[str, int]
-    ) -> None:
+        try:
+            sock = await proxy.connect(
+                dest_host=dest_host,
+                dest_port=dest_port,
+                timeout=TCP.TIMEOUT,
+            )
+        except Exception as e:
+            log.error("Proxy connection failed: %s %s", type(e).__name__, e)
+            raise
+
+        log.info("Proxy connection established")
+
+        self.reader, self.writer = await asyncio.open_connection(sock=sock)
+
+    async def _connect_via_direct(self, destination: Tuple[str, int]) -> None:
         host, port = destination
         family = socket.AF_INET6 if self.ipv6 else socket.AF_INET
-        self.reader, self.writer = await asyncio.open_connection(
-            host=host,
-            port=port,
-            family=family
-        )
+
+        log.info("Connecting to %s:%s", host, port)
+
+        try:
+            self.reader, self.writer = await asyncio.open_connection(
+                host=host,
+                port=port,
+                family=family,
+            )
+        except Exception as e:
+            log.error("Connection failed: %s %s", type(e).__name__, e)
+            raise
+
+        log.info("Connection established")
 
     async def _connect(self, destination: Tuple[str, int]) -> None:
         if self.proxy:
@@ -141,6 +145,7 @@ class TCP:
     async def close(self) -> None:
         async with self.lock:
             if self.writer is None or self.writer.is_closing():
+                log.debug("Close called but writer is already None or closing, skipping")
                 return None
 
             try:
@@ -148,10 +153,9 @@ class TCP:
                     self.writer.transport.abort()
 
                 self.writer.close()
-
                 await asyncio.wait_for(self.writer.wait_closed(), timeout=TCP.TIMEOUT)
             except asyncio.TimeoutError:
-                log.warning("Disconnect timed out")
+                log.warning("Disconnect timed out after %ss", TCP.TIMEOUT)
             except Exception as e:
                 log.info("Close exception: %s %s", type(e).__name__, e)
             finally:
@@ -160,39 +164,62 @@ class TCP:
     async def send(self, data: bytes, wait_for_marker: bool = True) -> None:
         async with self.lock:
             if self.writer is None or self.writer.is_closing():
+                log.debug("Send called but writer is None or closing")
                 return None
 
             if wait_for_marker:
+                log.debug("Waiting for marker event before sending")
                 try:
                     await asyncio.wait_for(self.marker_event.wait(), timeout=TCP.TIMEOUT)
                 except asyncio.TimeoutError:
+                    log.error("Timed out waiting for marker event after %ss", TCP.TIMEOUT)
                     raise TimeoutError
+                log.debug("Marker event received, proceeding with send")
 
+            log.debug("Sending %d bytes", len(data))
             try:
                 self.writer.write(data)
                 await self.writer.drain()
+                log.debug("Send complete")
             except Exception as e:
-                log.info("Send exception: %s %s", type(e).__name__, e)
+                log.error("Send failed: %s %s", type(e).__name__, e)
                 raise OSError(e)
 
     async def recv(self, length: int = 0) -> Optional[bytes]:
         if not self.reader:
+            log.debug("Recv called but reader is None")
             return None
 
+        log.debug("Receiving %d bytes", length)
         data = b""
 
         while len(data) < length:
             try:
                 chunk = await asyncio.wait_for(
                     self.reader.read(length - len(data)),
-                    timeout=TCP.TIMEOUT
+                    timeout=TCP.TIMEOUT,
                 )
-            except (OSError, asyncio.TimeoutError):
+            except asyncio.TimeoutError:
+                log.debug(
+                    "Recv timed out after %ss (got %d/%d bytes)", TCP.TIMEOUT, len(data), length
+                )
+                return None
+            except OSError as e:
+                log.debug("Recv OSError: %s %s", type(e).__name__, e)
                 return None
             else:
                 if chunk:
                     data += chunk
+                    log.debug(
+                        "Received chunk: %d bytes (%d/%d total)", len(chunk), len(data), length
+                    )
                 else:
+                    log.debug(
+                        "Recv got empty chunk (connection closed?) after %d/%d bytes",
+                        len(data),
+                        length,
+                    )
                     return None
 
+        log.debug("Recv complete: %d bytes", len(data))
         return data

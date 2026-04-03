@@ -143,6 +143,7 @@ class InlineQueryResultAnimation(InlineQueryResult):
             title=self.title,
             thumb=thumb,
             content=animation,
+            description=self.description,
             send_message=(
                 await self.input_message_content.write(client, self.reply_markup)
                 if self.input_message_content

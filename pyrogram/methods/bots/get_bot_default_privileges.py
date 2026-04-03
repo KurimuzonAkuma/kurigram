@@ -27,7 +27,7 @@ class GetBotDefaultPrivileges:
     async def get_bot_default_privileges(
         self: "pyrogram.Client",
         for_channels: bool = None
-    ) -> Optional["types.ChatPrivileges"]:
+    ) -> Optional["types.ChatAdministratorRights"]:
         """Get the current default privileges of the bot.
 
         .. include:: /_includes/usable-by/bots.rst
@@ -56,4 +56,4 @@ class GetBotDefaultPrivileges:
 
         admin_rights = getattr(bot_info.full_user, field)
 
-        return types.ChatPrivileges._parse(admin_rights) if admin_rights else None
+        return types.ChatAdministratorRights._parse(admin_rights) if admin_rights else None

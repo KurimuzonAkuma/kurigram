@@ -35,12 +35,22 @@ from pyrogram.file_id import DOCUMENT_TYPES, PHOTO_TYPES, FileId, FileType
 from pyrogram.types.messages_and_media.message import Str
 
 
+def get_event_loop() -> asyncio.AbstractEventLoop:
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    return loop
+
+
 async def ainput(prompt: str = "", *, hide: bool = False, loop: Optional[asyncio.AbstractEventLoop] = None):
     """Just like the built-in input, but async"""
     if isinstance(loop, asyncio.AbstractEventLoop):
         loop = loop
     else:
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
 
     with ThreadPoolExecutor(1) as executor:
         func = functools.partial(getpass if hide else input, prompt)
@@ -96,6 +106,28 @@ def get_input_media_from_file_id(
         )
 
     raise ValueError(f"Unknown file id: {file_id}")
+
+
+async def get_input_stargift(client: "pyrogram.Client", owned_gift_id: str) -> "raw.base.InputSavedStarGift":
+    if not isinstance(owned_gift_id, str):
+        raise ValueError(f"owned_gift_id has to be str, but {type(owned_gift_id)} was provided")
+
+    saved_gift_match = client.SAVED_GIFT_RE.match(owned_gift_id)
+    slug_match = client.UPGRADED_GIFT_RE.match(owned_gift_id)
+
+    if saved_gift_match:
+        return raw.types.InputSavedStarGiftChat(
+            peer=await client.resolve_peer(int(saved_gift_match.group(1))),
+            saved_id=int(saved_gift_match.group(2))
+        )
+    elif slug_match:
+        return raw.types.InputSavedStarGiftSlug(
+            slug=slug_match.group(1)
+        )
+    else:
+        return raw.types.InputSavedStarGiftUser(
+            msg_id=int(owned_gift_id)
+        )
 
 
 async def parse_messages(
@@ -675,3 +707,14 @@ def from_nano(nano: int) -> float:
 
 def to_nano(amount: float) -> int:
     return int(amount * 1e9)
+
+
+def get_premium_duration_month_count(day_count: int) -> int:
+    return max(1, day_count // 30)
+
+
+def get_premium_duration_day_count(month_count: int) -> int:
+    if month_count <= 0 or month_count > 10000000:
+        return 7
+
+    return month_count * 30 + month_count // 3 + month_count // 12

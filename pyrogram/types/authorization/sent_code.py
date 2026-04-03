@@ -32,10 +32,10 @@ class SentCode(Object):
             :meth:`~pyrogram.Client.sign_in` or :meth:`~pyrogram.Client.sign_up`).
 
         next_type (:obj:`~pyrogram.enums.NextCodeType`, *optional*):
-            Type of the next code to be sent with :meth:`~pyrogram.Client.resend_code`.
+            Type of the next code to be sent with :meth:`~pyrogram.Client.resend_phone_number_code`.
 
         timeout (``int``, *optional*):
-            Delay in seconds before calling :meth:`~pyrogram.Client.resend_code`.
+            Delay in seconds before calling :meth:`~pyrogram.Client.resend_phone_number_code`.
     """
 
     def __init__(

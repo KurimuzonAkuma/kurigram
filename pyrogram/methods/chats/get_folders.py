@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Union
+from typing import List
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -25,7 +25,7 @@ from pyrogram import raw, types, utils
 class GetFolders:
     async def get_folders(
         self: "pyrogram.Client"
-    ) -> Union["types.Folder", List["types.Folder"]]:
+    ) -> List["types.Folder"]:
         """Return information about a chat folders.
 
         .. include:: /_includes/usable-by/users.rst

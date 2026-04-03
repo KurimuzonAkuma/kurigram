@@ -38,11 +38,12 @@ from .chat_member import ChatMember
 from .chat_member_updated import ChatMemberUpdated
 from .chat_permissions import ChatPermissions
 from .chat_photo import ChatPhoto
-from .chat_privileges import ChatPrivileges
+from .chat_administrator_rights import ChatAdministratorRights, ChatPrivileges
 from .chat_reactions import ChatReactions
 from .chat_settings import ChatSettings
 from .dialog import Dialog
 from .emoji_status import EmojiStatus
+from .failed_to_add_member import FailedToAddMember
 from .folder import Folder
 from .found_contacts import FoundContacts
 from .global_privacy_settings import GlobalPrivacySettings
@@ -100,9 +101,11 @@ __all__ = [
     "ChatMemberUpdated",
     "VideoChatScheduled",
     "ChatJoinRequest",
+    "ChatAdministratorRights",
     "ChatPrivileges",
     "ChatJoiner",
     "EmojiStatus",
+    "FailedToAddMember",
     "Folder",
     "FoundContacts",
     "GlobalPrivacySettings",

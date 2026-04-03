@@ -24,7 +24,7 @@ from pyrogram import types
 class SetBotDefaultPrivileges:
     async def set_bot_default_privileges(
         self: "pyrogram.Client",
-        privileges: "types.ChatPrivileges" = None,
+        privileges: "types.ChatAdministratorRights" = None,
         for_channels: bool = None
     ) -> bool:
         """Change the default privileges requested by the bot when it's added as an administrator to groups or channels.
@@ -34,7 +34,7 @@ class SetBotDefaultPrivileges:
         .. include:: /_includes/usable-by/bots.rst
 
         Parameters:
-            privileges (:obj:`~pyrogram.types.ChatPrivileges`):
+            privileges (:obj:`~pyrogram.types.ChatAdministratorRights`):
                 New default privileges. None to clear.
                 Defaults to None.
 
@@ -48,10 +48,10 @@ class SetBotDefaultPrivileges:
         Example:
             .. code-block:: python
 
-                from pyrogram.types import ChatPrivileges
+                from pyrogram.types import ChatAdministratorRights
 
                 await app.set_bot_default_privileges(
-                    ChatPrivileges(
+                    ChatAdministratorRights(
                         can_delete_messages=True,
                         can_restrict_members=True
                     )

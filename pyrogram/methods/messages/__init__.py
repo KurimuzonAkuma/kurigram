@@ -45,6 +45,7 @@ from .get_direct_messages_chat_topic_history import GetDirectMessagesChatTopicHi
 from .get_discussion_message import GetDiscussionMessage
 from .get_discussion_replies import GetDiscussionReplies
 from .get_discussion_replies_count import GetDiscussionRepliesCount
+from .get_main_web_app import GetMainWebApp
 from .get_media_group import GetMediaGroup
 from .get_messages import GetMessages
 from .get_scheduled_messages import GetScheduledMessages
@@ -52,6 +53,7 @@ from .get_stickers import GetStickers
 from .get_web_app_link_url import GetWebAppLinkUrl
 from .get_web_app_url import GetWebAppUrl
 from .mark_checklist_tasks_as_done import MarkChecklistTasksAsDone
+from .open_web_app import OpenWebApp
 from .read_chat_history import ReadChatHistory
 from .read_mentions import ReadMentions
 from .read_reactions import ReadReactions
@@ -72,6 +74,7 @@ from .send_dice import SendDice
 from .send_document import SendDocument
 from .send_location import SendLocation
 from .send_media_group import SendMediaGroup
+from .send_message_draft import SendMessageDraft
 from .send_message import SendMessage
 from .send_paid_media import SendPaidMedia
 from .send_paid_reaction import SendPaidReaction
@@ -89,6 +92,7 @@ from .set_direct_messages_chat_topic_is_marked_as_unread import SetDirectMessage
 from .start_bot import StartBot
 from .stop_poll import StopPoll
 from .stream_media import StreamMedia
+from .summarize_message import SummarizeMessage
 from .translate_message_text import TranslateMessageText
 from .translate_text import TranslateText
 from .view_messages import ViewMessages
@@ -116,6 +120,7 @@ class Messages(
     GetWebAppLinkUrl,
     GetWebAppUrl,
     MarkChecklistTasksAsDone,
+    OpenWebApp,
     SendAudio,
     SendChatAction,
     SendChecklist,
@@ -124,6 +129,7 @@ class Messages(
     SendAnimation,
     SendLocation,
     SendMediaGroup,
+    SendMessageDraft,
     SendMessage,
     SendPaidMedia,
     SendPaidReaction,
@@ -168,7 +174,9 @@ class Messages(
     SendReaction,
     GetDiscussionReplies,
     GetDiscussionRepliesCount,
+    GetMainWebApp,
     StreamMedia,
+    SummarizeMessage,
     TranslateMessageText,
     TranslateText,
     GetCustomEmojiStickers,

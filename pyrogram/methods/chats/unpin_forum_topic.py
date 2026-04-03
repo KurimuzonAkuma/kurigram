@@ -16,9 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Union
+
 import pyrogram
 from pyrogram import raw
-from typing import Union
 
 
 class UnpinForumTopic:
@@ -47,8 +48,8 @@ class UnpinForumTopic:
                 await app.unpin_forum_topic(chat_id, topic_id)
         """
         await self.invoke(
-            raw.functions.channels.UpdatePinnedForumTopic(
-                channel=await self.resolve_peer(chat_id),
+            raw.functions.messages.UpdatePinnedForumTopic(
+                peer=await self.resolve_peer(chat_id),
                 topic_id=topic_id,
                 pinned=False
             )

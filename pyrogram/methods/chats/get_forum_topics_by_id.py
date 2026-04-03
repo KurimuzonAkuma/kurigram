@@ -17,11 +17,10 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Union, List, Iterable
+from typing import Iterable, List, Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types
 
 log = logging.getLogger(__name__)
 
@@ -64,8 +63,8 @@ class GetForumTopicsByID:
         ids = list(topic_ids) if is_iterable else [topic_ids]
 
         r = await self.invoke(
-            raw.functions.channels.GetForumTopicsByID(
-                channel=await self.resolve_peer(chat_id),
+            raw.functions.messages.GetForumTopicsByID(
+                peer=await self.resolve_peer(chat_id),
                 topics=ids
             )
         )

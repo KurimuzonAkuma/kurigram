@@ -32,34 +32,35 @@ class SendMessage:
         chat_id: Union[int, str],
         text: str,
         parse_mode: Optional["enums.ParseMode"] = None,
-        entities: List["types.MessageEntity"] = None,
-        link_preview_options: "types.LinkPreviewOptions" = None,
-        disable_notification: bool = None,
-        message_thread_id: int = None,
-        direct_messages_topic_id: int = None,
-        effect_id: int = None,
-        show_caption_above_media: bool = None,
-        reply_parameters: "types.ReplyParameters" = None,
-        schedule_date: datetime = None,
-        protect_content: bool = None,
-        business_connection_id: str = None,
-        allow_paid_broadcast: bool = None,
-        paid_message_star_count: int = None,
-        suggested_post_parameters: "types.SuggestedPostParameters" = None,
-        reply_markup: Union[
+        entities: Optional[List["types.MessageEntity"]] = None,
+        link_preview_options: Optional["types.LinkPreviewOptions"] = None,
+        disable_notification: Optional[bool] = None,
+        message_thread_id: Optional[int] = None,
+        direct_messages_topic_id: Optional[int] = None,
+        effect_id: Optional[int] = None,
+        show_caption_above_media: Optional[bool] = None,
+        reply_parameters: Optional["types.ReplyParameters"] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        protect_content: Optional[bool] = None,
+        business_connection_id: Optional[str] = None,
+        allow_paid_broadcast: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        suggested_post_parameters: Optional["types.SuggestedPostParameters"] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
+        ]] = None,
 
-        reply_to_message_id: int = None,
-        reply_to_chat_id: Union[int, str] = None,
-        reply_to_story_id: int = None,
-        quote_text: str = None,
-        quote_entities: List["types.MessageEntity"] = None,
-        quote_offset: int = None,
-        disable_web_page_preview: bool = None, # TODO: Remove later
+        reply_to_message_id: Optional[int] = None,
+        reply_to_chat_id: Optional[Union[int, str]] = None,
+        reply_to_story_id: Optional[int] = None,
+        quote_text: Optional[str] = None,
+        quote_entities: Optional[List["types.MessageEntity"]] = None,
+        quote_offset: Optional[int] = None,
+        disable_web_page_preview: Optional[bool] = None, # TODO: Remove later
     ) -> "types.Message":
         """Send text messages.
 
@@ -106,6 +107,9 @@ class SendMessage:
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
 
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
+
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
@@ -140,11 +144,29 @@ class SendMessage:
                 # Disable web page previews
                 from pyrogram import types
 
-                await app.send_message("me", "https://docs.pyrogram.org",
-                    link_preview_options=types.LinkPreviewOptions(is_disabled=True))
+                await app.send_message(
+                    "me",
+                    "https://docs.pyrogram.org",
+                    link_preview_options=types.LinkPreviewOptions(is_disabled=True)
+                )
 
                 # Reply to a message using its id
-                await app.send_message("me", "this is a reply", reply_to_message_id=123)
+                from pyrogram import types
+
+                await app.send_message(
+                    "me",
+                    "this is a reply",
+                    reply_parameters=types.ReplyParameters(message_id=123)
+                )
+
+                # Simple web page preview
+                from pyrogram import types
+
+                await app.send_message(
+                    "me",
+                    "Look at this preview!",
+                    link_preview_options=types.LinkPreviewOptions(url="https://docs.pyrogram.org")
+                )
 
             .. code-block:: python
 
@@ -167,8 +189,6 @@ class SendMessage:
                             [InlineKeyboardButton("Docs", url="https://docs.pyrogram.org")]
                         ]))
         """
-        link_preview_options = link_preview_options or self.link_preview_options
-
         if any(
             (
                 reply_to_message_id is not None,
@@ -219,7 +239,6 @@ class SendMessage:
                 quote_position=quote_offset
             )
 
-
         if any(
             (
                 disable_web_page_preview is not None,
@@ -241,11 +260,43 @@ class SendMessage:
                 show_above_text=show_caption_above_media
             )
 
+        link_preview_options = link_preview_options or self.link_preview_options
+
         message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
         peer = await self.resolve_peer(chat_id)
-        r = await self.invoke(
-            raw.functions.messages.SendMessage(
+
+        if link_preview_options and link_preview_options.url:
+            rpc = raw.functions.messages.SendMedia(
+                peer=peer,
+                media=raw.types.InputMediaWebPage(
+                    url=link_preview_options.url,
+                    force_large_media=link_preview_options.prefer_large_media,
+                    force_small_media=link_preview_options.prefer_small_media,
+                    optional=True
+                ),
+                silent=disable_notification or None,
+                invert_media=link_preview_options.show_above_text,
+                reply_to=await utils.get_reply_to(
+                    self,
+                    reply_parameters,
+                    message_thread_id,
+                    direct_messages_topic_id
+                ),
+                random_id=self.rnd_id(),
+                schedule_date=utils.datetime_to_timestamp(schedule_date),
+                schedule_repeat_period=repeat_period,
+                allow_paid_floodskip=allow_paid_broadcast,
+                allow_paid_stars=paid_message_star_count,
+                suggested_post=suggested_post_parameters.write() if suggested_post_parameters else None,
+                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                message=message,
+                entities=entities,
+                noforwards=protect_content,
+                effect=effect_id
+            )
+        else:
+            rpc = raw.functions.messages.SendMessage(
                 peer=peer,
                 no_webpage=getattr(link_preview_options, "is_disabled", None) or None,
                 silent=disable_notification or None,
@@ -258,6 +309,7 @@ class SendMessage:
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                schedule_repeat_period=repeat_period,
                 allow_paid_floodskip=allow_paid_broadcast,
                 allow_paid_stars=paid_message_star_count,
                 suggested_post=suggested_post_parameters.write() if suggested_post_parameters else None,
@@ -266,9 +318,9 @@ class SendMessage:
                 entities=entities,
                 noforwards=protect_content,
                 effect=effect_id
-            ),
-            business_connection_id=business_connection_id
-        )
+            )
+
+        r = await self.invoke(rpc, business_connection_id=business_connection_id)
 
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)
@@ -297,6 +349,4 @@ class SendMessage:
                 client=self
             )
 
-        messages = await utils.parse_messages(client=self, messages=r)
-
-        return messages[0] if messages else None
+        return next(iter(await utils.parse_messages(client=self, messages=r)), None)

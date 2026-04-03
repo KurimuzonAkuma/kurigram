@@ -27,6 +27,7 @@ BALANCE_TOO_LOW	The transaction cannot be completed because the current [Telegra
 BANK_CARD_NUMBER_INVALID	The specified credit card number is invalid.
 BANNED_RIGHTS_INVALID	You provided a set of restrictions that is invalid.
 BASE_PORT_LOC_INVALID	The base port location is invalid.
+BIRTHDAY_ALREADY	This user has already entered a birthday.
 BIRTHDAY_INVALID	An invalid age was specified, must be between 0 and 150 years.
 BOOSTS_EMPTY	No boost slots were specified.
 BOOSTS_REQUIRED	The specified channel must first be [boosted by its users](https://core.telegram.org/api/boost) in order to perform this action.
@@ -266,6 +267,7 @@ INPUT_LAYER_INVALID	The specified layer is invalid.
 INPUT_METHOD_INVALID	The method invoked is invalid in the current schema.
 INPUT_PEERS_EMPTY	The specified peer array is empty.
 INPUT_REQUEST_TOO_LONG	The request payload is too long.
+INPUT_STARS_NANOS_INVALID	The specified stars nano amount is invalid.
 INPUT_TEXT_EMPTY	The specified text is empty.
 INPUT_TEXT_TOO_LONG	The specified text is too long.
 INPUT_USER_DEACTIVATED	The target user has been deleted/deactivated.
@@ -290,6 +292,8 @@ LASTNAME_INVALID	The last name is invalid.
 LIMIT_INVALID	The provided limit is invalid.
 LINK_NOT_MODIFIED	The chat link was not modified because you tried to link to the same target.
 LOCATION_INVALID	The provided location is invalid.
+MANAGER_INVALID	The provided bot manager is invalid.
+MANAGER_PERMISSION_MISSING	The bot manager permission is missing.
 MAX_DATE_INVALID	The specified maximum date is invalid.
 MAX_ID_INVALID	The provided max_id is invalid.
 MAX_QTS_INVALID	The specified qts is invalid.
@@ -399,7 +403,7 @@ POLL_OPTION_INVALID	IA poll option used invalid data (the data may be too long).
 POLL_QUESTION_INVALID	The poll question is invalid.
 POLL_UNSUPPORTED	This layer does not support polls in the invoked method.
 POLL_VOTE_REQUIRED	Cast a vote in the poll before calling this method.
-PRECHECKOUT_FAILED	Precheckout failed.
+PRECHECKOUT_FAILED	Precheckout failed. Probably you don't have enough funds to complete the purchase.
 PREMIUM_ACCOUNT_REQUIRED	A premium account is required to execute this action.
 PREMIUM_GIFTCODE_WAS_REFUNDED	This gift code can't be redeemed because the giveaway organizer requested a refund.
 PRICING_CHAT_INVALID	The pricing for the [subscription](https://core.telegram.org/api/subscriptions) is invalid, the maximum price is specified in the [`stars_subscription_amount_max` config key »](https://core.telegram.org/api/config#stars-subscription-amount-max).
@@ -423,6 +427,7 @@ RANDOM_ID_EMPTY	The random ID is empty.
 RANDOM_ID_INVALID	The provided random ID is invalid.
 RANDOM_LENGTH_INVALID	The random length is invalid.
 RANGES_INVALID	Invalid range provided.
+RANK_INVALID	The specified member tag is invalid.
 REACTIONS_COUNT_INVALID	The count of the reactions should be less than `stars_paid_reaction_amount_max` stars, you can't react with more number of stars, see [the docs for more info](https://core.telegram.org/api/config#client-configuration).
 REACTIONS_TOO_MANY	Non-premium users, can set up only one reaction per message.
 REACTION_EMPTY	The specified reaction is empty.
@@ -480,9 +485,13 @@ SMS_CODE_CREATE_FAILED	An error occurred while creating the SMS code.
 SRP_A_INVALID	The specified inputCheckPasswordSRP.A value is invalid.
 SRP_ID_INVALID	Invalid SRP ID provided.
 SRP_PASSWORD_CHANGED	The password has changed.
+STARGIFT_ALREADY_BURNED	The provided gift is already burned.
 STARGIFT_ALREADY_CONVERTED	The provided star gift already converted to stars.
+STARGIFT_ALREADY_TRANSFERRED	The provided star gift is already transferred.
 STARGIFT_ALREADY_UPGRADED	This star gift was already upgraded before.
+STARGIFT_ATTRIBUTE_INVALID	The provided gift attribute is invalid.
 STARGIFT_CONVERT_TOO_OLD	This gift can no longer be converted into stars.
+STARGIFT_EXPORT_UNAVAILABLE	This gift is not available for export yet.
 STARGIFT_INVALID	The passed [inputInvoiceStarGift](https://core.telegram.org/constructor/inputInvoiceStarGift) is invalid.
 STARGIFT_MESSAGE_INVALID	The provided message for this gift is invalid.
 STARGIFT_NOT_FOUND	The specified star gift was not found.
@@ -592,6 +601,7 @@ USERNAME_NOT_MODIFIED	The username was not modified because you tried to edit it
 USERNAME_NOT_OCCUPIED	The provided username is not occupied by anyone.
 USERNAME_OCCUPIED	The provided username is already in use by someone else.
 USERNAME_PURCHASE_AVAILABLE	The specified username can be purchased on https://fragment.com.
+USERNAME_SUFFIX_MISSING	Bot username must end in `bot`.
 USERPIC_UPLOAD_REQUIRED	You are required to upload a profile picture for this action.
 USERS_TOO_FEW	Not enough users (to create a chat, for example).
 USERS_TOO_MUCH	The maximum number of users has been exceeded (to create a chat, for example).
@@ -606,6 +616,7 @@ USER_BOT_REQUIRED	This method can only be called by a bot.
 USER_CHANNELS_TOO_MUCH	One of the users you tried to add is already in too many channels/supergroups.
 USER_CREATOR	The user id being used is invalid or not known yet. Make sure you meet the user before interacting with it.
 USER_GIFT_UNAVAILABLE	Gifts are not available in the current region ([stars_gifts_enabled](https://core.telegram.org/api/config#stars-gifts-enabled) is equal to false).
+USER_HANDLE_MISMATCH	The user handle mismatch.
 USER_ID_INVALID	The provided user id is invalid.
 USER_INVALID	The provided user is invalid.
 USER_IS_BLOCKED	You were blocked by this user.

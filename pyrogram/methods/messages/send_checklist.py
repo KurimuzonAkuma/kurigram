@@ -18,10 +18,10 @@
 
 import logging
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import pyrogram
-from pyrogram import enums, raw, types, utils
+from pyrogram import raw, types, utils
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class SendChecklist:
         effect_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
         business_connection_id: Optional[str] = None,
         paid_message_star_count: int = None,
         reply_markup: Optional[
@@ -80,6 +81,9 @@ class SendChecklist:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
@@ -133,6 +137,7 @@ class SendChecklist:
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                schedule_repeat_period=repeat_period,
                 noforwards=protect_content,
                 allow_paid_stars=paid_message_star_count,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,

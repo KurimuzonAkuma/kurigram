@@ -36,6 +36,7 @@ class CopyMediaGroup:
         disable_notification: bool = None,
         message_thread_id: int = None,
         schedule_date: datetime = None,
+        protect_content: bool = None,
         show_caption_above_media: bool = None,
         allow_paid_broadcast: bool = None,
         paid_message_star_count: int = None,
@@ -89,6 +90,9 @@ class CopyMediaGroup:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
 
             show_caption_above_media (``bool``, *optional*):
                 Pass True, if the caption must be shown above the message media.
@@ -223,6 +227,7 @@ class CopyMediaGroup:
                     message_thread_id
                 ),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                noforwards=protect_content,
                 invert_media=show_caption_above_media,
                 allow_paid_floodskip=allow_paid_broadcast,
                 allow_paid_stars=paid_message_star_count
@@ -230,16 +235,4 @@ class CopyMediaGroup:
             sleep_threshold=60
         )
 
-        return await utils.parse_messages(
-            self,
-            raw.types.messages.Messages(
-                messages=[m.message for m in filter(
-                    lambda u: isinstance(u, (raw.types.UpdateNewMessage,
-                                             raw.types.UpdateNewChannelMessage,
-                                             raw.types.UpdateNewScheduledMessage)),
-                    r.updates
-                )],
-                users=r.users,
-                chats=r.chats
-            )
-        )
+        return await utils.parse_messages(client=self, messages=r)

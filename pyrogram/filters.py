@@ -22,7 +22,16 @@ from typing import Callable, Union, List, Pattern, Optional
 
 import pyrogram
 from pyrogram import enums
-from pyrogram.types import Message, CallbackQuery, InlineQuery, PreCheckoutQuery, InlineKeyboardMarkup, ReplyKeyboardMarkup, Update
+from pyrogram.types import (
+    Message,
+    CallbackQuery,
+    ChosenInlineResult,
+    InlineQuery,
+    PreCheckoutQuery,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    Update,
+)
 
 
 class Filter:
@@ -362,7 +371,7 @@ giveaway_winners = create(giveaway_winners_filter)
 
 # region gift_code_filter
 async def gift_code_filter(_, __, m: Message):
-    return bool(m.gift_code)
+    return bool(m.premium_gift_code)
 
 
 gift_code = create(gift_code_filter)
@@ -461,11 +470,22 @@ contact = create(contact_filter)
 
 # region location_filter
 async def location_filter(_, __, m: Message):
-    return bool(m.location)
+    return bool(m.location and not m.location.live_period)
 
 
 location = create(location_filter)
 """Filter messages that contain :obj:`~pyrogram.types.Location` objects."""
+
+
+# endregion
+
+# region live_location_filter
+async def live_location_filter(_, __, m: Message):
+    return bool(m.location and m.location.live_period)
+
+
+live_location = create(live_location_filter)
+"""Filter messages that contain :obj:`~pyrogram.types.Location` objects with a live period."""
 
 
 # endregion
@@ -924,9 +944,48 @@ linked_channel = create(linked_channel_filter)
 
 # endregion
 
+# region gift_offer_filter
+async def gift_offer_filter(_, __, m: Message):
+    return bool(
+        m.upgraded_gift_purchase_offer and m.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.PENDING
+    )
+
+
+gift_offer = create(gift_offer_filter)
+"""Filter new gift offers."""
+
+
+# endregion
+
+# region gift_offer_accepted_filter
+async def gift_offer_accepted_filter(_, __, m: Message):
+    return bool(
+        m.upgraded_gift_purchase_offer and m.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.ACCEPTED
+    )
+
+
+gift_offer_accepted = create(gift_offer_accepted_filter)
+"""Filter accepted gift offers."""
+
+
+# endregion
+
+# region gift_offer_rejected_filter
+async def gift_offer_rejected_filter(_, __, m: Message):
+    return bool(
+        (m.upgraded_gift_purchase_offer and m.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.REJECTED)
+        or m.upgraded_gift_purchase_offer_rejected
+    )
+
+
+gift_offer_rejected = create(gift_offer_rejected_filter)
+"""Filter rejected gift offers."""
+
+
+# endregion
 
 # region command_filter
-def command(commands: Union[str, List[str]], prefixes: Union[str, List[str]] = "/", case_sensitive: bool = False):
+def command(commands: Union[str, List[str]], prefixes: Optional[Union[str, List[str]]] = "/", case_sensitive: bool = False):
     """Filter commands, i.e.: text messages starting with "/" or any other custom prefix.
 
     Parameters:
@@ -1007,6 +1066,7 @@ def regex(pattern: Union[str, Pattern], flags: int = 0):
 
     - :obj:`~pyrogram.types.Message`: The filter will match ``text`` or ``caption``.
     - :obj:`~pyrogram.types.CallbackQuery`: The filter will match ``data``.
+    - :obj:`~pyrogram.types.ChosenInlineResult`: The filter will match ``query``.
     - :obj:`~pyrogram.types.InlineQuery`: The filter will match ``query``.
     - :obj:`~pyrogram.types.PreCheckoutQuery`: The filter will match ``payload``.
 
@@ -1026,7 +1086,7 @@ def regex(pattern: Union[str, Pattern], flags: int = 0):
             value = update.text or update.caption
         elif isinstance(update, CallbackQuery):
             value = update.data
-        elif isinstance(update, InlineQuery):
+        elif isinstance(update, (ChosenInlineResult, InlineQuery)):
             value = update.query
         elif isinstance(update, PreCheckoutQuery):
             value = update.invoice_payload

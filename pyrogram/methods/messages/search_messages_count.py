@@ -62,29 +62,37 @@ class SearchMessagesCount:
         Returns:
             ``int``: On success, the messages count is returned.
         """
-        r = await self.invoke(
-            raw.functions.messages.Search(
-                peer=await self.resolve_peer(chat_id),
-                q=query,
-                filter=filter.value(),
-                min_date=0,
-                max_date=0,
-                offset_id=0,
-                add_offset=0,
-                limit=1,
-                min_id=0,
-                max_id=0,
-                from_id=(
-                    await self.resolve_peer(from_user)
-                    if from_user
-                    else None
-                ),
-                top_msg_id=message_thread_id,
-                hash=0
-            )
-        )
+        peer = await self.resolve_peer(chat_id)
+        from_id = await self.resolve_peer(from_user) if from_user else None
 
-        if hasattr(r, "count"):
-            return r.count
-        else:
-            return len(r.messages)
+        # https://t.me/tdlibchat/189410
+        ranges = await self.invoke(raw.functions.messages.GetSplitRanges())
+        total = 0
+
+        for split_range in ranges:
+            r = await self.invoke(
+                raw.functions.InvokeWithMessagesRange(
+                    range=split_range,
+                    query=raw.functions.messages.Search(
+                        peer=peer,
+                        q=query,
+                        filter=filter.value(),
+                        min_date=0,
+                        max_date=0,
+                        offset_id=0,
+                        add_offset=0,
+                        limit=1,
+                        min_id=0,
+                        max_id=0,
+                        from_id=from_id,
+                        top_msg_id=message_thread_id,
+                        hash=0
+                    )
+                )
+            )
+            if hasattr(r, "count"):
+                total += r.count
+            else:
+                total += len(r.messages)
+
+        return total

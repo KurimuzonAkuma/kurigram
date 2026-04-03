@@ -29,7 +29,7 @@ class BotVerification(Object):
         bot (:obj:`~pyrogram.types.User`):
             Bot that is verified this user.
 
-        custom_emoji_id (``int``):
+        custom_emoji_id (``str``):
             Custom emoji icon identifier.
 
         description (``int``, *optional*):
@@ -40,7 +40,7 @@ class BotVerification(Object):
         self,
         *,
         bot: int,
-        custom_emoji_id: int,
+        custom_emoji_id: str,
         description: str
     ):
         self.bot = bot
@@ -58,6 +58,6 @@ class BotVerification(Object):
 
         return BotVerification(
             bot=types.User._parse(client, users.get(verification.bot_id)),
-            custom_emoji_id=verification.icon,
+            custom_emoji_id=str(verification.icon),
             description=verification.description
         )

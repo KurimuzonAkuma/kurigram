@@ -15,11 +15,11 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
-import re
+
 from typing import List, Union
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class CreateGiftCollection:
@@ -52,40 +52,11 @@ class CreateGiftCollection:
 
                 await create_gift_collection("me", "My best gifts!", ["https://t.me/nft/NekoHelmet-9215"])
         """
-        stargifts = []
-
-        for gift in gift_ids:
-            if not isinstance(gift, str):
-                raise ValueError(f"gift id has to be str, but {type(gift)} was provided")
-
-            saved_gift_match = re.match(r"^(-\d+)_(\d+)$", gift)
-            slug_match = self.UPGRADED_GIFT_RE.match(gift)
-
-            if saved_gift_match:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftChat(
-                        peer=await self.resolve_peer(saved_gift_match.group(1)),
-                        saved_id=int(saved_gift_match.group(2))
-                    )
-                )
-            elif slug_match:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftSlug(
-                        slug=slug_match.group(1)
-                    )
-                )
-            else:
-                stargifts.append(
-                    raw.types.InputSavedStarGiftUser(
-                        msg_id=int(gift)
-                    )
-                )
-
         r = await self.invoke(
             raw.functions.payments.CreateStarGiftCollection(
                 peer=await self.resolve_peer(owner_id),
                 title=name,
-                stargift=stargifts
+                stargift=[await utils.get_input_stargift(self, owned_gift_id) for owned_gift_id in gift_ids],
             )
         )
 

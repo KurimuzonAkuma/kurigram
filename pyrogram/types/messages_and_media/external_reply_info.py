@@ -216,7 +216,7 @@ class ExternalReplyInfo(Object):
                 media_type = enums.MessageMediaType.PHOTO
                 has_media_spoiler = media.spoiler
             elif isinstance(media, raw.types.MessageMediaGeo):
-                location = types.Location._parse(client, media.geo)
+                location = types.Location._parse(media.geo)
                 media_type = enums.MessageMediaType.LOCATION
             elif isinstance(media, raw.types.MessageMediaContact):
                 contact = types.Contact._parse(client, media)
@@ -291,7 +291,7 @@ class ExternalReplyInfo(Object):
                 paid_media = types.PaidMediaInfo._parse(client, media)
                 media_type = enums.MessageMediaType.PAID_MEDIA
             elif isinstance(media, raw.types.MessageMediaToDo):
-                checklist = types.Checklist._parse(client, media, users)
+                checklist = types.Checklist._parse(client, media, users, chats)
                 media_type = enums.MessageMediaType.CHECKLIST
             else:
                 media = None

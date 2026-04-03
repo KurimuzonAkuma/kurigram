@@ -42,18 +42,17 @@ class RawUpdateHandler(Handler):
         client (:obj:`~pyrogram.Client`):
             The Client itself, useful when you want to call other API methods inside the update handler.
 
-        update (``Update``):
+        update (:obj:`~pyrogram.raw.base.Update`):
             The received update, which can be one of the many single Updates listed in the
             :obj:`~pyrogram.raw.base.Update` base type.
 
         users (``dict``):
-            Dictionary of all :obj:`~pyrogram.types.User` mentioned in the update.
+            Dictionary of all :obj:`~pyrogram.raw.base.User` mentioned in the update.
             You can access extra info about the user (such as *first_name*, *last_name*, etc...) by using
             the IDs you find in the *update* argument (e.g.: *users[1768841572]*).
 
         chats (``dict``):
-            Dictionary of all :obj:`~pyrogram.types.Chat` and
-            :obj:`~pyrogram.raw.types.Channel` mentioned in the update.
+            Dictionary of all :obj:`~pyrogram.raw.base.Chat` mentioned in the update.
             You can access extra info about the chat (such as *title*, *participants_count*, etc...)
             by using the IDs you find in the *update* argument (e.g.: *chats[1701277281]*).
 

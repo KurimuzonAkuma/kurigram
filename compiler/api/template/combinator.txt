@@ -1,16 +1,18 @@
 {notice}
 
 from io import BytesIO
+from typing import TYPE_CHECKING, List, Optional, Any
 
 from pyrogram.raw.core.primitives import Int, Long, Int128, Int256, Bool, Bytes, String, Double, Vector
 from pyrogram.raw.core import TLObject
-from pyrogram import raw
-from typing import List, Optional, Any
+
+if TYPE_CHECKING:
+    from pyrogram import raw
 
 {warning}
 
 
-class {name}(TLObject):  # type: ignore
+class {name}(TLObject{generic_type}):
     """{docstring}
     """
 

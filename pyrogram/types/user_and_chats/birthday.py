@@ -60,3 +60,10 @@ class Birthday(Object):
             month=birthday.month,
             year=getattr(birthday, "year", None)
         )
+
+    def write(self):
+        return raw.types.Birthday(
+            day=self.day,
+            month=self.month,
+            year=self.year
+        )

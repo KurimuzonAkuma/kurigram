@@ -16,24 +16,122 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, overload
 import re
 import pyrogram
 from pyrogram import raw, types, utils
 
-log = logging.getLogger(__name__)
-
 
 class GetMessages:
+    # Invalid arguments (chat and string message_id provided)
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_ids: str,
+        reply: None = None,
+        pinned: None = None,
+        replies: int = 1,
+    ) -> Optional["types.Message"]: ...
+    # Invalid arguments (only message_ids with type int or Iterable of int provided)
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: None = None,
+        message_ids: Union[int, Iterable[int]] = 0,
+        reply: None = None,
+        pinned: None = None,
+        replies: int = 1,
+    ) -> None: ...
+    # Invalid arguments (only chat provided)
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_ids: None = None,
+        reply: None = None,
+        pinned: None = None,
+        replies: int = 1,
+    ) -> None: ...
+    # Invalid arguments (only pinned provided)
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: None = None,
+        message_ids: None = None,
+        reply: None = None,
+        pinned: bool = True,
+        replies: int = 1,
+    ) -> None: ...
+    # Invalid arguments (nothing provided)
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: None = None,
+        message_ids: None = None,
+        reply: None = None,
+        pinned: None = None,
+        replies: int = 1,
+    ) -> None: ...
+    # One message
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_ids: Union[int, str],
+        reply: Optional[bool] = None,
+        pinned: Optional[bool] = None,
+        replies: int = 1,
+    ) -> Optional["types.Message"]: ...
+    # One message with string
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: None = None,
+        message_ids: str = "",
+        reply: Optional[bool] = None,
+        pinned: Optional[bool] = None,
+        replies: int = 1,
+    ) -> Optional["types.Message"]: ...
+    # Many messages
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_ids: Iterable[int],
+        reply: Optional[bool] = None,
+        pinned: Optional[bool] = None,
+        replies: int = 1,
+    ) -> List["types.Message"]: ...
+    # Pinned message
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_ids: None = None,
+        reply: Optional[bool] = None,
+        pinned: bool = False,
+        replies: int = 1,
+    ) -> Optional["types.Message"]: ...
+    # Pinned message with provided message ids
+    # - message ids will not affect result
+    @overload
+    async def get_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_ids: Optional[Union[int, Iterable[int], str]] = None,
+        reply: Optional[bool] = None,
+        pinned: bool = False,
+        replies: int = 1,
+    ) -> Optional["types.Message"]: ...
     async def get_messages(
         self: "pyrogram.Client",
         chat_id: Optional[Union[int, str]] = None,
         message_ids: Optional[Union[int, Iterable[int], str]] = None,
         reply: Optional[bool] = None,
         pinned: Optional[bool] = None,
-        replies: int = 1
-    ) -> Optional[Union["types.Message", List["types.Message"]]]:
+        replies: int = 1,
+    ) -> Union[Optional["types.Message"], List["types.Message"]]:
         """Get one or more messages from a chat by using message identifiers or link.
 
         You can retrieve up to 200 messages at once.
@@ -55,7 +153,7 @@ class GetMessages:
                 the previous message you replied to using this message.
 
             pinned (``bool``, *optional*):
-                If True, you will get pinned message.
+                If True, you will get last pinned message.
 
             replies (``int``, *optional*):
                 The number of subsequent replies to get for each message.

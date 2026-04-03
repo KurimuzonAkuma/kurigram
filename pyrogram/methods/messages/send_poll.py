@@ -49,6 +49,7 @@ class SendPoll:
         effect_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
         business_connection_id: Optional[str] = None,
         options_parse_mode: Optional["enums.ParseMode"] = None,
         allow_paid_broadcast: bool = None,
@@ -153,6 +154,9 @@ class SendPoll:
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
+
+            repeat_period (``int``, *optional*):
+                Period after which the message will be sent again in seconds.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
@@ -259,6 +263,7 @@ class SendPoll:
                 media=raw.types.InputMediaPoll(
                     poll=raw.types.Poll(
                         id=self.rnd_id(),
+                        hash=self.rnd_id(),
                         question=raw.types.TextWithEntities(
                             text=question,
                             entities=question_entities or []
@@ -284,6 +289,7 @@ class SendPoll:
                 ),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
+                schedule_repeat_period=repeat_period,
                 noforwards=protect_content,
                 allow_paid_floodskip=allow_paid_broadcast,
                 allow_paid_stars=paid_message_star_count,

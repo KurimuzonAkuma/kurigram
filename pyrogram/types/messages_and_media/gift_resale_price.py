@@ -38,7 +38,7 @@ class GiftResalePrice(Object):
         raise NotImplementedError
 
 
-class GiftResalePriceStar(Object):
+class GiftResalePriceStar(GiftResalePrice):
     """Describes price of a resold gift in Telegram Stars.
 
     Parameters:
@@ -61,7 +61,7 @@ class GiftResalePriceStar(Object):
         )
 
 
-class GiftResalePriceTon(Object):
+class GiftResalePriceTon(GiftResalePrice):
     """Describes price of a resold gift in Toncoins.
 
     Parameters:

@@ -30,7 +30,7 @@ class Reaction(Object):
         emoji (``str``, *optional*):
             Reaction emoji.
 
-        custom_emoji_id (``int``, *optional*):
+        custom_emoji_id (``str``, *optional*):
             Custom emoji id.
 
         count (``int``, *optional*):
@@ -49,7 +49,7 @@ class Reaction(Object):
         *,
         client: "pyrogram.Client" = None,
         emoji: Optional[str] = None,
-        custom_emoji_id: Optional[int] = None,
+        custom_emoji_id: Optional[str] = None,
         count: Optional[int] = None,
         chosen_order: Optional[int] = None,
         is_paid: Optional[bool] = None
@@ -76,7 +76,7 @@ class Reaction(Object):
         if isinstance(reaction, raw.types.ReactionCustomEmoji):
             return Reaction(
                 client=client,
-                custom_emoji_id=reaction.document_id
+                custom_emoji_id=str(reaction.document_id)
             )
 
         if isinstance(reaction, raw.types.ReactionPaid):

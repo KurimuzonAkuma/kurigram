@@ -33,8 +33,14 @@ class MessageServiceType(AutoName):
     NEW_CHAT_MEMBERS = auto()
     "New members join"
 
-    LEFT_CHAT_MEMBERS = auto()
-    "Left chat members"
+    LEFT_CHAT_MEMBER = auto()
+    "Left chat member"
+
+    CHAT_OWNER_LEFT = auto()
+    "Chat owner left"
+
+    CHAT_OWNER_CHANGED = auto()
+    "Chat owner changed"
 
     NEW_CHAT_TITLE = auto()
     "New chat title"
@@ -90,7 +96,7 @@ class MessageServiceType(AutoName):
     GIVEAWAY_COMPLETED = auto()
     "Giveaway completed"
 
-    GIFT_CODE = auto()
+    PREMIUM_GIFT_CODE = auto()
     "Gift code"
 
     GIFTED_PREMIUM = auto()
@@ -150,11 +156,11 @@ class MessageServiceType(AutoName):
     SUGGESTED_POST_REFUNDED = auto()
     "Suggested post refunded"
 
-    CHAT_TTL_CHANGED = auto()
+    SET_MESSAGE_AUTO_DELETE_TIME = auto()
     "Chat TTL changed"
 
-    BOOST_APPLY = auto()
-    "Boost apply"
+    CHAT_BOOST = auto()
+    "Boost applied to the chat"
 
     GIFT = auto()
     "Star gift"
@@ -175,10 +181,13 @@ class MessageServiceType(AutoName):
     "Proximity alert triggered"
 
     HISTORY_CLEARED = auto()
-    "History clear"
+    "Chat history cleared"
 
     SUGGEST_PROFILE_PHOTO = auto()
     "Suggest profile photo"
+
+    SUGGEST_BIRTHDAY = auto()
+    "Suggest birthday"
 
     CHAT_SET_BACKGROUND = auto()
     "Set chat background"
@@ -203,3 +212,15 @@ class MessageServiceType(AutoName):
 
     CHECKLIST_TASKS_ADDED = auto()
     "Checklist tasks added"
+
+    UPGRADED_GIFT_PURCHASE_OFFER = auto()
+    "Upgraded gift purchase offer"
+
+    UPGRADED_GIFT_PURCHASE_OFFER_REJECTED = auto()
+    "Upgraded gift purchase offer declined"
+
+    CHAT_HAS_PROTECTED_CONTENT_TOGGLED = auto()
+    "Chat has protected content toggled"
+
+    CHAT_HAS_PROTECTED_CONTENT_DISABLE_REQUESTED = auto()
+    "Chat has protected content disable requested"

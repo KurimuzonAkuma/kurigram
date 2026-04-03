@@ -19,6 +19,8 @@
 from .block_user import BlockUser
 from .check_username import CheckUsername
 from .delete_profile_photos import DeleteProfilePhotos
+from .get_chat_audios_count import GetChatAudiosCount
+from .get_chat_audios import GetChatAudios
 from .get_chat_photos import GetChatPhotos
 from .get_chat_photos_count import GetChatPhotosCount
 from .get_common_chats import GetCommonChats
@@ -43,6 +45,8 @@ class Users(
     SetPersonalChannel,
     SetProfilePhoto,
     DeleteProfilePhotos,
+    GetChatAudiosCount,
+    GetChatAudios,
     GetUsers,
     GetMe,
     SetUsername,

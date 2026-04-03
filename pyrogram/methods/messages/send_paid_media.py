@@ -110,7 +110,7 @@ class SendPaidMedia:
                 Unique identifier of the business connection on behalf of which the message will be sent.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            List of :obj:`~pyrogram.types.Message`: On success, a list of messages is returned.
 
         Example:
             .. code-block:: python
