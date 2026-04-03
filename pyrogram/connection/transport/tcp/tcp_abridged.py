@@ -38,12 +38,18 @@ class TCPAbridged(TCP):
     async def connect(self, address: Tuple[str, int]) -> None:
         self.marker_event.clear()
         await super().connect(address)
-        await super().send(b"\xef", wait_for_marker=False)
+        # MTProxy handles its own framing; skip the abridged marker byte.
+        if self._mtproxy_encrypt is None:
+            await super().send(b"\xef", wait_for_marker=False)
         self.marker_event.set()
 
     async def send(self, data: bytes, *args) -> None:
-        length = len(data) // 4
+        # MTProxy uses padded-intermediate framing via TCP.send; bypass abridged framing.
+        if self._mtproxy_encrypt is not None:
+            await super().send(data)
+            return
 
+        length = len(data) // 4
         await super().send(
             (bytes([length])
              if length <= 126
@@ -52,6 +58,10 @@ class TCPAbridged(TCP):
         )
 
     async def recv(self, length: int = 0) -> Optional[bytes]:
+        # MTProxy framing is handled in TCP.recv; bypass abridged length prefix.
+        if self._mtproxy_encrypt is not None:
+            return await super().recv(length)
+
         length = await super().recv(1)
 
         if length is None:

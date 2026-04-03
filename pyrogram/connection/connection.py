@@ -60,8 +60,15 @@ class Connection:
             self.loop = utils.get_event_loop()
 
     async def connect(self) -> None:
+        # For MTProxy we need to pass the DC ID so the proxy can embed it in the
+        # obfuscation nonce.  We do this by temporarily augmenting the proxy dict
+        # rather than modifying the original object supplied by the caller.
+        proxy = self.proxy
+        if isinstance(proxy, dict) and str(proxy.get("scheme", "")).upper() == "MTPROXY":
+            proxy = dict(proxy, dc_id=self.dc_id)
+
         for i in range(Connection.MAX_CONNECTION_ATTEMPTS):
-            self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=self.proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
+            self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
 
             try:
                 log.info("Connecting...")
