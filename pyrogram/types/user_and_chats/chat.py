@@ -516,6 +516,11 @@ class Chat(Object):
             Note added to the user's contact.
             Returned only in :meth:`~pyrogram.Client.get_chat`
 
+        uses_unofficial_app (``bool``, *optional*):
+            True, if the user was marked as a user of an unofficial
+            Telegram app with security risk
+            Returned only in :meth:`~pyrogram.Client.get_chat`
+
         raw (:obj:`~pyrogram.raw.types.UserFull` | :obj:`~pyrogram.raw.types.ChatFull` | :obj:`~pyrogram.raw.types.ChannelFull`, *optional*):
             The raw chat or user object, as received from the Telegram API.
 
@@ -660,6 +665,7 @@ class Chat(Object):
         display_gifts_button: Optional[bool] = None,
         accepted_gift_types: Optional["types.AcceptedGiftTypes"] = None,
         note: Optional["types.FormattedText"] = None,
+        uses_unofficial_app: Optional[bool] = None,
         raw: Optional[Union["raw.types.UserFull", "raw.types.ChatFull", "raw.types.ChannelFull"]] = None
     ):
         super().__init__(client)
@@ -798,6 +804,7 @@ class Chat(Object):
         self.display_gifts_button = display_gifts_button
         self.accepted_gift_types = accepted_gift_types
         self.note = note
+        self.uses_unofficial_app = uses_unofficial_app
         self.raw = raw
 
     # region Deprecated
@@ -1089,6 +1096,7 @@ class Chat(Object):
         parsed_chat.display_gifts_button = user.display_gifts_button
         parsed_chat.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
         parsed_chat.note = types.FormattedText._parse(client, user.note)
+        parsed_chat.uses_unofficial_app = user.unofficial_security_risk
 
         return parsed_chat
 

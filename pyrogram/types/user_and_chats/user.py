@@ -386,6 +386,11 @@ class User(Object, Update):
         note (:obj:`~pyrogram.types.FormattedText`, *optional*):
             Note added to the user's contact.
 
+        uses_unofficial_app (``bool``, *optional*):
+            True, if the user was marked as a user of an unofficial
+            Telegram app with security risk
+            Returned only in :meth:`~pyrogram.Client.get_me`
+
         raw (:obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.UserStatus`, *optional*):
             The raw user or user status object, as received from the Telegram API.
 
@@ -493,6 +498,7 @@ class User(Object, Update):
         pending_rating_date: Optional[datetime] = None,
         accepted_gift_types: Optional["types.AcceptedGiftTypes"] = None,
         note: Optional["types.FormattedText"] = None,
+        uses_unofficial_app: Optional[bool] = None,
         raw: Optional[Union["raw.base.User", "raw.base.UserStatus"]] = None
     ):
         super().__init__(client)
@@ -587,6 +593,7 @@ class User(Object, Update):
         self.pending_rating_date = pending_rating_date
         self.accepted_gift_types = accepted_gift_types
         self.note = note
+        self.uses_unofficial_app = uses_unofficial_app
         self.raw = raw
 
     @property
@@ -773,6 +780,7 @@ class User(Object, Update):
         parsed_user.pending_rating_date = utils.timestamp_to_datetime(user.stars_my_pending_rating_date)
         parsed_user.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
         parsed_user.note = types.FormattedText._parse(client, user.note)
+        parsed_user.uses_unofficial_app = user.unofficial_security_risk
 
         return parsed_user
 
