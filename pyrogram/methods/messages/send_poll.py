@@ -233,7 +233,7 @@ class SendPoll:
                         id=self.rnd_id(),
                         question=await question.write(self),
                         answers=[await answer.write(self) for answer in answers],
-                        hash=self.rnd_id(),
+                        hash=0,
                         closed=is_closed,
                         public_voters=not is_anonymous,
                         multiple_choice=True if correct_option_ids and len(correct_option_ids) > 1 else allows_multiple_answers,
