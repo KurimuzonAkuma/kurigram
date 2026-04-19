@@ -37,6 +37,7 @@ from .create_folder_invite_link import CreateFolderInviteLink
 from .get_chat import GetChat
 from .get_chats_for_folder_invite_link import GetChatsForFolderInviteLink
 from .get_chat_event_log import GetChatEventLog
+from .get_folder_channels import GetFolderChannels
 from .get_folder_invite_links import GetFolderInviteLinks
 from .get_chat_member import GetChatMember
 from .get_chat_members import GetChatMembers
@@ -163,6 +164,7 @@ class Chats(
     UnpinAllChatMessages,
     MarkChatUnread,
     GetChatEventLog,
+    GetFolderChannels,
     GetFolderInviteLinks,
     GetChatOnlineCount,
     GetChatSettings,
