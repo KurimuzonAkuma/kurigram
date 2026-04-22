@@ -9,30 +9,38 @@ from pyrogram import types
 from pyrogram import utils
 from pyrogram.file_id import FileType
 
-from pyrogram.raw.types.input_media_document import InputMediaDocument
-from pyrogram.raw.types.input_media_document_external import InputMediaDocumentExternal
-from pyrogram.raw.types.input_media_photo import InputMediaPhoto
-from pyrogram.raw.types.input_media_photo_external import InputMediaPhotoExternal
-from pyrogram.raw.types.input_media_geo_live import InputMediaGeoLive
-from pyrogram.raw.types.input_media_geo_point import InputMediaGeoPoint
-from pyrogram.raw.types.input_geo_point import InputGeoPoint
-from pyrogram.raw.types.document_attribute_sticker import DocumentAttributeSticker
-from pyrogram.raw.types.document_attribute_filename import DocumentAttributeFilename
-from pyrogram.raw.types.input_sticker_set_empty import InputStickerSetEmpty
-from pyrogram.raw.types.input_media_uploaded_document import InputMediaUploadedDocument
-
 
 async def resolve_to_raw_photo(
     client: "pyrogram.Client",
     media: "types.InputMediaPhoto",
     chat_id: Union[int, str, None] = None,
-) -> Union[InputMediaPhoto, InputMediaPhotoExternal, InputMediaDocument]:
+) -> Union[
+    raw.types.InputMediaPhoto,
+    raw.types.InputMediaPhotoExternal,
+    raw.types.InputMediaDocument,
+]:
+    """
+    Prepare the photo to be sent in raw
+    Parameters:
+        client (``pyrogram.Client``):
+            The client instance
+        media (``types.InputMediaPhoto``):
+            The media to be sent
+        chat_id (``int`` | ``str`` | ``None``):
+            The chat id to send the media
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaPhoto|pyrogram.raw.types.InputMediaPhotoExternal`: On success, the resolved media is returned in form of an InputMediaPhoto object.
+    Raises:
+        RPCError: In case of a Telegram RPC error.
+    """
     if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
-        if chat_id is None:
-            raise ValueError("chat_id is required for uploading files")
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
-                peer=await client.resolve_peer(chat_id),
+                peer=(
+                    await client.resolve_peer(chat_id)
+                    if chat_id
+                    else raw.types.InputPeerSelf()
+                ),
                 media=raw.types.InputMediaUploadedPhoto(
                     file=await client.save_file(media.media),
                     spoiler=media.has_spoiler,
@@ -65,13 +73,31 @@ async def resolve_to_raw_video(
     media: "types.InputMediaVideo",
     file_name: Union[str, None] = None,
     chat_id: Union[int, str, None] = None,
-) -> Union[InputMediaDocument, InputMediaDocumentExternal, InputMediaPhoto]:
+) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
+    """
+    Prepare the video to be sent in raw
+    Parameters:
+        client (``pyrogram.Client``):
+            The client instance
+        media (``types.InputMediaVideo``):
+            The media to be sent
+        file_name (``str`` | ``None``):
+            The name of the file
+        chat_id (``int`` | ``str`` | ``None``):
+            The chat id to send the media
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+    Raises:
+        RPCError: In case of a Telegram RPC error.
+    """
     if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
-        if chat_id is None:
-            raise ValueError("chat_id is required for uploading files")
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
-                peer=await client.resolve_peer(chat_id),
+                peer=(
+                    await client.resolve_peer(chat_id)
+                    if chat_id
+                    else raw.types.InputPeerSelf()
+                ),
                 media=raw.types.InputMediaUploadedDocument(
                     mime_type=client.guess_mime_type(media.media) or "video/mp4",
                     thumb=await client.save_file(media.thumb),
@@ -117,13 +143,31 @@ async def resolve_to_raw_audio(
     media: "types.InputMediaAudio",
     file_name: Union[str, None] = None,
     chat_id: Union[int, str, None] = None,
-) -> Union[InputMediaDocument, InputMediaDocumentExternal, InputMediaPhoto]:
+) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
+    """
+    Prepare the audio to be sent in raw
+    Parameters:
+        client (``pyrogram.Client``):
+            The client instance
+        media (``types.InputMediaAudio``):
+            The media to be sent
+        file_name (``str`` | ``None``):
+            The name of the file
+        chat_id (``int`` | ``str`` | ``None``):
+            The chat id to send the media
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+    Raises:
+        RPCError: In case of a Telegram RPC error.
+    """
     if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
-        if chat_id is None:
-            raise ValueError("chat_id is required for uploading files")
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
-                peer=await client.resolve_peer(chat_id),
+                peer=(
+                    await client.resolve_peer(chat_id)
+                    if chat_id
+                    else raw.types.InputPeerSelf()
+                ),
                 media=raw.types.InputMediaUploadedDocument(
                     mime_type=client.guess_mime_type(media.media) or "audio/mpeg",
                     thumb=await client.save_file(media.thumb),
@@ -161,13 +205,31 @@ async def resolve_to_raw_animation(
     media: "types.InputMediaAnimation",
     file_name: Union[str, None] = None,
     chat_id: Union[int, str, None] = None,
-) -> Union[InputMediaDocument, InputMediaDocumentExternal, InputMediaPhoto]:
+) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
+    """
+    Prepare the animation to be sent in raw
+    Parameters:
+        client (``pyrogram.Client``):
+            The client instance
+        media (``types.InputMediaAnimation``):
+            The media to be sent
+        file_name (``str`` | ``None``):
+            The name of the file
+        chat_id (``int`` | ``str`` | ``None``):
+            The chat id to send the media
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+    Raises:
+        RPCError: In case of a Telegram RPC error.
+    """
     if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
-        if chat_id is None:
-            raise ValueError("chat_id is required for uploading files")
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
-                peer=await client.resolve_peer(chat_id),
+                peer=(
+                    await client.resolve_peer(chat_id)
+                    if chat_id
+                    else raw.types.InputPeerSelf()
+                ),
                 media=raw.types.InputMediaUploadedDocument(
                     mime_type=client.guess_mime_type(media.media) or "video/mp4",
                     thumb=await client.save_file(media.thumb),
@@ -214,13 +276,31 @@ async def resolve_to_raw_document(
     media: "types.InputMediaDocument",
     file_name: Union[str, None] = None,
     chat_id: Union[int, str, None] = None,
-) -> Union[InputMediaDocument, InputMediaDocumentExternal, InputMediaPhoto]:
+) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
+    """
+    Prepare the document to be sent in raw
+    Parameters:
+        client (``pyrogram.Client``):
+            The client instance
+        media (``types.InputMediaDocument``):
+            The media to be sent
+        file_name (``str`` | ``None``):
+            The name of the file
+        chat_id (``int`` | ``str`` | ``None``):
+            The chat id to send the media
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+    Raises:
+        RPCError: In case of a Telegram RPC error.
+    """
     if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
-        if chat_id is None:
-            raise ValueError("chat_id is required for uploading files")
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
-                peer=await client.resolve_peer(chat_id),
+                peer=(
+                    await client.resolve_peer(chat_id)
+                    if chat_id
+                    else raw.types.InputPeerSelf()
+                ),
                 media=raw.types.InputMediaUploadedDocument(
                     mime_type=client.guess_mime_type(media.media) or "application/zip",
                     thumb=await client.save_file(media.thumb),
@@ -250,10 +330,19 @@ async def resolve_to_raw_document(
 
 async def resolve_to_raw_location(
     loc: "types.Location",
-) -> Union[InputMediaGeoLive, InputMediaGeoPoint]:
+) -> Union[raw.types.InputMediaGeoLive, raw.types.InputMediaGeoPoint]:
+    """
+    Prepare the location to be sent in raw
+    Parameters:
+        loc (``types.Location``):
+            The location to be sent
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaGeoLive|pyrogram.raw.types.InputMediaGeoPoint`:
+        On success, the resolved media is returned in form of an InputMediaGeoLive|InputMediaGeoPoint object.
+    """
     if loc.live_period is not None:
-        return InputMediaGeoLive(
-            geo_point=InputGeoPoint(
+        return raw.types.InputMediaGeoLive(
+            geo_point=raw.types.InputGeoPoint(
                 lat=loc.latitude or 0,
                 long=loc.longitude or 0,
                 accuracy_radius=loc.accuracy_radius,
@@ -262,8 +351,8 @@ async def resolve_to_raw_location(
             period=loc.live_period,
             proximity_notification_radius=loc.proximity_alert_radius,
         )
-    return InputMediaGeoPoint(
-        geo_point=InputGeoPoint(
+    return raw.types.InputMediaGeoPoint(
+        geo_point=raw.types.InputGeoPoint(
             lat=loc.latitude or 0,
             long=loc.longitude or 0,
             accuracy_radius=loc.accuracy_radius,
@@ -272,55 +361,78 @@ async def resolve_to_raw_location(
 
 
 async def resolve_to_raw_sticker(
-    client: "pyrogram.client.Client",
-    sticker: Union[str, BinaryIO],
+    client: "pyrogram.Client",
+    sticker: "types.InputMediaSticker",
     emoji: str = "",
     progress: Union[Callable, None] = None,
     progress_args: tuple = (),
 ) -> Union[
-    InputMediaUploadedDocument,
-    InputMediaDocumentExternal,
-    InputMediaPhoto,
-    InputMediaDocument,
+    raw.types.InputMediaUploadedDocument,
+    raw.types.InputMediaDocumentExternal,
+    raw.types.InputMediaDocument,
 ]:
-    if isinstance(sticker, str):
-        if os.path.isfile(sticker):
+    """
+    Prepare the sticker to be sent in raw
+    Parameters:
+        client (``pyrogram.Client``):
+            The client instance
+        sticker (``types.InputMediaSticker``):
+            The media to be sent
+        emoji (``str``):
+            The emoji to be associated with the sticker
+        progress (``Callable``):
+            A callable to be called with the progress of the upload
+        progress_args (``tuple``):
+            The arguments to be passed to the progress callable
+    Returns:
+        :obj:`~pyrogram.raw.types.InputMediaUploadedDocument|pyrogram.raw.types.InputMediaDocumentExternal|pyrogram.raw.types.InputMediaDocument`:
+        On success, the resolved media is returned in form of an InputMediaUploadedDocument|InputMediaDocumentExternal|InputMediaDocument object.
+    Raises:
+        RPCError: In case of a Telegram RPC error.
+    """
+    media: Union[BinaryIO, str] = sticker.media
+    if isinstance(media, str):
+        if os.path.isfile(media):
             file = await client.save_file(
-                sticker,
+                media,
                 progress=cast(Callable, progress),
                 progress_args=progress_args,
             )
             if not file:
                 raise ValueError("Failed to upload sticker")
-            return InputMediaUploadedDocument(
-                mime_type=client.guess_mime_type(sticker) or "image/webp",
+            return raw.types.InputMediaUploadedDocument(
+                mime_type=client.guess_mime_type(media) or "image/webp",
                 file=file,
                 attributes=[
-                    DocumentAttributeFilename(
-                        file_name=os.path.basename(sticker),
+                    raw.types.DocumentAttributeFilename(
+                        file_name=os.path.basename(media),
                     ),
-                    DocumentAttributeSticker(
-                        alt=emoji, stickerset=InputStickerSetEmpty(),
+                    raw.types.DocumentAttributeSticker(
+                        alt=emoji,
+                        stickerset=raw.types.InputStickerSetEmpty(),
                     ),
                 ],
             )
-        if re.match("^https?://", sticker):
-            return InputMediaDocumentExternal(url=sticker)
+        if re.match("^https?://", media):
+            return raw.types.InputMediaDocumentExternal(url=media)
 
-        return utils.get_input_media_from_file_id(sticker, FileType.STICKER)
+        return utils.get_input_media_from_file_id(media, FileType.STICKER)
 
     file = await client.save_file(
-        sticker, progress=cast(Callable, progress), progress_args=progress_args,
+        media,
+        progress=cast(Callable, progress),
+        progress_args=progress_args,
     )
     if not file:
         raise ValueError("Failed to upload sticker")
-    return InputMediaUploadedDocument(
-        mime_type=client.guess_mime_type(sticker.name) or "image/webp",
+    return raw.types.InputMediaUploadedDocument(
+        mime_type=client.guess_mime_type(media.name) or "image/webp",
         file=file,
         attributes=[
-            DocumentAttributeFilename(file_name=sticker.name),
-            DocumentAttributeSticker(
-                alt=emoji, stickerset=InputStickerSetEmpty(),
+            raw.types.DocumentAttributeFilename(file_name=media.name),
+            raw.types.DocumentAttributeSticker(
+                alt=emoji,
+                stickerset=raw.types.InputStickerSetEmpty(),
             ),
         ],
     )

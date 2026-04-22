@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Annotated, BinaryIO, Union
+from typing import Union
 
 import pyrogram
 from pyrogram import raw, types, media_utils
@@ -41,7 +41,7 @@ class InputPollOption(Object):
         media: Union[
             "types.InputMediaPhoto",
             "types.InputMediaVideo",
-            Annotated[str, "sticker file_id"],
+            "types.InputMediaSticker",
             "types.Location",
             None,
         ] = None,
@@ -58,10 +58,10 @@ class InputPollOption(Object):
         if not self.media:
             raw_media = None
         elif isinstance(self.media, types.InputMediaPhoto):
-            raw_media = await media_utils.resolve_to_raw_photo(client, self.media, chat_id="me")
+            raw_media = await media_utils.resolve_to_raw_photo(client, self.media)
         elif isinstance(self.media, types.InputMediaVideo):
-            raw_media = await media_utils.resolve_to_raw_video(client, self.media, chat_id="me")
-        elif isinstance(self.media, Union[BinaryIO, str]):
+            raw_media = await media_utils.resolve_to_raw_video(client, self.media)
+        elif isinstance(self.media, types.InputMediaSticker):
             raw_media = await media_utils.resolve_to_raw_sticker(client, self.media)
         elif isinstance(self.media, types.Location):
             raw_media = await media_utils.resolve_to_raw_location(self.media)
