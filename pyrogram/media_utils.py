@@ -1,7 +1,7 @@
 import io
 import os
 import re
-from typing import Union
+from typing import BinaryIO, Callable, Union, cast
 
 import pyrogram
 from pyrogram import raw
@@ -13,6 +13,14 @@ from pyrogram.raw.types.input_media_document import InputMediaDocument
 from pyrogram.raw.types.input_media_document_external import InputMediaDocumentExternal
 from pyrogram.raw.types.input_media_photo import InputMediaPhoto
 from pyrogram.raw.types.input_media_photo_external import InputMediaPhotoExternal
+from pyrogram.raw.types.input_media_geo_live import InputMediaGeoLive
+from pyrogram.raw.types.input_media_geo_point import InputMediaGeoPoint
+from pyrogram.raw.types.input_geo_point import InputGeoPoint
+from pyrogram.raw.types.document_attribute_sticker import DocumentAttributeSticker
+from pyrogram.raw.types.document_attribute_filename import DocumentAttributeFilename
+from pyrogram.raw.types.input_sticker_set_empty import InputStickerSetEmpty
+from pyrogram.raw.types.input_media_uploaded_document import InputMediaUploadedDocument
+
 
 async def resolve_to_raw_photo(
     client: "pyrogram.Client",
@@ -238,3 +246,81 @@ async def resolve_to_raw_document(
             url=media.media,
         )
     return utils.get_input_media_from_file_id(media.media, FileType.DOCUMENT)
+
+
+async def resolve_to_raw_location(
+    loc: "types.Location",
+) -> Union[InputMediaGeoLive, InputMediaGeoPoint]:
+    if loc.live_period is not None:
+        return InputMediaGeoLive(
+            geo_point=InputGeoPoint(
+                lat=loc.latitude or 0,
+                long=loc.longitude or 0,
+                accuracy_radius=loc.accuracy_radius,
+            ),
+            heading=loc.heading,
+            period=loc.live_period,
+            proximity_notification_radius=loc.proximity_alert_radius,
+        )
+    return InputMediaGeoPoint(
+        geo_point=InputGeoPoint(
+            lat=loc.latitude or 0,
+            long=loc.longitude or 0,
+            accuracy_radius=loc.accuracy_radius,
+        ),
+    )
+
+
+async def resolve_to_raw_sticker(
+    client: "pyrogram.client.Client",
+    sticker: Union[str, BinaryIO],
+    emoji: str = "",
+    progress: Union[Callable, None] = None,
+    progress_args: tuple = (),
+) -> Union[
+    InputMediaUploadedDocument,
+    InputMediaDocumentExternal,
+    InputMediaPhoto,
+    InputMediaDocument,
+]:
+    if isinstance(sticker, str):
+        if os.path.isfile(sticker):
+            file = await client.save_file(
+                sticker,
+                progress=cast(Callable, progress),
+                progress_args=progress_args,
+            )
+            if not file:
+                raise ValueError("Failed to upload sticker")
+            return InputMediaUploadedDocument(
+                mime_type=client.guess_mime_type(sticker) or "image/webp",
+                file=file,
+                attributes=[
+                    DocumentAttributeFilename(
+                        file_name=os.path.basename(sticker),
+                    ),
+                    DocumentAttributeSticker(
+                        alt=emoji, stickerset=InputStickerSetEmpty(),
+                    ),
+                ],
+            )
+        if re.match("^https?://", sticker):
+            return InputMediaDocumentExternal(url=sticker)
+
+        return utils.get_input_media_from_file_id(sticker, FileType.STICKER)
+
+    file = await client.save_file(
+        sticker, progress=cast(Callable, progress), progress_args=progress_args,
+    )
+    if not file:
+        raise ValueError("Failed to upload sticker")
+    return InputMediaUploadedDocument(
+        mime_type=client.guess_mime_type(sticker.name) or "image/webp",
+        file=file,
+        attributes=[
+            DocumentAttributeFilename(file_name=sticker.name),
+            DocumentAttributeSticker(
+                alt=emoji, stickerset=InputStickerSetEmpty(),
+            ),
+        ],
+    )
