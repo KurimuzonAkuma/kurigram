@@ -918,6 +918,7 @@ def pyrogram_api():
             InputMediaDocument
             InputMediaPhoto
             InputMediaVideo
+            InputMediaSticker
             InputMessageContent
             InputPhoneContact
             InputPollOption
