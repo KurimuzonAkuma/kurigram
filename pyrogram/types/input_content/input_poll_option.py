@@ -19,7 +19,7 @@
 from typing import Optional, Union
 
 import pyrogram
-from pyrogram import raw, types, media_utils
+from pyrogram import raw, types, utils
 
 from ..object import Object
 
@@ -57,20 +57,7 @@ class InputPollOption(Object):
         if isinstance(self.text, str):
             self.text = types.FormattedText(text=self.text)
 
-        if not self.media:
-            raw_media = None
-        elif isinstance(self.media, types.InputMediaPhoto):
-            raw_media = await media_utils.resolve_to_raw_photo(client, self.media)
-        elif isinstance(self.media, types.InputMediaVideo):
-            raw_media = await media_utils.resolve_to_raw_video(client, self.media)
-        elif isinstance(self.media, types.InputMediaSticker):
-            raw_media = await media_utils.resolve_to_raw_sticker(client, self.media)
-        elif isinstance(self.media, types.Location):
-            raw_media = await media_utils.resolve_to_raw_location(self.media)
-        else:
-            raise ValueError("Unsupported media type: " + str(type(self.media)))
-
         return raw.types.InputPollAnswer(
             text=await self.text.write(client),
-            media=raw_media,
+            media=await utils.resolve_raw_media(client, self.media) if self.media else None,
         )
