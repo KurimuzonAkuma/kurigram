@@ -21,7 +21,7 @@ from typing import Union, BinaryIO
 from .input_media import InputMedia
 
 class InputMediaSticker(InputMedia):
-    """A sticker to be attached
+    """A sticker to be attached.
 
     Parameters:
         media (``str`` | ``BinaryIO``):

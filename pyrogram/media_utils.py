@@ -1,7 +1,7 @@
 import io
 import os
 import re
-from typing import BinaryIO, Callable, Union, cast
+from typing import BinaryIO, Callable, Optional, Union, cast
 
 import pyrogram
 from pyrogram import raw
@@ -13,7 +13,7 @@ from pyrogram.file_id import FileType
 async def resolve_to_raw_photo(
     client: "pyrogram.Client",
     media: "types.InputMediaPhoto",
-    chat_id: Union[int, str, None] = None,
+    chat_id: Optional[Union[int, str]] = None,
 ) -> Union[
     raw.types.InputMediaPhoto,
     raw.types.InputMediaPhotoExternal,
@@ -21,15 +21,22 @@ async def resolve_to_raw_photo(
 ]:
     """
     Prepare the photo to be sent in raw
+
     Parameters:
-        client (``pyrogram.Client``):
+        client (:obj:`~pyrogram.Client`):
             The client instance
-        media (``types.InputMediaPhoto``):
+
+        media (:obj:`~pyrogram.types.InputMediaPhoto`):
             The media to be sent
-        chat_id (``int`` | ``str`` | ``None``):
+
+        chat_id (``int`` | ``str``, *optional*):
             The chat id to send the media
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaPhoto|pyrogram.raw.types.InputMediaPhotoExternal`: On success, the resolved media is returned in form of an InputMediaPhoto object.
+        :obj:`~pyrogram.raw.types.InputMediaPhoto`
+        | :obj:`~pyrogram.raw.types.InputMediaPhotoExternal`: On success,
+        the resolved media is returned in form of a proper object.
+
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
@@ -71,22 +78,30 @@ async def resolve_to_raw_photo(
 async def resolve_to_raw_video(
     client: "pyrogram.Client",
     media: "types.InputMediaVideo",
-    file_name: Union[str, None] = None,
-    chat_id: Union[int, str, None] = None,
+    file_name: Optional[str] = None,
+    chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
     Prepare the video to be sent in raw
+
     Parameters:
-        client (``pyrogram.Client``):
+        client (:obj:`~pyrogram.Client`):
             The client instance
-        media (``types.InputMediaVideo``):
+
+        media (:obj:`~pyrogram.types.InputMediaVideo`):
             The media to be sent
-        file_name (``str`` | ``None``):
+
+        file_name (``str``, *optional*):
             The name of the file
-        chat_id (``int`` | ``str`` | ``None``):
+
+        chat_id (``int`` | ``str``, *optional*):
             The chat id to send the media
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+        :obj:`~pyrogram.raw.types.InputMediaDocument`
+        | :obj:`~pyrogram.raw.types.InputMediaDocumentExternal`: On success,
+        the resolved media is returned in form of a proper object.
+
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
@@ -141,22 +156,30 @@ async def resolve_to_raw_video(
 async def resolve_to_raw_audio(
     client: "pyrogram.Client",
     media: "types.InputMediaAudio",
-    file_name: Union[str, None] = None,
-    chat_id: Union[int, str, None] = None,
+    file_name: Optional[str] = None,
+    chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
     Prepare the audio to be sent in raw
+
     Parameters:
-        client (``pyrogram.Client``):
+        client (:obj:`~pyrogram.Client`):
             The client instance
-        media (``types.InputMediaAudio``):
+
+        media (:obj:`~pyrogram.types.InputMediaAudio`):
             The media to be sent
-        file_name (``str`` | ``None``):
+
+        file_name (``str``, *optional*):
             The name of the file
-        chat_id (``int`` | ``str`` | ``None``):
+
+        chat_id (``int`` | ``str``, *optional*):
             The chat id to send the media
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+        :obj:`~pyrogram.raw.types.InputMediaDocument`
+        | :obj:`~pyrogram.raw.types.InputMediaDocumentExternal`: On success,
+        the resolved media is returned in form of a proper object.
+
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
@@ -203,22 +226,30 @@ async def resolve_to_raw_audio(
 async def resolve_to_raw_animation(
     client: "pyrogram.Client",
     media: "types.InputMediaAnimation",
-    file_name: Union[str, None] = None,
-    chat_id: Union[int, str, None] = None,
+    file_name: Optional[str] = None,
+    chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
     Prepare the animation to be sent in raw
+
     Parameters:
-        client (``pyrogram.Client``):
+        client (:obj:`~pyrogram.Client`):
             The client instance
-        media (``types.InputMediaAnimation``):
+
+        media (:obj:`~pyrogram.types.InputMediaAnimation`):
             The media to be sent
-        file_name (``str`` | ``None``):
+
+        file_name (``str``, *optional*):
             The name of the file
-        chat_id (``int`` | ``str`` | ``None``):
+
+        chat_id (``int`` | ``str``, *optional*):
             The chat id to send the media
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+        :obj:`~pyrogram.raw.types.InputMediaDocument`
+        | :obj:`~pyrogram.raw.types.InputMediaDocumentExternal`: On success,
+        the resolved media is returned in form of a proper object.
+
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
@@ -274,22 +305,30 @@ async def resolve_to_raw_animation(
 async def resolve_to_raw_document(
     client: "pyrogram.Client",
     media: "types.InputMediaDocument",
-    file_name: Union[str, None] = None,
-    chat_id: Union[int, str, None] = None,
+    file_name: Optional[str] = None,
+    chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
     Prepare the document to be sent in raw
+
     Parameters:
-        client (``pyrogram.Client``):
+        client (:obj:`~pyrogram.Client`):
             The client instance
-        media (``types.InputMediaDocument``):
+
+        media (:obj:`~pyrogram.types.InputMediaDocument`):
             The media to be sent
-        file_name (``str`` | ``None``):
+
+        file_name (``str``, *optional*):
             The name of the file
-        chat_id (``int`` | ``str`` | ``None``):
+
+        chat_id (``int`` | ``str``, *optional*):
             The chat id to send the media
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaDocument|pyrogram.raw.types.InputMediaDocumentExternal`: On success, the resolved media is returned in form of an InputMediaDocument|InputMediaDocumentExternal object.
+        :obj:`~pyrogram.raw.types.InputMediaDocument`
+        | :obj:`~pyrogram.raw.types.InputMediaDocumentExternal`: On success,
+        the resolved media is returned in form of a proper object.
+
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
@@ -333,12 +372,15 @@ async def resolve_to_raw_location(
 ) -> Union[raw.types.InputMediaGeoLive, raw.types.InputMediaGeoPoint]:
     """
     Prepare the location to be sent in raw
+
     Parameters:
-        loc (``types.Location``):
+        loc (:obj:`~pyrogram.types.Location`):
             The location to be sent
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaGeoLive|pyrogram.raw.types.InputMediaGeoPoint`:
-        On success, the resolved media is returned in form of an InputMediaGeoLive|InputMediaGeoPoint object.
+        :obj:`~pyrogram.raw.types.InputMediaGeoLive`
+        | :obj:`~pyrogram.raw.types.InputMediaGeoPoint`: On success,
+        the resolved media is returned in form of a proper object.
     """
     if loc.live_period is not None:
         return raw.types.InputMediaGeoLive(
@@ -363,9 +405,9 @@ async def resolve_to_raw_location(
 async def resolve_to_raw_sticker(
     client: "pyrogram.Client",
     sticker: "types.InputMediaSticker",
-    emoji: str = "",
-    progress: Union[Callable, None] = None,
-    progress_args: tuple = (),
+    emoji: Optional[str] = "",
+    progress: Optional[Callable] = None,
+    progress_args: Optional[tuple] = (),
 ) -> Union[
     raw.types.InputMediaUploadedDocument,
     raw.types.InputMediaDocumentExternal,
@@ -373,20 +415,29 @@ async def resolve_to_raw_sticker(
 ]:
     """
     Prepare the sticker to be sent in raw
+
     Parameters:
-        client (``pyrogram.Client``):
+        client (:obj:`~pyrogram.Client`):
             The client instance
-        sticker (``types.InputMediaSticker``):
+
+        sticker (:obj:`~pyrogram.types.InputMediaSticker`):
             The media to be sent
-        emoji (``str``):
+
+        emoji (``str``, *optional*):
             The emoji to be associated with the sticker
-        progress (``Callable``):
+
+        progress (``Callable``, *optional*):
             A callable to be called with the progress of the upload
-        progress_args (``tuple``):
+
+        progress_args (``tuple``, *optional*):
             The arguments to be passed to the progress callable
+
     Returns:
-        :obj:`~pyrogram.raw.types.InputMediaUploadedDocument|pyrogram.raw.types.InputMediaDocumentExternal|pyrogram.raw.types.InputMediaDocument`:
-        On success, the resolved media is returned in form of an InputMediaUploadedDocument|InputMediaDocumentExternal|InputMediaDocument object.
+        :obj:`~pyrogram.raw.types.InputMediaUploadedDocument`
+        | :obj:`~pyrogram.raw.types.InputMediaDocumentExternal`
+        | :obj:`~pyrogram.raw.types.InputMediaDocument`: On success, the resolved
+        media is returned in form of a proper object.
+
     Raises:
         RPCError: In case of a Telegram RPC error.
     """

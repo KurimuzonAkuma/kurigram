@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, types, media_utils
@@ -30,20 +30,22 @@ class InputPollOption(Object):
     Parameters:
         text (``str`` | :obj:`~pyrogram.enums.FormattedText`, *optional*):
             Option text, 1-100 characters.
-        media (``str`` | :obj:`pyrogram.types.InputMediaPhoto|pyrogram.types.InputMediaVideo|pyrogram.types.Location|str`, *optional*):
-            Media associated with the option. (photo, video, location, sticker)
+
+        media (:obj:`~pyrogram.types.InputMediaPhoto` | :obj:`~pyrogram.types.InputMediaVideo` | :obj:`~pyrogram.types.InputMediaSticker` | :obj:`~pyrogram.types.Location`, *optional*):
+            Media associated with the option. (photo, video, sticker, location)
     """
 
     def __init__(
         self,
         *,
         text: Union[str, "types.FormattedText"],
-        media: Union[
-            "types.InputMediaPhoto",
-            "types.InputMediaVideo",
-            "types.InputMediaSticker",
-            "types.Location",
-            None,
+        media: Optional[
+            Union[
+                "types.InputMediaPhoto",
+                "types.InputMediaVideo",
+                "types.InputMediaSticker",
+                "types.Location",
+            ]
         ] = None,
     ):
         super().__init__()
