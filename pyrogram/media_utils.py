@@ -1,5 +1,5 @@
 import io
-import os
+import pathlib
 import re
 from typing import BinaryIO, Callable, Optional, Union, cast
 
@@ -38,7 +38,7 @@ async def resolve_to_raw_photo(
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
-    if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
+    if isinstance(media.media, io.BytesIO) or pathlib.Path(media.media).is_file():
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
                 peer=(
@@ -104,7 +104,7 @@ async def resolve_to_raw_video(
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
-    if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
+    if isinstance(media.media, io.BytesIO) or pathlib.Path(media.media).is_file():
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
                 peer=(
@@ -125,7 +125,7 @@ async def resolve_to_raw_video(
                             h=media.height,
                         ),
                         raw.types.DocumentAttributeFilename(
-                            file_name=file_name or os.path.basename(media.media),
+                            file_name=file_name or pathlib.Path(media.media).name,
                         ),
                     ],
                 ),
@@ -183,7 +183,7 @@ async def resolve_to_raw_audio(
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
-    if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
+    if isinstance(media.media, io.BytesIO) or pathlib.Path(media.media).is_file():
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
                 peer=(
@@ -202,7 +202,7 @@ async def resolve_to_raw_audio(
                             title=media.title,
                         ),
                         raw.types.DocumentAttributeFilename(
-                            file_name=file_name or os.path.basename(media.media),
+                            file_name=file_name or pathlib.Path(media.media).name,
                         ),
                     ],
                 ),
@@ -254,7 +254,7 @@ async def resolve_to_raw_animation(
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
-    if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
+    if isinstance(media.media, io.BytesIO) or pathlib.Path(media.media).is_file():
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
                 peer=(
@@ -275,7 +275,7 @@ async def resolve_to_raw_animation(
                             h=media.height,
                         ),
                         raw.types.DocumentAttributeFilename(
-                            file_name=file_name or os.path.basename(media.media),
+                            file_name=file_name or pathlib.Path(media.media).name,
                         ),
                         raw.types.DocumentAttributeAnimated(),
                     ],
@@ -334,7 +334,7 @@ async def resolve_to_raw_document(
     Raises:
         RPCError: In case of a Telegram RPC error.
     """
-    if isinstance(media.media, io.BytesIO) or os.path.isfile(media.media):
+    if isinstance(media.media, io.BytesIO) or pathlib.Path(media.media).is_file():
         uploaded_media = await client.invoke(
             raw.functions.messages.UploadMedia(
                 peer=(
@@ -348,7 +348,7 @@ async def resolve_to_raw_document(
                     file=await client.save_file(media.media),
                     attributes=[
                         raw.types.DocumentAttributeFilename(
-                            file_name=file_name or os.path.basename(media.media),
+                            file_name=file_name or pathlib.Path(media.media).name,
                         ),
                     ],
                 ),
@@ -449,7 +449,7 @@ async def resolve_to_raw_sticker(
     media: Union[BinaryIO, str] = sticker.media
 
     if isinstance(media, str):
-        if os.path.isfile(media):
+        if pathlib.Path(media).is_file():
             file = await client.save_file(
                 media,
                 progress=cast(Callable, progress),
@@ -464,7 +464,7 @@ async def resolve_to_raw_sticker(
                 file=file,
                 attributes=[
                     raw.types.DocumentAttributeFilename(
-                        file_name=os.path.basename(media),
+                        file_name=pathlib.Path(media).name,
                     ),
                     raw.types.DocumentAttributeSticker(
                         alt=emoji,
