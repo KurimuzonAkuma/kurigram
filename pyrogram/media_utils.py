@@ -4,9 +4,7 @@ import re
 from typing import BinaryIO, Callable, Optional, Union, cast
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-from pyrogram import utils
+from pyrogram import raw, types, utils
 from pyrogram.file_id import FileType
 
 
@@ -20,17 +18,17 @@ async def resolve_to_raw_photo(
     raw.types.InputMediaDocument,
 ]:
     """
-    Prepare the photo to be sent in raw
+    Prepare the photo to be sent in raw.
 
     Parameters:
         client (:obj:`~pyrogram.Client`):
-            The client instance
+            The client instance.
 
         media (:obj:`~pyrogram.types.InputMediaPhoto`):
-            The media to be sent
+            The media to be sent.
 
         chat_id (``int`` | ``str``, *optional*):
-            The chat id to send the media
+            The chat id to send the media.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaPhoto`
@@ -63,17 +61,18 @@ async def resolve_to_raw_photo(
             ),
             spoiler=media.has_spoiler,
         )
+
     if re.match("^https?://", media.media):
         return raw.types.InputMediaPhotoExternal(
             url=media.media,
             spoiler=media.has_spoiler,
         )
+
     return utils.get_input_media_from_file_id(
         media.media,
         FileType.PHOTO,
         has_spoiler=media.has_spoiler,
     )
-
 
 async def resolve_to_raw_video(
     client: "pyrogram.Client",
@@ -82,20 +81,20 @@ async def resolve_to_raw_video(
     chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
-    Prepare the video to be sent in raw
+    Prepare the video to be sent in raw.
 
     Parameters:
         client (:obj:`~pyrogram.Client`):
-            The client instance
+            The client instance.
 
         media (:obj:`~pyrogram.types.InputMediaVideo`):
-            The media to be sent
+            The media to be sent.
 
         file_name (``str``, *optional*):
-            The name of the file
+            The name of the file.
 
         chat_id (``int`` | ``str``, *optional*):
-            The chat id to send the media
+            The chat id to send the media.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaDocument`
@@ -141,17 +140,18 @@ async def resolve_to_raw_video(
             ),
             spoiler=media.has_spoiler,
         )
+
     if re.match("^https?://", media.media):
         return raw.types.InputMediaDocumentExternal(
             url=media.media,
             spoiler=media.has_spoiler,
         )
+
     return utils.get_input_media_from_file_id(
         media.media,
         FileType.VIDEO,
         has_spoiler=media.has_spoiler,
     )
-
 
 async def resolve_to_raw_audio(
     client: "pyrogram.Client",
@@ -160,20 +160,20 @@ async def resolve_to_raw_audio(
     chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
-    Prepare the audio to be sent in raw
+    Prepare the audio to be sent in raw.
 
     Parameters:
         client (:obj:`~pyrogram.Client`):
-            The client instance
+            The client instance.
 
         media (:obj:`~pyrogram.types.InputMediaAudio`):
-            The media to be sent
+            The media to be sent.
 
         file_name (``str``, *optional*):
-            The name of the file
+            The name of the file.
 
         chat_id (``int`` | ``str``, *optional*):
-            The chat id to send the media
+            The chat id to send the media.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaDocument`
@@ -216,12 +216,13 @@ async def resolve_to_raw_audio(
                 file_reference=uploaded_media.document.file_reference,
             ),
         )
+
     if re.match("^https?://", media.media):
         return raw.types.InputMediaDocumentExternal(
             url=media.media,
         )
-    return utils.get_input_media_from_file_id(media.media, FileType.AUDIO)
 
+    return utils.get_input_media_from_file_id(media.media, FileType.AUDIO)
 
 async def resolve_to_raw_animation(
     client: "pyrogram.Client",
@@ -230,20 +231,20 @@ async def resolve_to_raw_animation(
     chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
-    Prepare the animation to be sent in raw
+    Prepare the animation to be sent in raw.
 
     Parameters:
         client (:obj:`~pyrogram.Client`):
-            The client instance
+            The client instance.
 
         media (:obj:`~pyrogram.types.InputMediaAnimation`):
-            The media to be sent
+            The media to be sent.
 
         file_name (``str``, *optional*):
-            The name of the file
+            The name of the file.
 
         chat_id (``int`` | ``str``, *optional*):
-            The chat id to send the media
+            The chat id to send the media.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaDocument`
@@ -290,17 +291,18 @@ async def resolve_to_raw_animation(
             ),
             spoiler=media.has_spoiler,
         )
+
     if re.match("^https?://", media.media):
         return raw.types.InputMediaDocumentExternal(
             url=media.media,
             spoiler=media.has_spoiler,
         )
+
     return utils.get_input_media_from_file_id(
         media.media,
         FileType.ANIMATION,
         has_spoiler=media.has_spoiler,
     )
-
 
 async def resolve_to_raw_document(
     client: "pyrogram.Client",
@@ -309,20 +311,20 @@ async def resolve_to_raw_document(
     chat_id: Optional[Union[int, str]] = None,
 ) -> Union[raw.types.InputMediaDocument, raw.types.InputMediaDocumentExternal]:
     """
-    Prepare the document to be sent in raw
+    Prepare the document to be sent in raw.
 
     Parameters:
         client (:obj:`~pyrogram.Client`):
-            The client instance
+            The client instance.
 
         media (:obj:`~pyrogram.types.InputMediaDocument`):
-            The media to be sent
+            The media to be sent.
 
         file_name (``str``, *optional*):
-            The name of the file
+            The name of the file.
 
         chat_id (``int`` | ``str``, *optional*):
-            The chat id to send the media
+            The chat id to send the media.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaDocument`
@@ -360,10 +362,12 @@ async def resolve_to_raw_document(
                 file_reference=uploaded_media.document.file_reference,
             ),
         )
+
     if re.match("^https?://", media.media):
         return raw.types.InputMediaDocumentExternal(
             url=media.media,
         )
+
     return utils.get_input_media_from_file_id(media.media, FileType.DOCUMENT)
 
 
@@ -371,11 +375,11 @@ async def resolve_to_raw_location(
     loc: "types.Location",
 ) -> Union[raw.types.InputMediaGeoLive, raw.types.InputMediaGeoPoint]:
     """
-    Prepare the location to be sent in raw
+    Prepare the location to be sent in raw.
 
     Parameters:
         loc (:obj:`~pyrogram.types.Location`):
-            The location to be sent
+            The location to be sent.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaGeoLive`
@@ -393,6 +397,7 @@ async def resolve_to_raw_location(
             period=loc.live_period,
             proximity_notification_radius=loc.proximity_alert_radius,
         )
+
     return raw.types.InputMediaGeoPoint(
         geo_point=raw.types.InputGeoPoint(
             lat=loc.latitude or 0,
@@ -414,23 +419,23 @@ async def resolve_to_raw_sticker(
     raw.types.InputMediaDocument,
 ]:
     """
-    Prepare the sticker to be sent in raw
+    Prepare the sticker to be sent in raw.
 
     Parameters:
         client (:obj:`~pyrogram.Client`):
-            The client instance
+            The client instance.
 
         sticker (:obj:`~pyrogram.types.InputMediaSticker`):
-            The media to be sent
+            The media to be sent.
 
         emoji (``str``, *optional*):
-            The emoji to be associated with the sticker
+            The emoji to be associated with the sticker.
 
         progress (``Callable``, *optional*):
-            A callable to be called with the progress of the upload
+            A callable to be called with the progress of the upload.
 
         progress_args (``tuple``, *optional*):
-            The arguments to be passed to the progress callable
+            The arguments to be passed to the progress callable.
 
     Returns:
         :obj:`~pyrogram.raw.types.InputMediaUploadedDocument`
@@ -442,6 +447,7 @@ async def resolve_to_raw_sticker(
         RPCError: In case of a Telegram RPC error.
     """
     media: Union[BinaryIO, str] = sticker.media
+
     if isinstance(media, str):
         if os.path.isfile(media):
             file = await client.save_file(
@@ -449,8 +455,10 @@ async def resolve_to_raw_sticker(
                 progress=cast(Callable, progress),
                 progress_args=progress_args,
             )
+
             if not file:
                 raise ValueError("Failed to upload sticker")
+
             return raw.types.InputMediaUploadedDocument(
                 mime_type=client.guess_mime_type(media) or "image/webp",
                 file=file,
@@ -464,6 +472,7 @@ async def resolve_to_raw_sticker(
                     ),
                 ],
             )
+
         if re.match("^https?://", media):
             return raw.types.InputMediaDocumentExternal(url=media)
 
@@ -474,8 +483,10 @@ async def resolve_to_raw_sticker(
         progress=cast(Callable, progress),
         progress_args=progress_args,
     )
+
     if not file:
         raise ValueError("Failed to upload sticker")
+
     return raw.types.InputMediaUploadedDocument(
         mime_type=client.guess_mime_type(media.name) or "image/webp",
         file=file,
