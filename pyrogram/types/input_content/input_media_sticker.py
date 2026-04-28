@@ -16,9 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, BinaryIO
+from typing import BinaryIO, Union
 
 from .input_media import InputMedia
+
 
 class InputMediaSticker(InputMedia):
     """A sticker to be attached.
@@ -30,10 +31,16 @@ class InputMediaSticker(InputMedia):
             pass a file path as string to upload a new file that exists on your local machine or
             pass a binary file-like object with its attribute “.name” set for in-memory uploads or
             pass an HTTP URL as a string for Telegram to get the webp file from the Internet.
+
+        emoji (``str``, *optional*):
+            Emoji associated with this sticker.
     """
 
     def __init__(
         self,
         media: Union[str, BinaryIO],
+        emoji: str = "",
     ) -> None:
         super().__init__(media)
+
+        self.emoji = emoji
