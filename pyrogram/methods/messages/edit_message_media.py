@@ -17,13 +17,10 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-from pyrogram import utils
-from pyrogram import media_utils
+from pyrogram import raw, types, utils
 
 
 class EditMessageMedia:
@@ -32,11 +29,10 @@ class EditMessageMedia:
         chat_id: Union[int, str],
         message_id: int,
         media: "types.InputMedia",
-        show_caption_above_media: bool = None,
-        schedule_date: datetime = None,
-        business_connection_id: str = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
-        file_name: str = None
+        show_caption_above_media: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        business_connection_id: Optional[str] = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
     ) -> "types.Message":
         """Edit animation, audio, document, photo or video messages, or to add media to text messages.
 
@@ -104,18 +100,23 @@ class EditMessageMedia:
         message, entities = None, None
 
         if caption is not None:
-            message, entities = (await utils.parse_text_entities(self, caption, parse_mode, caption_entities)).values()
+            message, entities = (
+                await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
+            ).values()
 
-        if isinstance(media, types.InputMediaPhoto):
-            raw_media = await media_utils.resolve_to_raw_photo(self, media, chat_id)
-        elif isinstance(media, types.InputMediaVideo):
-            raw_media = await media_utils.resolve_to_raw_video(self, media, file_name, chat_id)
-        elif isinstance(media, types.InputMediaAudio):
-            raw_media = await media_utils.resolve_to_raw_audio(self, media, file_name, chat_id)
-        elif isinstance(media, types.InputMediaAnimation):
-            raw_media = await media_utils.resolve_to_raw_animation(self, media, file_name, chat_id)
-        elif isinstance(media, types.InputMediaDocument):
-            raw_media = await media_utils.resolve_to_raw_document(self, media, file_name, chat_id)
+        raw_media = None
+
+        if isinstance(
+            media,
+            (
+                types.InputMediaPhoto,
+                types.InputMediaVideo,
+                types.InputMediaAudio,
+                types.InputMediaAnimation,
+                types.InputMediaDocument,
+            ),
+        ):
+            raw_media = await utils.resolve_raw_media(self, media)
         else:
             raise ValueError("Unsupported media type")
 
@@ -128,15 +129,13 @@ class EditMessageMedia:
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,
-                entities=entities
+                entities=entities,
             ),
-            business_connection_id=business_connection_id
+            business_connection_id=business_connection_id,
         )
 
         for i in r.updates:
             if isinstance(i, (raw.types.UpdateEditMessage, raw.types.UpdateEditChannelMessage)):
                 return await types.Message._parse(
-                    self, i.message,
-                    {i.id: i for i in r.users},
-                    {i.id: i for i in r.chats}
+                    self, i.message, {i.id: i for i in r.users}, {i.id: i for i in r.chats}
                 )
