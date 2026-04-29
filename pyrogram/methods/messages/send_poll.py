@@ -31,6 +31,7 @@ class SendPoll:
         chat_id: Union[int, str],
         question: Union[str, "types.FormattedText"],
         options: List[Union[str, "types.InputPollOption"]],
+        media: Optional["types.InputMedia"] = None,
         message_thread_id: Optional[int] = None,
         business_connection_id: Optional[str] = None,
         is_anonymous: bool = True,
@@ -84,6 +85,10 @@ class SendPoll:
 
             options (List of :obj:`~pyrogram.types.InputPollOption`):
                 List of 2-12 answer options.
+
+            media (:obj:`~pyrogram.types.InputMediaPhoto` | :obj:`~pyrogram.types.InputMediaVideo` | :obj:`~pyrogram.types.InputMediaSticker` | :obj:`~pyrogram.types.Location`, *optional*):
+                Media attached to the poll.
+                Currently supports only photo, video, sticker or location.
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
@@ -179,6 +184,7 @@ class SendPoll:
         Example:
             .. code-block:: python
 
+                # Regular poll
                 await app.send_poll(
                     chat_id=chat_id,
                     question="Is this a poll question?",
@@ -188,7 +194,38 @@ class SendPoll:
                         types.InputPollOption(text="Maybe")
                     ]
                 )
+
+                # Poll with media
+                await app.send_poll(
+                    chat_id=chat_id,
+                    question="Where we are?",
+                    media=types.InputMediaPhoto("photo.jpg"),
+                    options=[
+                        types.InputPollOption(
+                            text="Maybe here?",
+                            media=types.InputMediaPhoto("photo1.jpg")
+                        ),
+                        types.InputPollOption(
+                            text="Or here?",
+                            media=types.Location(
+                                longitude=49.807760,
+                                latitude=73.088504
+                            ),
+                        ),
+                    ]
+                )
         """
+        if media is not None and not isinstance(
+            media,
+            (
+                types.InputMediaPhoto,
+                types.InputMediaVideo,
+                types.InputMediaSticker,
+                types.Location,
+            ),
+        ):
+            raise ValueError("Unsupported media type")
+
         if isinstance(question, str):
             question = types.FormattedText(text=question)
 
@@ -246,6 +283,7 @@ class SendPoll:
                         close_date=utils.datetime_to_timestamp(close_date)
                     ),
                     correct_answers=correct_option_ids,
+                    attached_media=await media.write(client=self) if media is not None else None,
                     solution=solution,
                     solution_entities=solution_entities
                 ),
