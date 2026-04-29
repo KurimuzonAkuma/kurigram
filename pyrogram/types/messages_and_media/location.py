@@ -19,6 +19,7 @@
 from typing import Optional, Union
 
 from pyrogram import raw
+
 from ..object import Object
 
 
@@ -107,3 +108,24 @@ class Location(Object):
             parsed_location.proximity_alert_radius = media.proximity_notification_radius
 
             return parsed_location
+
+    async def write(self, **kwargs) -> Union["raw.types.InputMediaGeoPoint", "raw.types.InputMediaGeoLive"]:
+        if self.live_period is not None:
+            return raw.types.InputMediaGeoLive(
+                geo_point=raw.types.InputGeoPoint(
+                    lat=self.latitude or 0,
+                    long=self.longitude or 0,
+                    accuracy_radius=self.accuracy_radius,
+                ),
+                heading=self.heading,
+                period=self.live_period,
+                proximity_notification_radius=self.proximity_alert_radius,
+            )
+
+        return raw.types.InputMediaGeoPoint(
+            geo_point=raw.types.InputGeoPoint(
+                lat=self.latitude or 0,
+                long=self.longitude or 0,
+                accuracy_radius=self.accuracy_radius,
+            ),
+        )

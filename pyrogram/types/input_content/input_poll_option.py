@@ -32,7 +32,8 @@ class InputPollOption(Object):
             Option text, 1-100 characters.
 
         media (:obj:`~pyrogram.types.InputMediaPhoto` | :obj:`~pyrogram.types.InputMediaVideo` | :obj:`~pyrogram.types.InputMediaSticker` | :obj:`~pyrogram.types.Location`, *optional*):
-            Media associated with the option. (photo, video, sticker, location)
+            Media associated with the option.
+            Currently supports only photo, video, sticker or location.
     """
 
     def __init__(
@@ -57,7 +58,18 @@ class InputPollOption(Object):
         if isinstance(self.text, str):
             self.text = types.FormattedText(text=self.text)
 
+        if self.media is not None and not isinstance(
+            self.media,
+            (
+                types.InputMediaPhoto,
+                types.InputMediaVideo,
+                types.InputMediaSticker,
+                types.Location,
+            ),
+        ):
+            raise ValueError(f"Unsupported media type: {type(self.media)}")
+
         return raw.types.InputPollAnswer(
             text=await self.text.write(client),
-            media=await utils.resolve_raw_media(client, self.media) if self.media else None,
+            media=await self.media.write(client=client) if self.media is not None else None,
         )

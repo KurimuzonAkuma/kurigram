@@ -16,11 +16,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, List, Union, BinaryIO
+import io
+import pathlib
+import re
+from typing import BinaryIO, Callable, List, Optional, Union
 
-from .input_media import InputMedia
-from ..messages_and_media import MessageEntity
+import pyrogram
+from pyrogram import raw, utils
+from pyrogram.file_id import FileType
+
 from ... import enums
+from ..messages_and_media import MessageEntity
+from .input_media import InputMedia
 
 
 class InputMediaAnimation(InputMedia):
@@ -62,19 +69,24 @@ class InputMediaAnimation(InputMedia):
 
         has_spoiler (``bool``, *optional*):
             Pass True if the photo needs to be covered with a spoiler animation.
+
+        file_name (``str``, *optional*):
+            File name of the animation sent.
+            Defaults to file's path basename.
     """
 
     def __init__(
         self,
         media: Union[str, BinaryIO],
-        thumb: str = None,
+        thumb: Optional[str] = None,
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List[MessageEntity] = None,
+        caption_entities: Optional[List[MessageEntity]] = None,
         width: int = 0,
         height: int = 0,
         duration: int = 0,
-        has_spoiler: bool = None
+        has_spoiler: Optional[bool] = None,
+        file_name: Optional[str] = None,
     ):
         super().__init__(media, caption, parse_mode, caption_entities)
 
@@ -83,3 +95,66 @@ class InputMediaAnimation(InputMedia):
         self.height = height
         self.duration = duration
         self.has_spoiler = has_spoiler
+        self.file_name = file_name
+
+    async def write(
+        self,
+        *,
+        client: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+        **kwargs
+    ) -> "raw.base.InputMedia":
+        if chat_id is None:
+            peer = raw.types.InputPeerSelf()
+        else:
+            peer = await client.resolve_peer(chat_id)
+
+        if isinstance(self.media, io.BytesIO) or pathlib.Path(self.media).is_file():
+            uploaded_media = await client.invoke(
+                raw.functions.messages.UploadMedia(
+                    peer=peer,
+                    media=raw.types.InputMediaUploadedDocument(
+                        mime_type=client.guess_mime_type(self.media) or "video/mp4",
+                        file=await client.save_file(
+                            self.media, progress=progress, progress_args=progress_args
+                        ),
+                        thumb=await client.save_file(self.thumb),
+                        spoiler=self.has_spoiler,
+                        attributes=[
+                            raw.types.DocumentAttributeVideo(
+                                supports_streaming=True,
+                                duration=self.duration,
+                                w=self.width,
+                                h=self.height,
+                            ),
+                            raw.types.DocumentAttributeFilename(
+                                file_name=utils.get_file_name(self.media, file_name=self.file_name),
+                            ),
+                            raw.types.DocumentAttributeAnimated(),
+                        ],
+                    ),
+                ),
+            )
+
+            return raw.types.InputMediaDocument(
+                id=raw.types.InputDocument(
+                    id=uploaded_media.document.id,
+                    access_hash=uploaded_media.document.access_hash,
+                    file_reference=uploaded_media.document.file_reference,
+                ),
+                spoiler=self.has_spoiler,
+            )
+
+        if re.match("^https?://", self.media):
+            return raw.types.InputMediaDocumentExternal(
+                url=self.media,
+                spoiler=self.has_spoiler,
+            )
+
+        return utils.get_input_media_from_file_id(
+            self.media,
+            FileType.ANIMATION,
+            has_spoiler=self.has_spoiler,
+        )

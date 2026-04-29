@@ -16,7 +16,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import BinaryIO, List, Optional, Union
+import io
+import pathlib
+import re
+from typing import BinaryIO, Callable, List, Optional, Union
+
+import pyrogram
+from pyrogram import raw, utils
+from pyrogram.file_id import FileType
 
 from ... import enums
 from ..messages_and_media import MessageEntity
@@ -90,19 +97,19 @@ class InputMediaVideo(InputMedia):
     def __init__(
         self,
         media: Union[str, BinaryIO],
-        thumb: str = None,
+        thumb: Optional[str] = None,
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List[MessageEntity] = None,
+        caption_entities: Optional[List[MessageEntity]] = None,
         width: int = 0,
         height: int = 0,
         duration: int = 0,
-        file_name: str = None,
+        file_name: Optional[str] = None,
         supports_streaming: bool = True,
-        has_spoiler: bool = None,
-        no_sound: bool = None,
-        video_start_timestamp: int = None,
-        video_cover: Union[str, BinaryIO] = None,
+        has_spoiler: Optional[bool] = None,
+        no_sound: Optional[bool] = None,
+        video_start_timestamp: Optional[int] = None,
+        video_cover: Optional[Union[str, BinaryIO]] = None,
     ):
         super().__init__(media, caption, parse_mode, caption_entities)
 
@@ -116,3 +123,116 @@ class InputMediaVideo(InputMedia):
         self.no_sound = no_sound
         self.video_start_timestamp = video_start_timestamp
         self.video_cover = video_cover
+
+    async def write(
+        self,
+        *,
+        client: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+        ttl_seconds: Optional[int] = None,
+        **kwargs
+    ) -> "raw.base.InputMedia":
+        if chat_id is None:
+            peer = raw.types.InputPeerSelf()
+        else:
+            peer = await client.resolve_peer(chat_id)
+
+        input_video_cover = None
+
+        if self.video_cover is not None:
+            if (
+                isinstance(self.video_cover, io.BytesIO)
+                or pathlib.Path(self.video_cover).is_file()
+            ):
+                uploaded_media = await client.invoke(
+                    raw.functions.messages.UploadMedia(
+                        peer=peer,
+                        media=raw.types.InputMediaUploadedPhoto(
+                            file=await client.save_file(self.video_cover)
+                        ),
+                    )
+                )
+
+                input_video_cover = raw.types.InputPhoto(
+                    id=uploaded_media.photo.id,
+                    access_hash=uploaded_media.photo.access_hash,
+                    file_reference=uploaded_media.photo.file_reference,
+                )
+            elif re.match("^https?://", self.video_cover):
+                uploaded_media = await client.invoke(
+                    raw.functions.messages.UploadMedia(
+                        peer=peer, media=raw.types.InputMediaPhotoExternal(url=self.video_cover)
+                    )
+                )
+
+                input_video_cover = raw.types.InputPhoto(
+                    id=uploaded_media.photo.id,
+                    access_hash=uploaded_media.photo.access_hash,
+                    file_reference=uploaded_media.photo.file_reference,
+                )
+            else:
+                input_video_cover = utils.get_input_media_from_file_id(
+                    self.video_cover, FileType.PHOTO
+                ).id
+
+        if isinstance(self.media, io.BytesIO) or pathlib.Path(self.media).is_file():
+            uploaded_media = await client.invoke(
+                raw.functions.messages.UploadMedia(
+                    peer=peer,
+                    media=raw.types.InputMediaUploadedDocument(
+                        mime_type=client.guess_mime_type(self.media) or "video/mp4",
+                        file=await client.save_file(
+                            self.media, progress=progress, progress_args=progress_args
+                        ),
+                        spoiler=self.has_spoiler,
+                        thumb=await client.save_file(self.thumb),
+                        video_cover=input_video_cover,
+                        video_timestamp=self.video_start_timestamp,
+                        nosound_video=self.no_sound,
+                        attributes=[
+                            raw.types.DocumentAttributeVideo(
+                                supports_streaming=self.supports_streaming or None,
+                                duration=self.duration,
+                                w=self.width,
+                                h=self.height,
+                            ),
+                            raw.types.DocumentAttributeFilename(
+                                file_name=utils.get_file_name(self.media, file_name=self.file_name),
+                            ),
+                        ],
+                        ttl_seconds=ttl_seconds,
+                    ),
+                ),
+            )
+
+            return raw.types.InputMediaDocument(
+                id=raw.types.InputDocument(
+                    id=uploaded_media.document.id,
+                    access_hash=uploaded_media.document.access_hash,
+                    file_reference=uploaded_media.document.file_reference,
+                ),
+                spoiler=self.has_spoiler,
+                ttl_seconds=ttl_seconds,
+                video_cover=input_video_cover,
+                video_timestamp=self.video_start_timestamp,
+            )
+
+        if re.match("^https?://", self.media):
+            return raw.types.InputMediaDocumentExternal(
+                url=self.media,
+                spoiler=self.has_spoiler,
+                ttl_seconds=ttl_seconds,
+                video_cover=input_video_cover,
+                video_timestamp=self.video_start_timestamp,
+            )
+
+        return utils.get_input_media_from_file_id(
+            self.media,
+            FileType.VIDEO,
+            has_spoiler=self.has_spoiler,
+            ttl_seconds=ttl_seconds,
+            video_cover=input_video_cover,
+            video_start_timestamp=self.video_start_timestamp,
+        )

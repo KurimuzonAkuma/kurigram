@@ -104,9 +104,7 @@ class EditMessageMedia:
                 await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
             ).values()
 
-        raw_media = None
-
-        if isinstance(
+        if not isinstance(
             media,
             (
                 types.InputMediaPhoto,
@@ -116,16 +114,14 @@ class EditMessageMedia:
                 types.InputMediaDocument,
             ),
         ):
-            raw_media = await utils.resolve_raw_media(self, media)
-        else:
-            raise ValueError("Unsupported media type")
+            raise ValueError(f"Unsupported media type {type(media)}")
 
         r = await self.invoke(
             raw.functions.messages.EditMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
                 invert_media=show_caption_above_media,
-                media=raw_media,
+                media=await media.write(client=self),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,

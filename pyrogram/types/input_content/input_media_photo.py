@@ -16,11 +16,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, List, Union, BinaryIO
+import io
+import pathlib
+import re
+from typing import BinaryIO, Callable, List, Optional, Union
 
-from .input_media import InputMedia
-from ..messages_and_media import MessageEntity
+import pyrogram
+from pyrogram import raw, utils
+from pyrogram.file_id import FileType
+
 from ... import enums
+from ..messages_and_media import MessageEntity
+from .input_media import InputMedia
 
 
 class InputMediaPhoto(InputMedia):
@@ -55,9 +62,64 @@ class InputMediaPhoto(InputMedia):
         media: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List[MessageEntity] = None,
-        has_spoiler: bool = None
+        caption_entities: Optional[List[MessageEntity]] = None,
+        has_spoiler: Optional[bool] = None
     ):
         super().__init__(media, caption, parse_mode, caption_entities)
 
         self.has_spoiler = has_spoiler
+
+    async def write(
+        self,
+        *,
+        client: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+        ttl_seconds: Optional[int] = None,
+        **kwargs
+    ) -> "raw.base.InputMedia":
+        # TODO: add support for live photos and maybe move ttl_seconds to class param
+
+        if chat_id is None:
+            peer = raw.types.InputPeerSelf()
+        else:
+            peer = await client.resolve_peer(chat_id)
+
+        if isinstance(self.media, io.BytesIO) or pathlib.Path(self.media).is_file():
+            uploaded_media = await client.invoke(
+                raw.functions.messages.UploadMedia(
+                    peer=peer,
+                    media=raw.types.InputMediaUploadedPhoto(
+                        file=await client.save_file(
+                            self.media, progress=progress, progress_args=progress_args
+                        ),
+                        spoiler=self.has_spoiler,
+                        ttl_seconds=ttl_seconds,
+                    ),
+                )
+            )
+
+            return raw.types.InputMediaPhoto(
+                id=raw.types.InputPhoto(
+                    id=uploaded_media.photo.id,
+                    access_hash=uploaded_media.photo.access_hash,
+                    file_reference=uploaded_media.photo.file_reference,
+                ),
+                spoiler=self.has_spoiler,
+                ttl_seconds=ttl_seconds,
+            )
+
+        if re.match("^https?://", self.media):
+            return raw.types.InputMediaPhotoExternal(
+                url=self.media,
+                spoiler=self.has_spoiler,
+                ttl_seconds=ttl_seconds,
+            )
+
+        return utils.get_input_media_from_file_id(
+            self.media,
+            FileType.PHOTO,
+            has_spoiler=self.has_spoiler,
+            ttl_seconds=ttl_seconds,
+        )

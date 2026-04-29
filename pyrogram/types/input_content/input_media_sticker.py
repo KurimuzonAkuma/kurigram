@@ -16,7 +16,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import BinaryIO, Union
+import io
+import pathlib
+import re
+from typing import BinaryIO, Callable, Optional, Union
+
+import pyrogram
+from pyrogram import raw, utils
+from pyrogram.file_id import FileType
 
 from .input_media import InputMedia
 
@@ -44,3 +51,53 @@ class InputMediaSticker(InputMedia):
         super().__init__(media)
 
         self.emoji = emoji
+
+    async def write(
+        self,
+        *,
+        client: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+        **kwargs
+    ) -> "raw.base.InputMedia":
+        if chat_id is None:
+            peer = raw.types.InputPeerSelf()
+        else:
+            peer = await client.resolve_peer(chat_id)
+
+        if isinstance(self.media, io.BytesIO) or pathlib.Path(self.media).is_file():
+            uploaded_media = await client.invoke(
+                raw.functions.messages.UploadMedia(
+                    peer=peer,
+                    media=raw.types.InputMediaUploadedDocument(
+                        mime_type=client.guess_mime_type(self.media) or "image/webp",
+                        file=await client.save_file(
+                            self.media, progress=progress, progress_args=progress_args
+                        ),
+                        attributes=[
+                            raw.types.DocumentAttributeFilename(
+                                file_name=utils.get_file_name(self.media),
+                            ),
+                            raw.types.DocumentAttributeSticker(
+                                alt=self.emoji, stickerset=raw.types.InputStickerSetEmpty()
+                            ),
+                        ],
+                    ),
+                ),
+            )
+
+            return raw.types.InputMediaDocument(
+                id=raw.types.InputDocument(
+                    id=uploaded_media.document.id,
+                    access_hash=uploaded_media.document.access_hash,
+                    file_reference=uploaded_media.document.file_reference,
+                ),
+            )
+
+        if re.match("^https?://", self.media):
+            return raw.types.InputMediaDocumentExternal(
+                url=self.media,
+            )
+
+        return utils.get_input_media_from_file_id(self.media, FileType.STICKER)

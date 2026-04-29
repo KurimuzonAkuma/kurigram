@@ -16,10 +16,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import BinaryIO, List, Optional, Union
+from typing import TYPE_CHECKING, BinaryIO, List, Optional, Union
 
 from ..messages_and_media import MessageEntity
 from ..object import Object
+
+if TYPE_CHECKING:
+    from pyrogram import raw
 
 
 class InputMedia(Object):
@@ -40,7 +43,7 @@ class InputMedia(Object):
         media: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional[str] = None,
-        caption_entities: Optional[List[MessageEntity]] = None
+        caption_entities: Optional[List[MessageEntity]] = None,
     ):
         super().__init__()
 
@@ -48,3 +51,6 @@ class InputMedia(Object):
         self.caption = caption
         self.parse_mode = parse_mode
         self.caption_entities = caption_entities
+
+    async def write(self, **kwargs) -> "raw.base.InputMedia":
+        raise NotImplementedError
