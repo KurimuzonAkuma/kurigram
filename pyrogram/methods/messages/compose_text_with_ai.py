@@ -26,7 +26,7 @@ class ComposeTextWithAI:
     async def compose_text_with_ai(
         self: "pyrogram.Client",
         text: Union[str, "types.FormattedText"],
-        translate_to_language_code: Optional[str] = "en",
+        translate_to_language_code: Optional[str] = None,
         style_name: Optional[str] = None,
         add_emojis: Optional[bool] = None,
     ) -> "types.FormattedText":
@@ -60,7 +60,7 @@ class ComposeTextWithAI:
         r = await self.invoke(
             raw.functions.messages.ComposeMessageWithAI(
                 text=await text.write(self),
-                translate_to_lang=translate_to_language_code,
+                translate_to_lang=translate_to_language_code or self.lang_code,
                 tone=raw.types.InputAiComposeToneDefault(tone=style_name) if style_name else None,
                 emojify=add_emojis,
             )
