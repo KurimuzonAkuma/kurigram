@@ -26,7 +26,7 @@ class ComposeTextWithAI:
     async def compose_text_with_ai(
         self: "pyrogram.Client",
         text: Union[str, "types.FormattedText"],
-        translate_to_language_code: Optional[str],
+        translate_to_language_code: Optional[str] = "en",
         style_name: Optional[str] = None,
         add_emojis: Optional[bool] = None,
     ) -> "types.FormattedText":
