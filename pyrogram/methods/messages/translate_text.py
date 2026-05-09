@@ -63,7 +63,7 @@ class TranslateText:
 
         r = await self.invoke(
             raw.functions.messages.TranslateText(
-                to_lang=to_language_code,
+                to_lang=to_language_code or self.lang_code,
                 text=[await text.write(self)],
                 tone=tone
             )
