@@ -66,7 +66,7 @@ class TranslateMessageText:
         """
         r = await self.invoke(
             raw.functions.messages.TranslateText(
-                to_lang=to_language_codeor or self.lang_code,
+                to_lang=to_language_code or self.lang_code,
                 peer=await self.resolve_peer(chat_id),
                 id=[message_id],
                 tone=tone
