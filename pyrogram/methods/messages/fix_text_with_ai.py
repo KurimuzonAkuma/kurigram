@@ -36,6 +36,13 @@ class FixTextWithAI:
 
         Returns:
             :obj:`~pyrogram.types.FormattedText`: On success, information about the fixed text is returned.
+
+        Example: 
+            .. code-block:: python
+            
+                app.fix_text_with_ai(
+                    "This statement maay havve feew mistakes"
+                )
         """
         if isinstance(text, str):
             text = types.FormattedText(text=text)
