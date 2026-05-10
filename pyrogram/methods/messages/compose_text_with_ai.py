@@ -53,6 +53,19 @@ class ComposeTextWithAI:
 
         Returns:
             :obj:`~pyrogram.types.FormattedText`: On success, information about the composed text is returned.
+
+        Notes: 
+            - If ``translate_to_language_code`` is None, the text will be processed using the client's default.
+
+        Example: 
+            .. code-block:: python 
+            
+                await app.compose_text_with_ai( 
+                    "hello, how are you?",
+                    translate_to_language_code="ru",
+                    style_name="formal",
+                    add_emojis=True 
+                )
         """
         if isinstance(text, str):
             text = types.FormattedText(text=text)
