@@ -5121,22 +5121,26 @@ class Message(Object, Update):
     async def reply_poll(
         self,
         question: "types.FormattedText",
-        options: List[Union[str, "types.FormattedText"]],
+        options: List[Union[str, "types.InputPollOption"]],
+        description: Optional["types.FormattedText"] = None,
+        description_media: Optional["types.InputPollMedia"] = None,
         message_thread_id: Optional[int] = None,
         business_connection_id: Optional[str] = None,
         is_anonymous: bool = True,
         type: "enums.PollType" = enums.PollType.REGULAR,
         allows_multiple_answers: Optional[bool] = None,
         allows_revoting: Optional[bool] = None,
+        members_only: Optional[bool] = None,
+        country_codes: Optional[List[str]] = None,
         shuffle_options: Optional[bool] = None,
         allow_adding_options: Optional[bool] = None,
         hide_results_until_closes: Optional[bool] = None,
         correct_option_ids: Optional[List[int]] = None,
         explanation: Optional["types.FormattedText"] = None,
+        explanation_media: Optional["types.InputPollMedia"] = None,
         open_period: Optional[int] = None,
         close_date: Optional[datetime] = None,
         is_closed: Optional[bool] = None,
-        description: Optional["types.FormattedText"] = None,
         disable_notification: Optional[bool] = None,
         protect_content: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
@@ -5171,8 +5175,14 @@ class Message(Object, Update):
                 Poll question, 1-255 characters (up to 300 characters for bots).
                 Only custom emoji entities are allowed to be added and only by Premium users.
 
-            options (List of ``str`` | List of :obj:`~pyrogram.types.FormattedText`):
+            options (List of :obj:`~pyrogram.types.InputPollOption`):
                 List of 1-12 answer options, each 1-100 characters.
+
+            description (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
+                Description of the poll to be sent, 0-1024 characters after entities parsing.
+
+            description_media (:obj:`~pyrogram.types.InputPollMedia`, *optional*):
+                Media attached to the poll.
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
@@ -5197,6 +5207,15 @@ class Message(Object, Update):
                 Pass True, if the poll allows to change chosen answer options.
                 Defaults to False for quizzes and to True for regular polls.
 
+            members_only (``bool``, *optional*):
+                Pass True, if voting is limited to users who have been members of the chat where the poll is being sent for more than 24 hours.
+                For channel chats only.
+
+            country_codes (List of ``str``, *optional*):
+                The list of 0-12 two-letter ISO 3166-1 alpha-2 country codes indicating the countries from which users can vote in the poll.
+                For channel chats only.
+                If omitted or empty, then users from any country can participate in the poll.
+
             shuffle_options (``bool``, *optional*):
                 Pass True, if the poll options must be shown in random order.
 
@@ -5212,6 +5231,9 @@ class Message(Object, Update):
             explanation (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
                 Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters with at most 2 line feeds after entities parsing.
 
+            explanation_media (:obj:`~pyrogram.types.InputPollMedia`, *optional*):
+                Media attached to the explanation.
+
             open_period (``int``, *optional*):
                 Amount of time in seconds the poll will be active after creation, 5-2628000.
                 Can't be used together with *close_date*.
@@ -5225,9 +5247,6 @@ class Message(Object, Update):
                 Pass True, if the poll needs to be immediately closed.
                 This can be useful for poll preview.
                 For bots only.
-
-            description (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
-                Description of the poll to be sent, 0-1024 characters after entities parsing.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -5280,21 +5299,25 @@ class Message(Object, Update):
             chat_id=self.chat.id,
             question=question,
             options=options,
+            description=description,
+            description_media=description_media,
             message_thread_id=message_thread_id,
             business_connection_id=business_connection_id,
             is_anonymous=is_anonymous,
             type=type,
             allows_multiple_answers=allows_multiple_answers,
             allows_revoting=allows_revoting,
+            members_only=members_only,
+            country_codes=country_codes,
             shuffle_options=shuffle_options,
             allow_adding_options=allow_adding_options,
             hide_results_until_closes=hide_results_until_closes,
             correct_option_ids=correct_option_ids,
             explanation=explanation,
+            explanation_media=explanation_media,
             open_period=open_period,
             close_date=close_date,
             is_closed=is_closed,
-            description=description,
             disable_notification=disable_notification,
             protect_content=protect_content,
             allow_paid_broadcast=allow_paid_broadcast,
@@ -5309,22 +5332,26 @@ class Message(Object, Update):
     async def answer_poll(
         self,
         question: "types.FormattedText",
-        options: List["types.FormattedText"],
+        options: List[Union[str, "types.InputPollOption"]],
+        description: Optional["types.FormattedText"] = None,
+        description_media: Optional["types.InputPollMedia"] = None,
         message_thread_id: Optional[int] = None,
         business_connection_id: Optional[str] = None,
         is_anonymous: bool = True,
         type: "enums.PollType" = enums.PollType.REGULAR,
         allows_multiple_answers: Optional[bool] = None,
         allows_revoting: Optional[bool] = None,
+        members_only: Optional[bool] = None,
+        country_codes: Optional[List[str]] = None,
         shuffle_options: Optional[bool] = None,
         allow_adding_options: Optional[bool] = None,
         hide_results_until_closes: Optional[bool] = None,
         correct_option_ids: Optional[List[int]] = None,
         explanation: Optional["types.FormattedText"] = None,
+        explanation_media: Optional["types.InputPollMedia"] = None,
         open_period: Optional[int] = None,
         close_date: Optional[datetime] = None,
         is_closed: Optional[bool] = None,
-        description: Optional["types.FormattedText"] = None,
         disable_notification: Optional[bool] = None,
         protect_content: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
@@ -5351,15 +5378,21 @@ class Message(Object, Update):
         Example:
             .. code-block:: python
 
-                await message.reply_poll("This is a poll", ["A", "B", "C"])
+                await message.answer_poll("This is a poll", ["A", "B", "C"])
 
         Parameters:
             question (``str`` | :obj:`~pyrogram.types.FormattedText`):
                 Poll question, 1-255 characters (up to 300 characters for bots).
                 Only custom emoji entities are allowed to be added and only by Premium users.
 
-            options (List of ``str`` | List of :obj:`~pyrogram.types.FormattedText`):
+            options (List of :obj:`~pyrogram.types.InputPollOption`):
                 List of 1-12 answer options, each 1-100 characters.
+
+            description (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
+                Description of the poll to be sent, 0-1024 characters after entities parsing.
+
+            description_media (:obj:`~pyrogram.types.InputPollMedia`, *optional*):
+                Media attached to the poll.
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
@@ -5384,6 +5417,15 @@ class Message(Object, Update):
                 Pass True, if the poll allows to change chosen answer options.
                 Defaults to False for quizzes and to True for regular polls.
 
+            members_only (``bool``, *optional*):
+                Pass True, if voting is limited to users who have been members of the chat where the poll is being sent for more than 24 hours.
+                For channel chats only.
+
+            country_codes (List of ``str``, *optional*):
+                The list of 0-12 two-letter ISO 3166-1 alpha-2 country codes indicating the countries from which users can vote in the poll.
+                For channel chats only.
+                If omitted or empty, then users from any country can participate in the poll.
+
             shuffle_options (``bool``, *optional*):
                 Pass True, if the poll options must be shown in random order.
 
@@ -5399,6 +5441,9 @@ class Message(Object, Update):
             explanation (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
                 Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters with at most 2 line feeds after entities parsing.
 
+            explanation_media (:obj:`~pyrogram.types.InputPollMedia`, *optional*):
+                Media attached to the explanation.
+
             open_period (``int``, *optional*):
                 Amount of time in seconds the poll will be active after creation, 5-2628000.
                 Can't be used together with *close_date*.
@@ -5412,9 +5457,6 @@ class Message(Object, Update):
                 Pass True, if the poll needs to be immediately closed.
                 This can be useful for poll preview.
                 For bots only.
-
-            description (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
-                Description of the poll to be sent, 0-1024 characters after entities parsing.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -5462,21 +5504,25 @@ class Message(Object, Update):
             chat_id=self.chat.id,
             question=question,
             options=options,
+            description=description,
+            description_media=description_media,
             message_thread_id=message_thread_id,
             business_connection_id=business_connection_id,
             is_anonymous=is_anonymous,
             type=type,
             allows_multiple_answers=allows_multiple_answers,
             allows_revoting=allows_revoting,
+            members_only=members_only,
+            country_codes=country_codes,
             shuffle_options=shuffle_options,
             allow_adding_options=allow_adding_options,
             hide_results_until_closes=hide_results_until_closes,
             correct_option_ids=correct_option_ids,
             explanation=explanation,
+            explanation_media=explanation_media,
             open_period=open_period,
             close_date=close_date,
             is_closed=is_closed,
-            description=description,
             disable_notification=disable_notification,
             protect_content=protect_content,
             allow_paid_broadcast=allow_paid_broadcast,
