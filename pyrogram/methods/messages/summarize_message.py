@@ -62,9 +62,9 @@ class SummarizeMessage:
             .. code-block:: python
             
                 await app.summarize_message(
-                    chat_id="me",
-                    message_id=123,
-                    translate_to_language_code="en",
+                    chat_id,
+                    message_id,
+                    translate_to_language_code="ru",
                     tone="neutral"
                 )
             
