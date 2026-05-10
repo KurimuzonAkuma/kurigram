@@ -57,6 +57,17 @@ class SummarizeMessage:
 
         Returns:
             :obj:`~pyrogram.types.FormattedText`: On success, information about the summarized text is returned.
+
+        Example:
+            .. code-block:: python
+            
+                await app.summarize_message(
+                    chat_id="me",
+                    message_id=123,
+                    translate_to_language_code="en",
+                    tone="neutral"
+                )
+            
         """
         r = await self.invoke(
             raw.functions.messages.SummarizeText(
