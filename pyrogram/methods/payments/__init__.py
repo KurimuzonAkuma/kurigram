@@ -36,6 +36,7 @@ from .get_gift_upgrade_variants import GetGiftUpgradeVariants
 from .get_gifts_for_crafting import GetGiftsForCrafting
 from .get_payment_form import GetPaymentForm
 from .get_stars_balance import GetStarsBalance
+from .get_stars_transactions import GetStarsTransactions
 from .get_ton_balance import GetTonBalance
 from .get_upgraded_gift import GetUpgradedGift
 from .get_upgraded_gift_value_info import GetUpgradedGiftValueInfo
@@ -83,6 +84,7 @@ class Payments(
     GetGiftsForCrafting,
     GetPaymentForm,
     GetStarsBalance,
+    GetStarsTransactions,
     GetTonBalance,
     GetUpgradedGift,
     GetUpgradedGiftValueInfo,
