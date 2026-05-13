@@ -279,6 +279,9 @@ class Dispatcher:
 
         async def guest_message_parser(update, users, chats):
             # Guest messages are parsed the same way as new messages, but the handler is different
+            # Pre-parse referenced messages so they get cached before the main message
+            for ref in sorted(update.reference_messages or [], key=lambda m: m.id):
+                await pyrogram.types.Message._parse(self.client, ref, users, chats)
             parsed, _ = await message_parser(update, users, chats)
 
             return (
