@@ -203,8 +203,8 @@ class SendVenue:
                     title=title,
                     address=address,
                     provider="",
-                    venue_id=foursquare_id,
-                    venue_type=foursquare_type
+                    venue_id=foursquare_id or "",
+                    venue_type=foursquare_type or ""
                 ),
                 message="",
                 silent=disable_notification or None,

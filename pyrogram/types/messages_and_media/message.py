@@ -8870,7 +8870,7 @@ class Message(Object, Update):
                     longitude=self.venue.location.longitude,
                     title=self.venue.title,
                     address=self.venue.address,
-                    foursquare_id=self.venue.foursquare_id or "",
+                    foursquare_id=self.venue.foursquare_id,
                     foursquare_type=self.venue.foursquare_type,
                     disable_notification=disable_notification,
                     message_thread_id=message_thread_id,
