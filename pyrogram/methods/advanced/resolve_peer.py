@@ -104,6 +104,11 @@ class ResolvePeer:
                 except KeyError as e:
                     raise PeerIdInvalid from e
         elif isinstance(peer_id, str):
+            peer_id = peer_id.strip()
+
+            if re.fullmatch(r"-\d+", peer_id):
+                return await self.resolve_peer(int(peer_id))
+
             phone = re.sub(r'[+()\s-]', '', peer_id)
 
             if phone.isdigit():
