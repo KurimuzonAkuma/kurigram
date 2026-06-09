@@ -20,6 +20,7 @@ from typing import Optional
 
 import pyrogram
 from pyrogram import raw, types
+from pyrogram import utils
 
 
 class GetBusinessAccountGifts:
@@ -99,10 +100,13 @@ class GetBusinessAccountGifts:
 
         connection_info = await self.get_business_connection(business_connection_id)
 
+        peer=await self.resolve_peer(connection_info.user.id)
+        raw_peer_id = utils.get_raw_peer_id(peer)
+
         while True:
             r = await self.invoke(
                 raw.functions.payments.GetSavedStarGifts(
-                    peer=await self.resolve_peer(connection_info.user.id),
+                    peer=peer,
                     offset=offset,
                     limit=limit,
                     exclude_unsaved=exclude_unsaved,
@@ -123,8 +127,10 @@ class GetBusinessAccountGifts:
             users = {i.id: i for i in r.users}
             chats = {i.id: i for i in r.chats}
 
+            receiver = users.get(raw_peer_id) or chats.get(raw_peer_id)
+
             user_star_gifts = [
-                await types.Gift._parse_saved(self, gift, users, chats)
+                await types.Gift._parse(self, gift, receiver, users=users, chats=chats)
                 for gift in r.gifts
             ]
 

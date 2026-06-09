@@ -16,11 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, List
+from typing import List, Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types
 
 
 class VotePoll:
@@ -44,7 +43,7 @@ class VotePoll:
                 Identifier of the original message with the poll.
 
             options (``int`` | List of ``int``):
-                Index or list of indexes (for multiple answers) of the poll option(s) you want to vote for (0 to 9).
+                Index or list of indexes (for multiple answers) of the poll option(s) you want to vote for (0 to 11).
 
         Returns:
             :obj:`~pyrogram.types.Poll` - On success, the poll with the chosen option is returned.
@@ -62,8 +61,11 @@ class VotePoll:
             raw.functions.messages.SendVote(
                 peer=await self.resolve_peer(chat_id),
                 msg_id=message_id,
-                options=[poll.options[option].data for option in options]
+                options=[poll.options[option].persistent_id.encode() for option in options]
             )
         )
 
-        return types.Poll._parse(self, r.updates[0])
+        users = {i.id: i for i in r.users}
+        chats = {i.id: i for i in r.chats}
+
+        return await types.Poll._parse(self, r.updates[0], None, users=users, chats=chats)

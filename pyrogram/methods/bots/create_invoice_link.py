@@ -16,11 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import pyrogram
-from pyrogram import utils, raw, types
+from pyrogram import raw, types
 
 
 class CreateInvoiceLink:
@@ -32,7 +31,7 @@ class CreateInvoiceLink:
         currency: str,
         prices: List["types.LabeledPrice"],
         provider_token: Optional[str] = None,
-        subscription_period: datetime = None,
+        subscription_period: Optional[int] = None,
         max_tip_amount: Optional[int] = None,
         suggested_tip_amounts: Optional[List[int]] = None,
         start_parameter: Optional[str] = None,
@@ -47,7 +46,7 @@ class CreateInvoiceLink:
         need_shipping_address: Optional[bool] = None,
         send_phone_number_to_provider: Optional[bool] = None,
         send_email_to_provider: Optional[bool] = None,
-        is_flexible: Optional[bool] = None
+        is_flexible: Optional[bool] = None,
     ) -> str:
         """Create invoice link.
 
@@ -75,7 +74,7 @@ class CreateInvoiceLink:
             provider_token (``str``, *optional*):
                 Payment provider token, obtained via `@BotFather <https://t.me/botfather>`_. Pass an empty string for payments in `Telegram Stars <https://t.me/BotNews/90>`_.
 
-            subscription_period (:py:obj:`~datetime.datetime`, *optional*):
+            subscription_period (``int``, *optional*):
                 The number of seconds the subscription will be active for before the next payment.
                 The currency must be set to “XTR” (Telegram Stars) if the parameter is used.
                 Currently, it must always be 2592000 (30 days) if specified.
@@ -129,46 +128,39 @@ class CreateInvoiceLink:
             ``str``: On success, the invoice url is returned.
 
         """
-        media = raw.types.InputMediaInvoice(
-            title=title,
-            description=description,
-            photo=raw.types.InputWebDocument(
-                url=photo_url,
-                mime_type="image/jpg",
-                size=photo_size,
-                attributes=[
-                    raw.types.DocumentAttributeImageSize(
-                        w=photo_width,
-                        h=photo_height
-                    )
-                ]
-            ) if photo_url else None,
-            invoice=raw.types.Invoice(
-                currency=currency,
-                prices=[i.write() for i in prices],
-                test=self.test_mode,
-                name_requested=need_name,
-                phone_requested=need_phone_number,
-                email_requested=need_email,
-                shipping_address_requested=need_shipping_address,
-                flexible=is_flexible,
-                phone_to_provider=send_phone_number_to_provider,
-                email_to_provider=send_email_to_provider,
-                max_tip_amount=max_tip_amount,
-                suggested_tip_amounts=suggested_tip_amounts,
-                subscription_period=utils.datetime_to_timestamp(subscription_period)
-            ),
-            payload=payload.encode() if isinstance(payload, str) else payload,
-            provider=provider_token,
-            provider_data=raw.types.DataJSON(
-                data=provider_data if provider_data else "{}"
-            ),
-            start_param=start_parameter
-        )
-
         r = await self.invoke(
             raw.functions.payments.ExportInvoice(
-                invoice_media=media
+                invoice_media=raw.types.InputMediaInvoice(
+                    title=title,
+                    description=description,
+                    photo=raw.types.InputWebDocument(
+                        url=photo_url,
+                        mime_type="image/jpg",
+                        size=photo_size,
+                        attributes=[
+                            raw.types.DocumentAttributeImageSize(w=photo_width, h=photo_height)
+                        ],
+                    ) if photo_url else None,
+                    invoice=raw.types.Invoice(
+                        currency=currency,
+                        prices=[i.write() for i in prices],
+                        test=self.test_mode,
+                        name_requested=need_name,
+                        phone_requested=need_phone_number,
+                        email_requested=need_email,
+                        shipping_address_requested=need_shipping_address,
+                        flexible=is_flexible,
+                        phone_to_provider=send_phone_number_to_provider,
+                        email_to_provider=send_email_to_provider,
+                        max_tip_amount=max_tip_amount,
+                        suggested_tip_amounts=suggested_tip_amounts,
+                        subscription_period=subscription_period,
+                    ),
+                    payload=payload.encode() if isinstance(payload, str) else payload,
+                    provider=provider_token,
+                    provider_data=raw.types.DataJSON(data=provider_data or "{}"),
+                    start_param=start_parameter,
+                )
             )
         )
 

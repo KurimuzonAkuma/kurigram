@@ -39,4 +39,3 @@ class Disconnect:
         await self.storage.close()
         self.session = None
         self.is_connected = False
-        self._is_server_time_synced = False

@@ -53,20 +53,31 @@ class GetChatHistoryCount:
                 await app.get_chat_history_count(chat_id)
         """
 
-        r = await self.invoke(
-            raw.functions.messages.GetHistory(
-                peer=await self.resolve_peer(chat_id),
-                offset_id=0,
-                offset_date=0,
-                add_offset=0,
-                limit=1,
-                max_id=0,
-                min_id=0,
-                hash=0
-            )
-        )
+        peer = await self.resolve_peer(chat_id)
 
-        if isinstance(r, raw.types.messages.Messages):
-            return len(r.messages)
-        else:
-            return r.count
+        # https://t.me/tdlibchat/189410
+        ranges = await self.invoke(raw.functions.messages.GetSplitRanges())
+        total = 0
+
+        for split_range in ranges:
+            r = await self.invoke(
+                raw.functions.InvokeWithMessagesRange(
+                    range=split_range,
+                    query=raw.functions.messages.GetHistory(
+                        peer=peer,
+                        offset_id=0,
+                        offset_date=0,
+                        add_offset=0,
+                        limit=1,
+                        max_id=0,
+                        min_id=0,
+                        hash=0
+                    )
+                )
+            )
+            if isinstance(r, raw.types.messages.Messages):
+                total += len(r.messages)
+            else:
+                total += r.count
+
+        return total

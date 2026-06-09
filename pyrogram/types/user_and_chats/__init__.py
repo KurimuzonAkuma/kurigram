@@ -29,6 +29,7 @@ from .chat import Chat
 from .chat_admin_with_invite_links import ChatAdminWithInviteLinks
 from .chat_color import ChatColor
 from .chat_event import ChatEvent
+from .chat_folder_invite_link_info import ChatFolderInviteLinkInfo
 from .folder_invite_link import FolderInviteLink
 from .chat_event_filter import ChatEventFilter
 from .chat_invite_link import ChatInviteLink
@@ -86,6 +87,7 @@ __all__ = [
     "StoriesStealthMode",
     "UserRating",
     "ChatEvent",
+    "ChatFolderInviteLinkInfo",
     "FolderInviteLink",
     "ChatEventFilter",
     "ChatInviteLink",

@@ -19,16 +19,22 @@
 import asyncio
 import logging
 from struct import pack, unpack
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
-from .tcp import TCP, Proxy
+from .tcp import TCP, ProxyDict
 
 log = logging.getLogger(__name__)
 
 
 class TCPIntermediate(TCP):
-    def __init__(self, ipv6: bool, proxy: Proxy, loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
-        super().__init__(ipv6, proxy, loop)
+    def __init__(
+        self,
+        ipv6: bool,
+        proxy: Union[str, ProxyDict, None] = None,
+        crypto_executor_workers: int = 1,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+    ) -> None:
+        super().__init__(ipv6, proxy, crypto_executor_workers, loop)
 
     async def connect(self, address: Tuple[str, int]) -> None:
         self.marker_event.clear()

@@ -1,8 +1,11 @@
 id	message
+ACCESS_DENIED	You cannot perform this request.
 ALLOW_PAYMENT_REQUIRED_X	The user has enabled paid messages with {value} stars.
 ANONYMOUS_REACTIONS_DISABLED	Sorry, anonymous administrators cannot leave reactions or participate in polls.
 BOT_ACCESS_FORBIDDEN	You can't access this bot.
+BOT_FORUM_CREATE_FORBIDDEN	This bot prevents users from creating or deleting topics.
 BOT_OWNER_REQUIRED	You must be the owner of the bot to perform this action.
+BOT_VERIFIER_FORBIDDEN	This bot cannot assign [verification icons](https://core.telegram.org/api/bots/verification).
 BROADCAST_FORBIDDEN	This request can't be used in channels.
 CHANNEL_PUBLIC_GROUP_NA	The channel/supergroup is not available.
 CHAT_ACTION_FORBIDDEN	You cannot execute this action.
@@ -54,6 +57,7 @@ USER_INVALID	The provided user is invalid.
 USER_IS_BLOCKED	You were blocked by this user.
 USER_NOT_MUTUAL_CONTACT	The provided user is not a mutual contact.
 USER_NOT_PARTICIPANT	You're not a member of this supergroup/channel.
+USER_PERMISSION_DENIED	The user hasn't granted or has revoked the bot's access to change their emoji status using [bots.toggleUserEmojiStatusPermission](https://core.telegram.org/method/bots.toggleUserEmojiStatusPermission).
 USER_PRIVACY_RESTRICTED	The user's privacy settings do not allow you to do this.
 USER_RESTRICTED	You're limited/restricted by telegram. You can't perform this action.
 VOICE_MESSAGES_FORBIDDEN	This user's privacy settings forbid you from sending voice messages.

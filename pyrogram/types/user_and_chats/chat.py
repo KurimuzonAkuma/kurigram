@@ -333,188 +333,195 @@ class Chat(Object):
 
         kicked_count (``int``, *optional*):
             Number of kicked from the channel.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         banned_count (``int``, *optional*):
             Number of banned from the channel.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         available_min_id (``int``, *optional*):
             Identifier of a maximum unavailable message due to hidden history.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         boosts_applied (``int``, *optional*):
             The number of boosts the current user has applied to the current supergroup.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         channel_admin_rights (:obj:`~pyrogram.types.ChatAdministratorRights`, *optional*):
             A suggested set of administrator rights for the bot, to be shown when adding the bot as admin to a channel.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         chat_admin_rights (:obj:`~pyrogram.types.ChatAdministratorRights`, *optional*):
             A suggested set of administrator rights for the bot, to be shown when adding the bot as admin to a group.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         bot_can_manage_emoji_status (``bool``, *optional*):
             True, if the bot can change your emoji status.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_delete_channel (``bool``, *optional*):
             True, if the current user can delete this channel.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_pin_message (``bool``, *optional*):
             True, if the current user can pin messages in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_schedule_messages (``bool``, *optional*):
             True, if the current user can schedule messages in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_set_location (``bool``, *optional*):
             True, if the current user can set location in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_set_username (``bool``, *optional*):
             True, if the current user can set username in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_view_participants (``bool``, *optional*):
             True, if the current user can view participants in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_view_revenue (``bool``, *optional*):
             True, if the current user can view revenue in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_view_stars_revenue (``bool``, *optional*):
             True, if the current user can view stars revenue in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_view_stats (``bool``, *optional*):
             True, if the current user can view stats in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         can_send_voice_messages (``bool``, *optional*):
             True, if the current user can send voice messages in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
+
+        can_manage_bots (``bool``, *optional*):
+            True, if other bots can be created to be controlled by the bot.
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         common_chats (``int``, *optional*):
             Number of common chats with this user.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_ads_enabled (``bool``, *optional*):
             True, if ads were re-enabled for the current account (only accessible to the currently logged-in user).
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_blocked (``bool``, *optional*):
             True, if you have blocked this user.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_blocked_my_stories_from (``bool``, *optional*):
             True, if we've blocked this user, preventing them from seeing our stories.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_contact_require_premium (``bool``, *optional*):
             True, if we cannot write to this user:
             subscribe to Telegram Premium to get permission to write to this user.
             To set this flag for ourselves invoke account.setGlobalPrivacySettings,
             setting the settings.new_noncontact_peers_require_premium flag.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_phone_calls_available (``bool``, *optional*):
             True, if this user can make VoIP calls.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_phone_calls_private (``bool``, *optional*):
             True, if this user's privacy settings allow you to call them.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_pinned_stories_available (``bool``, *optional*):
             True, if this user has some pinned stories.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_read_dates_available (``bool``, *optional*):
             True, if we cannot fetch the exact read date of messages we send to this user.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_translations_disabled (``bool``, *optional*):
             True, if the real-time chat translation popup should be hidden.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_video_calls_available (``bool``, *optional*):
             True, if this user can receive video calls.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_wallpaper_overridden (``bool``, *optional*):
             True, if this user has a custom wallpaper.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         migrated_from_chat_id (``int``, *optional*):
             The unique chat identifier from which this group was migrated.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         migrated_from_max_message_id (``int``, *optional*):
             The message identifier in the original chat at which this group was migrated.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         online_count (``int``, *optional*):
             Number of online members in the chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         private_forward_name (``str``, *optional*):
             Anonymized text to be shown instead of the user's name on forwarded messages.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         read_inbox_max_id (``int``, *optional*):
             Position up to which all incoming messages are read.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         read_outbox_max_id (``int``, *optional*):
             Position up to which all outgoing messages are read.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         is_ads_restricted (``bool``, *optional*):
             True, if ads on this channel were restricted.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         stats_dc_id (``int``, *optional*):
             The DC ID where the stats are stored.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         theme (:obj:`~pyrogram.types.ChatTheme`, *optional*):
             Theme set for the chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         unread_count (``int``, *optional*):
             Number of unread messages in the chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         view_forum_as_messages (``bool``, *optional*):
             Users may also choose to display messages from all topics of a forum as if they were sent to a normal group,
             using a "View as messages" setting in the local client.
             This setting only affects the current account, and is synced to other logged in sessions using the channels.toggleViewForumAsMessages method.
             Invoking this method will update the value of this flag.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         paid_message_star_count (``int``, *optional*):
             Number of Telegram Stars that must be paid by non-administrator users of the supergroup chat for each sent message.
 
         is_paid_messages_available (``bool``, *optional*):
             True, if paid messages are available in this chat.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         display_gifts_button (``bool``, *optional*):
             True, if the gift button should be shown in the message input field for both participants in all chats.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
+
+        uses_unofficial_app (``bool``, *optional*):
+            True, if the user uses an unofficial application that poses a security risk.
 
         accepted_gift_types (:obj:`~pyrogram.types.AcceptedGiftTypes`, *optional*):
             Information about gifts that can be received by the user.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         note (:obj:`~pyrogram.types.FormattedText`, *optional*):
             Note added to the user's contact.
-            Returned only in :meth:`~pyrogram.Client.get_chat`
+            Returned only in :meth:`~pyrogram.Client.get_chat`.
 
         raw (:obj:`~pyrogram.raw.types.UserFull` | :obj:`~pyrogram.raw.types.ChatFull` | :obj:`~pyrogram.raw.types.ChannelFull`, *optional*):
             The raw chat or user object, as received from the Telegram API.
@@ -632,6 +639,7 @@ class Chat(Object):
         can_view_stars_revenue: Optional[bool] = None,
         can_view_stats: Optional[bool] = None,
         can_send_voice_messages: Optional[bool] = None,
+        can_manage_bots: Optional[bool] = None,
         common_chats: Optional[int] = None,
         is_ads_enabled: Optional[bool] = None,
         is_blocked: Optional[bool] = None,
@@ -658,6 +666,7 @@ class Chat(Object):
         paid_message_star_count: Optional[int] = None,
         is_paid_messages_available: Optional[bool] = None,
         display_gifts_button: Optional[bool] = None,
+        uses_unofficial_app: Optional[bool] = None,
         accepted_gift_types: Optional["types.AcceptedGiftTypes"] = None,
         note: Optional["types.FormattedText"] = None,
         raw: Optional[Union["raw.types.UserFull", "raw.types.ChatFull", "raw.types.ChannelFull"]] = None
@@ -770,6 +779,7 @@ class Chat(Object):
         self.can_view_stars_revenue = can_view_stars_revenue
         self.can_view_stats = can_view_stats
         self.can_send_voice_messages = can_send_voice_messages
+        self.can_manage_bots = can_manage_bots
         self.common_chats = common_chats
         self.is_ads_enabled = is_ads_enabled
         self.is_blocked = is_blocked
@@ -796,6 +806,7 @@ class Chat(Object):
         self.paid_message_star_count = paid_message_star_count
         self.is_paid_messages_available = is_paid_messages_available
         self.display_gifts_button = display_gifts_button
+        self.uses_unofficial_app = uses_unofficial_app
         self.accepted_gift_types = accepted_gift_types
         self.note = note
         self.raw = raw
@@ -852,6 +863,7 @@ class Chat(Object):
             reply_color=types.ChatColor._parse(user.color),
             profile_color=types.ChatColor._parse_profile_color(user.profile_color),
             paid_message_star_count=user.send_paid_messages_stars,
+            can_manage_bots=user.bot_can_manage_bots,
             raw=user,
             client=client
         )
@@ -905,7 +917,7 @@ class Chat(Object):
         if isinstance(channel, raw.types.ChannelForbidden):
             return Chat(
                 id=peer_id,
-                type=enums.ChatType.SUPERGROUP if channel.megagroup else enums.ChatType.CHANNEL,
+                type=enums.ChatType.DIRECT if channel.monoforum else enums.ChatType.SUPERGROUP if channel.megagroup else enums.ChatType.CHANNEL,
                 title=channel.title,
                 is_banned=True,
                 banned_until_date=utils.timestamp_to_datetime(getattr(channel, "until_date", None)),
@@ -1087,6 +1099,7 @@ class Chat(Object):
         parsed_chat.pending_rating_date = utils.timestamp_to_datetime(user.stars_my_pending_rating_date)
         parsed_chat.paid_message_star_count = user.send_paid_messages_stars
         parsed_chat.display_gifts_button = user.display_gifts_button
+        parsed_chat.uses_unofficial_app = user.unofficial_security_risk
         parsed_chat.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
         parsed_chat.note = types.FormattedText._parse(client, user.note)
 
@@ -1342,8 +1355,7 @@ class Chat(Object):
         """
         return await self._client.unarchive_chats(self.id)
 
-    # TODO: Remove notes about "All Members Are Admins" for basic groups, the attribute doesn't exist anymore
-    async def set_title(self, title: str) -> bool:
+    async def set_title(self, title: str) -> "types.Message":
         """Bound method *set_title* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1360,17 +1372,12 @@ class Chat(Object):
 
                 await chat.set_title("Lounge")
 
-        .. note::
-
-            In regular groups (non-supergroups), this method will only work if the "All Members Are Admins"
-            setting is off.
-
         Parameters:
             title (``str``):
                 New chat title, 1-255 characters.
 
         Returns:
-            ``bool``: True on success.
+            :obj:`~pyrogram.types.Message`: On success, the sent service message is returned.
 
         Raises:
             RPCError: In case of Telegram RPC error.
@@ -1420,7 +1427,7 @@ class Chat(Object):
         photo: Union[str, BinaryIO] = None,
         video: Union[str, BinaryIO] = None,
         video_start_ts: float = None,
-    ) -> bool:
+    ) -> "types.Message":
         """Bound method *set_photo* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1463,7 +1470,7 @@ class Chat(Object):
                 The timestamp in seconds of the video frame to use as photo profile preview.
 
         Returns:
-            ``bool``: True on success.
+            :obj:`~pyrogram.types.Message`: On success, the sent service message is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1504,7 +1511,8 @@ class Chat(Object):
     async def ban_member(
         self,
         user_id: Union[int, str],
-        until_date: datetime = utils.zero_datetime()
+        until_date: datetime = utils.zero_datetime(),
+        revoke_messages: Optional[bool] = None
     ) -> Union["types.Message", bool]:
         """Bound method *ban_member* of :obj:`~pyrogram.types.Chat`.
 
@@ -1522,12 +1530,6 @@ class Chat(Object):
 
                 await chat.ban_member(123456789)
 
-        .. note::
-
-            In regular groups (non-supergroups), this method will only work if the "All Members Are Admins" setting is
-            off in the target group. Otherwise members may only be removed by the group's creator or by the member
-            that added them.
-
         Parameters:
             user_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target user.
@@ -1537,6 +1539,9 @@ class Chat(Object):
                 Date when the user will be unbanned.
                 If user is banned for more than 366 days or less than 30 seconds from the current time they are
                 considered to be banned forever. Defaults to epoch (ban forever).
+
+            revoke_messages (``bool``, *optional*):
+                Pass True to delete all messages in the chat for the user who is being removed.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``bool``: On success, a service message will be returned (when applicable), otherwise, in
@@ -1548,7 +1553,8 @@ class Chat(Object):
         return await self._client.ban_chat_member(
             chat_id=self.id,
             user_id=user_id,
-            until_date=until_date
+            until_date=until_date,
+            revoke_messages=revoke_messages
         )
 
     async def unban_member(
@@ -1825,7 +1831,7 @@ class Chat(Object):
         self,
         user_ids: Union[Union[int, str], List[Union[int, str]]],
         forward_limit: int = 100
-    ) -> bool:
+    ) -> List["types.FailedToAddMember"]:
         """Bound method *add_members* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1840,7 +1846,7 @@ class Chat(Object):
                 await chat.add_members(user_id)
 
         Returns:
-            ``bool``: On success, True is returned.
+            List of :obj:`~pyrogram.types.FailedToAddMember`: On success, an empty list is returned, otherwise a list of :obj:`~pyrogram.types.FailedToAddMember` is returned.
         """
         return await self._client.add_chat_members(
             self.id,

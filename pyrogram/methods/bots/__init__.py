@@ -17,10 +17,13 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from .answer_callback_query import AnswerCallbackQuery
+from .answer_guest_query import AnswerGuestQuery
 from .answer_inline_query import AnswerInlineQuery
 from .answer_pre_checkout_query import AnswerPreCheckoutQuery
 from .answer_shipping_query import AnswerShippingQuery
 from .answer_web_app_query import AnswerWebAppQuery
+from .check_bot_username import CheckBotUsername
+from .create_bot import CreateBot
 from .create_invoice_link import CreateInvoiceLink
 from .delete_bot_commands import DeleteBotCommands
 from .edit_user_star_subscription import EditUserStarSubscription
@@ -29,9 +32,12 @@ from .get_bot_default_privileges import GetBotDefaultPrivileges
 from .get_bot_info_description import GetBotInfoDescription
 from .get_bot_info_short_description import GetBotInfoShortDescription
 from .get_bot_name import GetBotName
+from .get_managed_bot_token import GetManagedBotToken
+from .replace_managed_bot_token import ReplaceManagedBotToken
 from .get_chat_menu_button import GetChatMenuButton
 from .get_game_high_scores import GetGameHighScores
 from .get_inline_bot_results import GetInlineBotResults
+from .get_managed_bot_access_settings import GetManagedBotAccessSettings
 from .get_owned_bots import GetOwnedBots
 from .refund_star_payment import RefundStarPayment
 from .request_callback_answer import RequestCallbackAnswer
@@ -45,15 +51,18 @@ from .set_bot_info_short_description import SetBotInfoShortDescription
 from .set_bot_name import SetBotName
 from .set_chat_menu_button import SetChatMenuButton
 from .set_game_score import SetGameScore
+from .set_managed_bot_access_settings import SetManagedBotAccessSettings
 
 
 class Bots(
     AnswerCallbackQuery,
+    AnswerGuestQuery,
     AnswerInlineQuery,
     AnswerPreCheckoutQuery,
     AnswerShippingQuery,
     CreateInvoiceLink,
     GetInlineBotResults,
+    GetManagedBotAccessSettings,
     GetOwnedBots,
     RefundStarPayment,
     RequestCallbackAnswer,
@@ -74,8 +83,13 @@ class Bots(
     GetBotInfoDescription,
     GetBotInfoShortDescription,
     GetBotName,
+    GetManagedBotToken,
+    ReplaceManagedBotToken,
     SetChatMenuButton,
     GetChatMenuButton,
-    AnswerWebAppQuery
+    AnswerWebAppQuery,
+    CheckBotUsername,
+    CreateBot,
+    SetManagedBotAccessSettings
 ):
     pass

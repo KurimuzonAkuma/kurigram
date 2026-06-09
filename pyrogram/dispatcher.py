@@ -20,28 +20,70 @@ import asyncio
 import inspect
 import logging
 from collections import OrderedDict
+from typing import Dict
 
 import pyrogram
 from pyrogram import utils
 from pyrogram.handlers import (
-    CallbackQueryHandler, MessageHandler, EditedMessageHandler, DeletedMessagesHandler,
-    UserStatusHandler, RawUpdateHandler, InlineQueryHandler, PollHandler, PreCheckoutQueryHandler,
-    ChosenInlineResultHandler, ChatMemberUpdatedHandler, ChatJoinRequestHandler, StoryHandler,
-    ShippingQueryHandler, MessageReactionHandler, MessageReactionCountHandler, ChatBoostHandler,
-    PurchasedPaidMediaHandler, BusinessConnectionHandler, BusinessMessageHandler,
-    EditedBusinessMessageHandler, DeletedBusinessMessagesHandler
+    BusinessConnectionHandler,
+    BusinessMessageHandler,
+    CallbackQueryHandler,
+    ChatBoostHandler,
+    ChatJoinRequestHandler,
+    ChatMemberUpdatedHandler,
+    ChosenInlineResultHandler,
+    DeletedBusinessMessagesHandler,
+    DeletedMessagesHandler,
+    EditedBusinessMessageHandler,
+    EditedMessageHandler,
+    ErrorHandler,
+    GuestMessageHandler,
+    Handler,
+    InlineQueryHandler,
+    ManagedBotUpdatedHandler,
+    MessageHandler,
+    MessageReactionCountHandler,
+    MessageReactionHandler,
+    PollHandler,
+    PreCheckoutQueryHandler,
+    PurchasedPaidMediaHandler,
+    RawUpdateHandler,
+    ShippingQueryHandler,
+    StoryHandler,
+    UserStatusHandler,
 )
 from pyrogram.raw.types import (
-    UpdateNewMessage, UpdateNewChannelMessage, UpdateNewScheduledMessage,
-    UpdateBotNewBusinessMessage, UpdateBotEditBusinessMessage, UpdateBotDeleteBusinessMessage,
-    UpdateEditMessage, UpdateEditChannelMessage,
-    UpdateDeleteMessages, UpdateDeleteChannelMessages,
-    UpdateBotCallbackQuery, UpdateInlineBotCallbackQuery, UpdateBotPrecheckoutQuery,
-    UpdateUserStatus, UpdateBotInlineQuery, UpdateMessagePoll,
-    UpdateBotInlineSend, UpdateChatParticipant, UpdateChannelParticipant,
-    UpdateBotChatInviteRequester, UpdateStory, UpdateBotShippingQuery, UpdateBotMessageReaction,
-    UpdateBotMessageReactions, UpdateBotChatBoost, UpdateBusinessBotCallbackQuery,
-    UpdateBotPurchasedPaidMedia, UpdateMessagePollVote, UpdateBotBusinessConnect
+    UpdateBotBusinessConnect,
+    UpdateBotCallbackQuery,
+    UpdateBotChatBoost,
+    UpdateBotChatInviteRequester,
+    UpdateBotDeleteBusinessMessage,
+    UpdateBotEditBusinessMessage,
+    UpdateBotGuestChatQuery,
+    UpdateBotInlineQuery,
+    UpdateBotInlineSend,
+    UpdateBotMessageReaction,
+    UpdateBotMessageReactions,
+    UpdateBotNewBusinessMessage,
+    UpdateBotPrecheckoutQuery,
+    UpdateBotPurchasedPaidMedia,
+    UpdateBotShippingQuery,
+    UpdateBusinessBotCallbackQuery,
+    UpdateChannelParticipant,
+    UpdateChatParticipant,
+    UpdateDeleteChannelMessages,
+    UpdateDeleteMessages,
+    UpdateEditChannelMessage,
+    UpdateEditMessage,
+    UpdateInlineBotCallbackQuery,
+    UpdateManagedBot,
+    UpdateMessagePoll,
+    UpdateMessagePollVote,
+    UpdateNewChannelMessage,
+    UpdateNewMessage,
+    UpdateNewScheduledMessage,
+    UpdateStory,
+    UpdateUserStatus,
 )
 
 log = logging.getLogger(__name__)
@@ -69,6 +111,8 @@ class Dispatcher:
     NEW_BUSINESS_MESSAGE_UPDATES = (UpdateBotNewBusinessMessage,)
     EDITED_BUSINESS_MESSAGE_UPDATES = (UpdateBotEditBusinessMessage,)
     DELETED_BUSINESS_MESSAGES_UPDATES = (UpdateBotDeleteBusinessMessage,)
+    MANAGED_BOT_UPDATES = (UpdateManagedBot,)
+    GUEST_MESSAGE_UPDATES = (UpdateBotGuestChatQuery,)
 
     def __init__(self, client: "pyrogram.Client"):
         self.client = client
@@ -80,8 +124,6 @@ class Dispatcher:
         self.groups = OrderedDict()
 
         async def message_parser(update, users, chats):
-            connection_id = getattr(update, "connection_id", None)
-
             return (
                 await pyrogram.types.Message._parse(
                     self.client,
@@ -90,7 +132,8 @@ class Dispatcher:
                     chats,
                     is_scheduled=isinstance(update, UpdateNewScheduledMessage),
                     replies=0 if getattr(update, "connection_id", None) else 1,
-                    business_connection_id=connection_id,
+                    business_connection_id=getattr(update, "connection_id", None),
+                    guest_query_id=getattr(update, "query_id", None),
                     raw_reply_to_message=getattr(update, "reply_to_message", None)
                 ),
                 MessageHandler
@@ -131,7 +174,7 @@ class Dispatcher:
 
         async def poll_parser(update, users, chats):
             return (
-                pyrogram.types.Poll._parse_update(self.client, update, users),
+                await pyrogram.types.Poll._parse_update(self.client, update, users, chats),
                 PollHandler
             )
 
@@ -228,6 +271,24 @@ class Dispatcher:
                 DeletedBusinessMessagesHandler,
             )
 
+        async def managed_bot_parser(update, users, chats):
+            return (
+                await pyrogram.types.ManagedBotUpdated._parse(self.client, update, users),
+                ManagedBotUpdatedHandler
+            )
+
+        async def guest_message_parser(update, users, chats):
+            # Guest messages are parsed the same way as new messages, but the handler is different
+            # Pre-parse referenced messages so they get cached before the main message
+            for ref in update.reference_messages or []:
+                await pyrogram.types.Message._parse(self.client, ref, users, chats)
+            parsed, _ = await message_parser(update, users, chats)
+
+            return (
+                parsed,
+                GuestMessageHandler
+            )
+
         self.update_parsers = {
             Dispatcher.NEW_MESSAGE_UPDATES: message_parser,
             Dispatcher.EDIT_MESSAGE_UPDATES: edited_message_parser,
@@ -249,7 +310,9 @@ class Dispatcher:
             Dispatcher.BUSINESS_CONNECTION_UPDATES: business_connection_parser,
             Dispatcher.NEW_BUSINESS_MESSAGE_UPDATES: business_message_parser,
             Dispatcher.EDITED_BUSINESS_MESSAGE_UPDATES: edited_business_message_parser,
-            Dispatcher.DELETED_BUSINESS_MESSAGES_UPDATES: deleted_business_messages_parser
+            Dispatcher.DELETED_BUSINESS_MESSAGES_UPDATES: deleted_business_messages_parser,
+            Dispatcher.MANAGED_BOT_UPDATES: managed_bot_parser,
+            Dispatcher.GUEST_MESSAGE_UPDATES: guest_message_parser,
         }
 
         self.update_parsers = {key: value for key_tuple, value in self.update_parsers.items() for key in key_tuple}
@@ -294,7 +357,7 @@ class Dispatcher:
 
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
-    def add_handler(self, handler, group: int):
+    def add_handler(self, handler: Handler, group: int):
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
@@ -311,16 +374,21 @@ class Dispatcher:
 
         self.client.loop.create_task(fn())
 
-    def remove_handler(self, handler, group: int):
+    def remove_handler(self, handler: Handler, group: int):
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
 
             try:
                 if group not in self.groups:
-                    raise ValueError(f"Group {group} does not exist. Handler was not removed.")
+                    raise ValueError(
+                        f"Group {group} does not exist. Handler was not removed."
+                    )
 
                 self.groups[group].remove(handler)
+
+                if not self.groups[group]:
+                    del self.groups[group]
             finally:
                 for lock in self.locks_list:
                     lock.release()
@@ -347,6 +415,9 @@ class Dispatcher:
                 async with lock:
                     for group in self.groups.values():
                         for handler in group:
+                            if isinstance(handler, ErrorHandler):
+                                continue
+
                             args = None
 
                             if isinstance(handler, handler_type):
@@ -382,11 +453,62 @@ class Dispatcher:
                                 raise
                             except pyrogram.ContinuePropagation:
                                 continue
-                            except Exception as e:
-                                log.exception(e)
+                            except Exception as exc:
+                                await self.handle_update_handler_exception(
+                                    exc, handler, update, users, chats
+                                )
 
                             break
             except pyrogram.StopPropagation:
                 pass
             except Exception as e:
                 log.exception(e)
+
+    async def handle_update_handler_exception(
+        self,
+        exc: Exception,
+        update_handler: Handler,
+        update: "pyrogram.raw.base.Update",
+        users: Dict[int, "pyrogram.raw.base.User"],
+        chats: Dict[int, "pyrogram.raw.base.Chat"]
+    ) -> None:
+        handled = False
+        try:
+            for group in self.groups.values():
+                for handler in group:
+                    if not isinstance(handler, ErrorHandler):
+                        continue
+
+                    if not isinstance(exc, handler.exceptions):
+                        continue
+
+                    try:
+                        if inspect.iscoroutinefunction(handler.callback):
+                            await handler.callback(
+                                self.client, exc, update_handler, update, users, chats
+                            )
+                        else:
+                            await self.client.loop.run_in_executor(
+                                self.client.executor, handler.callback,
+                                self.client, exc, update_handler, update, users, chats
+                            )
+                    except pyrogram.StopPropagation:
+                        handled = True
+                        raise
+                    except pyrogram.ContinuePropagation:
+                        handled = True
+                        continue
+                    except Exception:
+                        log.exception("Error handler raised an exception:")
+                    else:
+                        handled = True
+
+                    break
+        except pyrogram.StopPropagation:
+            pass
+        finally:
+            if not handled:
+                log.error(
+                    f"Unexpected exception raised in {type(update_handler).__name__}:",
+                    exc_info=(type(exc), exc, exc.__traceback__)
+                )

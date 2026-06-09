@@ -77,7 +77,7 @@ class Sticker(Object):
         mask_position (:obj:`~pyrogram.types.MaskPosition`, *optional*):
             For mask stickers, the position where the mask should be placed.
 
-        custom_emoji_id (``int``, *optional*):
+        custom_emoji_id (``str``, *optional*):
             For custom emoji stickers, unique identifier of the custom emoji.
 
         needs_repainting (``bool``, *optional*):
@@ -109,7 +109,7 @@ class Sticker(Object):
         set_name: str = None,
         premium_animation: "types.Animation" = None,
         mask_position: "types.MaskPosition" = None,
-        custom_emoji_id: int = None,
+        custom_emoji_id: str = None,
         needs_repainting: bool = None,
         thumbs: List["types.Thumbnail"] = None,
         raw: "raw.types.Document" = None
@@ -195,7 +195,7 @@ class Sticker(Object):
             sticker_attribute = document_attributes[raw.types.DocumentAttributeCustomEmoji]
 
             sticker_type = enums.StickerType.CUSTOM_EMOJI
-            custom_emoji_id = sticker.id
+            custom_emoji_id = str(sticker.id)
             needs_repainting = sticker_attribute.text_color
 
         image_size_attributes = document_attributes.get(raw.types.DocumentAttributeImageSize, None)

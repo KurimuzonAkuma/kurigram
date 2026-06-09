@@ -33,10 +33,17 @@ from .input_media import InputMedia
 from .input_media_animation import InputMediaAnimation
 from .input_media_audio import InputMediaAudio
 from .input_media_document import InputMediaDocument
+from .input_media_live_photo import InputMediaLivePhoto
+from .input_media_location import InputMediaLocation
 from .input_media_photo import InputMediaPhoto
 from .input_media_video import InputMediaVideo
+from .input_media_sticker import InputMediaSticker
+from .input_media_venue import InputMediaVenue
 from .input_message_content import InputMessageContent
 from .input_phone_contact import InputPhoneContact
+from .input_poll_media import InputPollMedia
+from .input_poll_option_media import InputPollOptionMedia
+from .input_poll_option import InputPollOption
 from .input_privacy_rule import InputPrivacyRule
 from .input_privacy_rule_allow_all import InputPrivacyRuleAllowAll
 from .input_privacy_rule_allow_bots import InputPrivacyRuleAllowBots
@@ -74,10 +81,17 @@ __all__ = [
     "InputMediaAnimation",
     "InputMediaAudio",
     "InputMediaDocument",
+    "InputMediaLivePhoto",
+    "InputMediaLocation",
+    "InputMediaVenue",
     "InputMediaPhoto",
     "InputMediaVideo",
+    "InputMediaSticker",
     "InputMessageContent",
     "InputPhoneContact",
+    "InputPollMedia",
+    "InputPollOptionMedia",
+    "InputPollOption",
     "InputPrivacyRule",
     "InputPrivacyRuleAllowAll",
     "InputPrivacyRuleAllowBots",

@@ -57,7 +57,7 @@ class CopyStory:
             story_id (``int``):
                 Message identifier in the chat specified in *from_chat_id*.
 
-            caption (``string``, *optional*):
+            caption (``str``, *optional*):
                 New caption for story, 0-1024 characters after entities parsing.
                 If not specified, the original caption is kept.
                 Pass "" (empty string) to remove the caption.

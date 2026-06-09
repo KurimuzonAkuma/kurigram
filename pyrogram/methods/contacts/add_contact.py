@@ -30,7 +30,7 @@ class AddContact:
         last_name: str = "",
         phone_number: str = "",
         share_phone_number: bool = False,
-        note: Optional["types.FormattedText"] = None
+        note: Optional[Union[str, "types.FormattedText"]] = None
     ):
         """Add an existing Telegram user as contact, even without a phone number.
 
@@ -53,7 +53,7 @@ class AddContact:
                 Whether or not to share the phone number with the user.
                 Defaults to False.
 
-            note (:obj:`~pyrogram.types.FormattedText`, *optional*):
+            note (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
                 Note to set for the user.
 
         Returns:
@@ -68,6 +68,9 @@ class AddContact:
                 # Add contact by username
                 await app.add_contact("username", "Bar")
         """
+        if isinstance(note, str):
+            note = types.FormattedText(text=note)
+
         r = await self.invoke(
             raw.functions.contacts.AddContact(
                 id=await self.resolve_peer(user_id),

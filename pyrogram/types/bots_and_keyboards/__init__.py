@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from .bot_access_settings import BotAccessSettings
 from .bot_command import BotCommand
 from .bot_command_scope import BotCommandScope
 from .bot_command_scope_all_chat_administrators import BotCommandScopeAllChatAdministrators
@@ -35,6 +36,7 @@ from .inline_keyboard_markup import InlineKeyboardMarkup
 from .keyboard_button import KeyboardButton
 from .labeled_price import LabeledPrice
 from .login_url import LoginUrl
+from .managed_bot_updated import ManagedBotUpdated
 from .menu_button import MenuButton
 from .menu_button_commands import MenuButtonCommands
 from .menu_button_default import MenuButtonDefault
@@ -46,7 +48,9 @@ from .pre_checkout_query import PreCheckoutQuery
 from .purchased_paid_media import PurchasedPaidMedia
 from .reply_keyboard_markup import ReplyKeyboardMarkup
 from .reply_keyboard_remove import ReplyKeyboardRemove
+from .sent_guest_message import SentGuestMessage
 from .keyboard_button_request_chat import KeyboardButtonRequestChat
+from .keyboard_button_request_managed_bot import KeyboardButtonRequestManagedBot
 from .keyboard_button_poll_type import KeyboardButtonPollType
 from .keyboard_button_request_users import KeyboardButtonRequestUsers
 from .chat_shared import ChatShared
@@ -58,6 +62,7 @@ from .shipping_address import ShippingAddress
 from .web_app_info import WebAppInfo
 
 __all__ = [
+    "BotAccessSettings",
     "CallbackGame",
     "CallbackQuery",
     "ChatBoostUpdated",
@@ -68,13 +73,16 @@ __all__ = [
     "KeyboardButton",
     "ReplyKeyboardMarkup",
     "ReplyKeyboardRemove",
+    "SentGuestMessage",
     "KeyboardButtonRequestChat",
+    "KeyboardButtonRequestManagedBot",
     "KeyboardButtonRequestUsers",
     "KeyboardButtonPollType",
     "ChatShared",
     "UsersShared",
     "LabeledPrice",
     "LoginUrl",
+    "ManagedBotUpdated",
     "BotCommand",
     "BotCommandScope",
     "BotCommandScopeAllChatAdministrators",

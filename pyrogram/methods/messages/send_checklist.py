@@ -103,11 +103,13 @@ class SendChecklist:
 
                 await client.send_checklist(
                     chat_id=message.chat.id,
-                    title="To do",
-                    tasks=[
-                        types.InputChecklistTask(id=1, text="Task 1"),
-                        types.InputChecklistTask(id=2, text="Task 2")
-                    ]
+                    checklist=types.InputChecklist(
+                        title="To do",
+                        tasks=[
+                            types.InputChecklistTask(id=1, text="Task 1"),
+                            types.InputChecklistTask(id=2, text="Task 2")
+                        ]
+                    )
                 )
         """
         title, entities = (await utils.parse_text_entities(

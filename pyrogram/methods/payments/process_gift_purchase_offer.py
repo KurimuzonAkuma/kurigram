@@ -24,7 +24,7 @@ class ProcessGiftPurchaseOffer:
     async def process_gift_purchase_offer(
         self: "pyrogram.Client",
         message_id: int,
-        approve: bool
+        accept: bool
     ) -> "types.Message":
         """Handles a pending gift purchase offer.
 
@@ -34,9 +34,9 @@ class ProcessGiftPurchaseOffer:
             message_id (``int``):
                 Identifier of the message with the gift purchase offer.
 
-            approve (``bool``):
-                Pass True to approve the request.
-                Pass False to decline it.
+            accept (``bool``):
+                Pass True to accept the request.
+                Pass False to reject it.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent Message is returned.
@@ -44,7 +44,7 @@ class ProcessGiftPurchaseOffer:
         r = await self.invoke(
             raw.functions.payments.ResolveStarGiftOffer(
                 offer_msg_id=message_id,
-                decline=not approve
+                decline=not accept
             )
         )
 

@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+from typing import Optional
 
 import pyrogram
 from pyrogram import types, raw, utils
@@ -57,6 +58,9 @@ class ForumTopic(Object):
         unread_reactions_count (``int``, *optional*):
             Amount of unread messages containing a reaction in this topic.
 
+        unread_poll_vote_count (``int``, *optional*):
+            Number of messages with unread poll votes in the topic.
+
         is_my (``bool``, *optional*):
             True, if you are creator of topic.
 
@@ -80,21 +84,22 @@ class ForumTopic(Object):
         self,
         *,
         id: int,
-        title: str = None,
-        date: datetime = None,
-        icon_color: str = None,
-        icon_emoji_id: int = None,
-        creator: "types.Chat" = None,
-        top_message: "types.Message" = None,
-        unread_count: int = None,
-        unread_mentions_count: int = None,
-        unread_reactions_count: int = None,
-        is_my: bool = None,
-        is_closed: bool = None,
-        is_pinned: bool = None,
-        is_short: bool = None,
-        is_hidden: bool = None,
-        is_deleted: bool = None
+        title: Optional[str] = None,
+        date: Optional[datetime] = None,
+        icon_color: Optional[str] = None,
+        icon_emoji_id: Optional[int] = None,
+        creator: Optional["types.Chat"] = None,
+        top_message: Optional["types.Message"] = None,
+        unread_count: Optional[int] = None,
+        unread_mentions_count: Optional[int] = None,
+        unread_reactions_count: Optional[int] = None,
+        unread_poll_vote_count: Optional[int] = None,
+        is_my: Optional[bool] = None,
+        is_closed: Optional[bool] = None,
+        is_pinned: Optional[bool] = None,
+        is_short: Optional[bool] = None,
+        is_hidden: Optional[bool] = None,
+        is_deleted: Optional[bool] = None
     ):
         super().__init__()
 
@@ -108,6 +113,7 @@ class ForumTopic(Object):
         self.unread_count = unread_count
         self.unread_mentions_count = unread_mentions_count
         self.unread_reactions_count = unread_reactions_count
+        self.unread_poll_vote_count = unread_poll_vote_count
         self.is_my = is_my
         self.is_closed = is_closed
         self.is_pinned = is_pinned
@@ -146,6 +152,7 @@ class ForumTopic(Object):
             unread_count=getattr(forum_topic, "unread_count", None),
             unread_mentions_count=getattr(forum_topic, "unread_mentions_count", None),
             unread_reactions_count=getattr(forum_topic, "unread_reactions_count", None),
+            unread_poll_vote_count=getattr(forum_topic, "unread_poll_votes_count", None),
             is_my=getattr(forum_topic, "my", None),
             is_closed=getattr(forum_topic, "closed", None),
             is_pinned=getattr(forum_topic, "pinned", None),

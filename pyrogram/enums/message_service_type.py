@@ -36,6 +36,12 @@ class MessageServiceType(AutoName):
     LEFT_CHAT_MEMBER = auto()
     "Left chat member"
 
+    CHAT_OWNER_LEFT = auto()
+    "Chat owner left"
+
+    CHAT_OWNER_CHANGED = auto()
+    "Chat owner changed"
+
     NEW_CHAT_TITLE = auto()
     "New chat title"
 
@@ -90,7 +96,16 @@ class MessageServiceType(AutoName):
     GIVEAWAY_COMPLETED = auto()
     "Giveaway completed"
 
-    GIFT_CODE = auto()
+    MANAGED_BOT_CREATED = auto()
+    "Managed bot created"
+
+    POLL_OPTION_ADDED = auto()
+    "Poll option added"
+
+    POLL_OPTION_DELETED = auto()
+    "Poll option deleted"
+
+    PREMIUM_GIFT_CODE = auto()
     "Gift code"
 
     GIFTED_PREMIUM = auto()
@@ -210,5 +225,11 @@ class MessageServiceType(AutoName):
     UPGRADED_GIFT_PURCHASE_OFFER = auto()
     "Upgraded gift purchase offer"
 
-    UPGRADED_GIFT_PURCHASE_OFFER_DECLINED = auto()
+    UPGRADED_GIFT_PURCHASE_OFFER_REJECTED = auto()
     "Upgraded gift purchase offer declined"
+
+    CHAT_HAS_PROTECTED_CONTENT_TOGGLED = auto()
+    "Chat has protected content toggled"
+
+    CHAT_HAS_PROTECTED_CONTENT_DISABLE_REQUESTED = auto()
+    "Chat has protected content disable requested"

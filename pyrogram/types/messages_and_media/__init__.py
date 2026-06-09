@@ -26,6 +26,10 @@ from .boosts_status import BoostsStatus
 from .business_message import BusinessMessage
 from .chat_background import ChatBackground
 from .chat_boost import ChatBoost
+from .chat_owner_changed import ChatOwnerChanged
+from .chat_owner_left import ChatOwnerLeft
+from .chat_has_protected_content_toggled import ChatHasProtectedContentToggled
+from .chat_has_protected_content_disable_requested import ChatHasProtectedContentDisableRequested
 from .chat_theme import ChatTheme
 from .checked_gift_code import CheckedGiftCode
 from .checklist_task import ChecklistTask
@@ -34,6 +38,7 @@ from .checklist_tasks_done import ChecklistTasksDone
 from .checklist import Checklist
 from .contact_registered import ContactRegistered
 from .contact import Contact
+from .craft_gift_result import CraftGiftResult, CraftGiftResultSuccess, CraftGiftResultFail
 from .dice import Dice
 from .direct_message_price_changed import DirectMessagePriceChanged
 from .direct_messages_topic import DirectMessagesTopic
@@ -50,7 +55,7 @@ from .game import Game
 from .general_forum_topic_hidden import GeneralForumTopicHidden
 from .general_forum_topic_unhidden import GeneralForumTopicUnhidden
 from .gift_collection import GiftCollection
-from .gift_code import GiftCode
+from .premium_gift_code import PremiumGiftCode
 from .gift_purchase_limit import GiftPurchaseLimit
 from .gift_resale_parameters import GiftResaleParameters
 from .gift_resale_price import GiftResalePrice, GiftResalePriceStar, GiftResalePriceTon
@@ -59,6 +64,7 @@ from .gift_upgrade_price import GiftUpgradePrice
 from .gift_upgrade_variants import GiftUpgradeVariants
 from .invoice import Invoice
 from .link_preview_options import LinkPreviewOptions
+from .live_photo import LivePhoto
 from .giveaway import Giveaway
 from .input_checklist_task import InputChecklistTask
 from .giveaway_completed import GiveawayCompleted
@@ -66,8 +72,10 @@ from .giveaway_created import GiveawayCreated
 from .giveaway_prize_stars import GiveawayPrizeStars
 from .giveaway_winners import GiveawayWinners
 from .location import Location
+from .managed_bot_created import ManagedBotCreated
 from .mask_position import MaskPosition
 from .media_area import MediaArea
+from .message_content import MessageContent
 from .message import Message
 from .message_entity import MessageEntity
 from .message_origin import MessageOrigin
@@ -87,6 +95,8 @@ from .payment_form import PaymentForm
 from .payment_option import PaymentOption
 from .payment_result import PaymentResult
 from .photo import Photo
+from .poll_option_added import PollOptionAdded
+from .poll_option_deleted import PollOptionDeleted
 from .poll import Poll
 from .proximity_alert_triggered import ProximityAlertTriggered
 from .poll_option import PollOption
@@ -123,7 +133,9 @@ from .upgraded_gift_attribute_id_backdrop import UpgradedGiftAttributeIdBackdrop
 from .upgraded_gift_attribute_id_model import UpgradedGiftAttributeIdModel
 from .upgraded_gift_attribute_id_symbol import UpgradedGiftAttributeIdSymbol
 from .upgraded_gift_attribute_id import UpgradedGiftAttributeId
-from .upgraded_gift_purchase_offer import UpgradedGiftPurchaseOffer, UpgradedGiftPurchaseOfferDeclined
+from .upgraded_gift_attribute_rarity import UpgradedGiftAttributeRarity, UpgradedGiftAttributeRarityPerMille, UpgradedGiftAttributeRarityUncommon, UpgradedGiftAttributeRarityRare, UpgradedGiftAttributeRarityEpic, UpgradedGiftAttributeRarityLegendary
+from .upgraded_gift_original_details import UpgradedGiftOriginalDetails
+from .upgraded_gift_purchase_offer import UpgradedGiftPurchaseOffer, UpgradedGiftPurchaseOfferRejected
 from .upgraded_gift_value_info import UpgradedGiftValueInfo
 from .venue import Venue
 from .video import Video
@@ -146,6 +158,10 @@ __all__ = [
     "BusinessMessage",
     "ChatBackground",
     "ChatBoost",
+    "ChatOwnerChanged",
+    "ChatOwnerLeft",
+    "ChatHasProtectedContentToggled",
+    "ChatHasProtectedContentDisableRequested",
     "ChatTheme",
     "CheckedGiftCode",
     "ChecklistTask",
@@ -154,6 +170,9 @@ __all__ = [
     "Checklist",
     "ContactRegistered",
     "Contact",
+    "CraftGiftResult",
+    "CraftGiftResultSuccess",
+    "CraftGiftResultFail",
     "Dice",
     "DirectMessagePriceChanged",
     "DirectMessagesTopic",
@@ -170,7 +189,7 @@ __all__ = [
     "GeneralForumTopicHidden",
     "GeneralForumTopicUnhidden",
     "GiftCollection",
-    "GiftCode",
+    "PremiumGiftCode",
     "GiftPurchaseLimit",
     "GiftResaleParameters",
     "GiftResalePrice",
@@ -183,13 +202,16 @@ __all__ = [
     "InputChecklistTask",
     "Invoice",
     "LinkPreviewOptions",
+    "LivePhoto",
     "GiveawayCompleted",
     "GiveawayCreated",
     "GiveawayPrizeStars",
     "GiveawayWinners",
     "Location",
+    "ManagedBotCreated",
     "MaskPosition",
     "MediaArea",
+    "MessageContent",
     "Message",
     "MessageEntity",
     "MessageOrigin",
@@ -209,6 +231,8 @@ __all__ = [
     "PaymentOption",
     "PaymentResult",
     "Photo",
+    "PollOptionAdded",
+    "PollOptionDeleted",
     "Poll",
     "ProximityAlertTriggered",
     "PollOption",
@@ -247,8 +271,15 @@ __all__ = [
     "UpgradedGiftAttributeIdModel",
     "UpgradedGiftAttributeIdSymbol",
     "UpgradedGiftAttributeId",
+    "UpgradedGiftAttributeRarity",
+    "UpgradedGiftAttributeRarityPerMille",
+    "UpgradedGiftAttributeRarityUncommon",
+    "UpgradedGiftAttributeRarityRare",
+    "UpgradedGiftAttributeRarityEpic",
+    "UpgradedGiftAttributeRarityLegendary",
+    "UpgradedGiftOriginalDetails",
     "UpgradedGiftPurchaseOffer",
-    "UpgradedGiftPurchaseOfferDeclined",
+    "UpgradedGiftPurchaseOfferRejected",
     "UpgradedGiftValueInfo",
     "Venue",
     "Video",

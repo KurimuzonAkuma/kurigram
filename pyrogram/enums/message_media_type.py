@@ -36,6 +36,9 @@ class MessageMediaType(AutoName):
     PHOTO = auto()
     "Photo media"
 
+    LIVE_PHOTO = auto()
+    "Live photo media"
+
     STICKER = auto()
     "Sticker media"
 

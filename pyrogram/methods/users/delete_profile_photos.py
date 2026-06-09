@@ -31,7 +31,7 @@ class DeleteProfilePhotos:
     ) -> bool:
         """Delete your own profile photos.
 
-        .. include:: /_includes/usable-by/users.rst
+        .. include:: /_includes/usable-by/users-bots.rst
 
         Parameters:
             photo_ids (``str`` | List of ``str``):

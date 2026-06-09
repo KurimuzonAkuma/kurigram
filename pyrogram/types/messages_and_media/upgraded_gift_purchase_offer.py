@@ -72,7 +72,7 @@ class UpgradedGiftPurchaseOffer(Object):
             price = types.GiftResalePriceStar(star_count=action.price.amount)
 
         return UpgradedGiftPurchaseOffer(
-            gift=await types.Gift._parse(client, action.gift, users, chats),
+            gift=await types.Gift._parse(client, action.gift, users=users, chats=chats),
             state=enums.GiftPurchaseOfferState.ACCEPTED
             if action.accepted
             else enums.GiftPurchaseOfferState.REJECTED
@@ -83,8 +83,8 @@ class UpgradedGiftPurchaseOffer(Object):
         )
 
 
-class UpgradedGiftPurchaseOfferDeclined(Object):
-    """An offer to purchase a gift was declined or expired.
+class UpgradedGiftPurchaseOfferRejected(Object):
+    """An offer to purchase a gift was rejected or expired.
 
     Parameters:
         gift (:obj:`~pyrogram.types.Gift`):
@@ -94,10 +94,10 @@ class UpgradedGiftPurchaseOfferDeclined(Object):
             The proposed price.
 
         offer_message_id (``int``):
-            Identifier of the message with purchase offer which was declined or expired.
+            Identifier of the message with purchase offer which was rejected or expired.
 
         was_expired (``bool``):
-            True, if the offer has expired; otherwise, the offer was explicitly declined.
+            True, if the offer has expired; otherwise, the offer was explicitly rejected.
     """
 
     def __init__(
@@ -122,7 +122,7 @@ class UpgradedGiftPurchaseOfferDeclined(Object):
         offer_message_id: Optional[int] = None,
         users: Dict[int, "raw.base.User"] = {},
         chats: Dict[int, "raw.base.Chat"] = {},
-    ) -> "UpgradedGiftPurchaseOfferDeclined":
+    ) -> "UpgradedGiftPurchaseOfferRejected":
         price = None
 
         if isinstance(action.price, raw.types.StarsTonAmount):
@@ -130,8 +130,8 @@ class UpgradedGiftPurchaseOfferDeclined(Object):
         elif isinstance(action.price, raw.types.StarsAmount):
             price = types.GiftResalePriceStar(star_count=action.price.amount)
 
-        return UpgradedGiftPurchaseOfferDeclined(
-            gift=await types.Gift._parse(client, action.gift, users, chats),
+        return UpgradedGiftPurchaseOfferRejected(
+            gift=await types.Gift._parse(client, action.gift, users=users, chats=chats),
             price=price,
             offer_message_id=offer_message_id,
             was_expired=bool(action.expired),

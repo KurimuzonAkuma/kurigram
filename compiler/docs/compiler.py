@@ -209,7 +209,7 @@ def pyrogram_api():
 
     # Methods
 
-    categories = dict(
+    categories = dict(  # noqa: C408
         utilities="""
         Utilities
             start
@@ -243,12 +243,14 @@ def pyrogram_api():
             send_voice
             send_video_note
             send_media_group
+            send_message_draft
             send_location
             send_venue
             send_contact
             send_cached_media
             send_reaction
             edit_message_text
+            fix_text_with_ai
             edit_message_caption
             edit_message_checklist
             edit_message_media
@@ -264,6 +266,7 @@ def pyrogram_api():
             get_messages
             get_scheduled_messages
             get_stickers
+            get_user_personal_chat_messages
             get_web_app_link_url
             get_web_app_url
             mark_checklist_tasks_as_done
@@ -304,8 +307,16 @@ def pyrogram_api():
             send_paid_reaction
             add_to_gifs
             approve_suggested_post
+            compose_text_with_ai
             decline_suggested_post
             add_checklist_tasks
+            add_poll_option
+            delete_poll_option
+            summarize_message
+        """,
+        folders="""
+        Folders
+            check_chat_folder_invite_link
         """,
         chats="""
         Chats
@@ -318,6 +329,8 @@ def pyrogram_api():
             set_administrator_title
             set_chat_photo
             delete_chat_photo
+            delete_message_reaction
+            delete_all_message_reactions
             set_chat_title
             set_chat_description
             set_chat_direct_messages_group
@@ -325,6 +338,7 @@ def pyrogram_api():
             pin_chat_message
             unpin_chat_message
             pin_forum_topic
+            process_chat_has_protected_content_disable_request
             unpin_forum_topic
             unpin_all_chat_messages
             get_chat
@@ -381,7 +395,9 @@ def pyrogram_api():
             get_chat_settings
             transfer_chat_ownership
             get_suitable_discussion_chats
+            get_top_chats
             set_chat_discussion_group
+            set_chat_member_tag
             set_main_profile_tab
         """,
         users="""
@@ -431,6 +447,7 @@ def pyrogram_api():
             add_contact
             delete_contacts
             import_contacts
+            get_blocked_message_senders
             get_contacts
             get_contacts_count
             search_contacts
@@ -459,6 +476,8 @@ def pyrogram_api():
             set_gift_collection_name
             get_gift_upgrade_preview
             get_gift_upgrade_variants
+            get_gifts_for_crafting
+            craft_gift
             get_payment_form
             get_stars_balance
             get_ton_balance
@@ -495,8 +514,11 @@ def pyrogram_api():
         Bots
             get_inline_bot_results
             send_inline_bot_result
+            get_managed_bot_access_settings
+            set_managed_bot_access_settings
             send_invoice
             answer_callback_query
+            answer_guest_query
             answer_inline_query
             request_callback_answer
             send_game
@@ -511,6 +533,8 @@ def pyrogram_api():
             set_chat_menu_button
             get_chat_menu_button
             answer_web_app_query
+            check_bot_username
+            create_bot
             answer_pre_checkout_query
             answer_shipping_query
             create_invoice_link
@@ -521,6 +545,8 @@ def pyrogram_api():
             get_bot_info_short_description
             set_bot_name
             get_bot_name
+            get_managed_bot_token
+            replace_managed_bot_token
             get_owned_bots
         """,
         business="""
@@ -537,13 +563,14 @@ def pyrogram_api():
             disconnect
             initialize
             terminate
-            send_code
-            resend_code
+            send_phone_number_code
+            resend_phone_number_code
             sign_in
             sign_in_bot
             sign_up
             get_password_hint
             check_password
+            change_phone_number
             send_recovery_code
             recover_password
             accept_terms_of_service
@@ -680,6 +707,7 @@ def pyrogram_api():
             ChatSettings
             GlobalPrivacySettings
             HistoryCleared
+            ChatFolderInviteLinkInfo
         """,
         messages_media="""
         Messages & Media
@@ -693,6 +721,9 @@ def pyrogram_api():
             MessageOriginUser
             MessageOrigin
             Photo
+            LivePhoto
+            PollOptionAdded
+            PollOptionDeleted
             Thumbnail
             StrippedThumbnail
             Audio
@@ -713,9 +744,14 @@ def pyrogram_api():
             Voice
             VideoNote
             Contact
+            CraftGiftResult
+            CraftGiftResultSuccess
+            CraftGiftResultFail
             Location
+            ManagedBotCreated
             MaskPosition
             MediaArea
+            MessageContent
             Venue
             Sticker
             Game
@@ -748,7 +784,7 @@ def pyrogram_api():
             Invoice
             LinkPreviewOptions
             GiftCollection
-            GiftCode
+            PremiumGiftCode
             GiftPurchaseLimit
             GiftResaleParameters
             GiftResalePrice
@@ -788,6 +824,10 @@ def pyrogram_api():
             SavedCredentials
             PaymentResult
             ChatBoost
+            ChatOwnerChanged
+            ChatOwnerLeft
+            ChatHasProtectedContentToggled
+            ChatHasProtectedContentDisableRequested
             ContactRegistered
             ScreenshotTaken
             StarAmount
@@ -802,9 +842,17 @@ def pyrogram_api():
             UpgradedGiftValueInfo
             UpgradedGiftAttributeId
             UpgradedGiftPurchaseOffer
+            UpgradedGiftPurchaseOfferRejected
             UpgradedGiftAttributeIdModel
             UpgradedGiftAttributeIdSymbol
             UpgradedGiftAttributeIdBackdrop
+            UpgradedGiftAttributeRarity
+            UpgradedGiftAttributeRarityPerMille
+            UpgradedGiftAttributeRarityUncommon
+            UpgradedGiftAttributeRarityRare
+            UpgradedGiftAttributeRarityEpic
+            UpgradedGiftAttributeRarityLegendary
+            UpgradedGiftOriginalDetails
             InputChatPhoto
             InputChatPhotoPrevious
             InputChatPhotoStatic
@@ -822,6 +870,7 @@ def pyrogram_api():
             ReplyKeyboardMarkup
             KeyboardButton
             ReplyKeyboardRemove
+            SentGuestMessage
             InlineKeyboardMarkup
             InlineKeyboardButton
             LoginUrl
@@ -836,8 +885,10 @@ def pyrogram_api():
             MenuButtonDefault
             SentWebAppMessage
             KeyboardButtonRequestChat
+            KeyboardButtonRequestManagedBot
             KeyboardButtonRequestUsers
             KeyboardButtonPollType
+            ManagedBotUpdated
             OrderInfo
             PreCheckoutQuery
             ShippingAddress
@@ -852,6 +903,7 @@ def pyrogram_api():
         """,
         bot_commands="""
         Bot commands
+            BotAccessSettings
             BotCommand
             BotCommandScope
             BotCommandScopeDefault
@@ -880,10 +932,17 @@ def pyrogram_api():
             InputMediaAnimation
             InputMediaAudio
             InputMediaDocument
+            InputMediaLocation
+            InputMediaVenue
             InputMediaPhoto
+            InputMediaLivePhoto
             InputMediaVideo
+            InputMediaSticker
             InputMessageContent
             InputPhoneContact
+            InputPollOption
+            InputPollMedia
+            InputPollOptionMedia
             InputPrivacyRule
             InputPrivacyRuleAllowAll
             InputPrivacyRuleAllowBots
@@ -927,6 +986,10 @@ def pyrogram_api():
         Authorization
             ActiveSession
             ActiveSessions
+            FirebaseAuthenticationSettings
+            FirebaseAuthenticationSettingsAndroid
+            FirebaseAuthenticationSettingsIos
+            PhoneNumberAuthenticationSettings
             SentCode
             TermsOfService
         """
@@ -1014,6 +1077,8 @@ def pyrogram_api():
             Message.edit_media
             Message.edit_checklist
             Message.edit_reply_markup
+            Message.edit_live_location
+            Message.stop_live_location
             Message.forward
             Message.copy
             Message.copy_media_group
@@ -1028,6 +1093,9 @@ def pyrogram_api():
             Message.read
             Message.view
             Message.pay
+            Message.accept_gift_purchase_offer
+            Message.reject_gift_purchase_offer
+            Message.summarize
         """,
         chat="""
         Chat
@@ -1179,7 +1247,9 @@ def pyrogram_api():
     categories = dict(
         enums="""
         Enumerations
+            BlockList
             BusinessSchedule
+            ButtonStyle
             ChatAction
             ChatEventAction
             ChatJoinType
@@ -1197,6 +1267,7 @@ def pyrogram_api():
             PaidReactionPrivacy
             ParseMode
             PhoneCallDiscardReason
+            PhoneNumberCodeType
             PollType
             PrivacyKey
             ProfileColor
@@ -1205,16 +1276,19 @@ def pyrogram_api():
             SentCodeType
             StoriesPrivacyRules
             UserStatus
+            UpgradedGiftOrigin
             GiftAttributeType
             MediaAreaType
             PrivacyRuleType
             GiftForResaleOrder
             GiftPurchaseOfferState
+            GiftType
             PaymentFormType
             StickerType
             MaskPointType
             SuggestedPostRefundReason
             SuggestedPostState
+            TopChatCategory
         """,
     )
 

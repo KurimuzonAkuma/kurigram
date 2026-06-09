@@ -34,7 +34,7 @@ class SetProfilePhoto:
     ) -> bool:
         """Changes a profile photo for the current user.
 
-        .. include:: /_includes/usable-by/users.rst
+        .. include:: /_includes/usable-by/users-bots.rst
 
         Parameters:
             photo (:obj:`~pyrogram.types.InputChatPhoto`, *optional*):

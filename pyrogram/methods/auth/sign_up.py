@@ -42,7 +42,7 @@ class SignUp:
                 Phone number in international format (includes the country prefix).
 
             phone_code_hash (``str``):
-                Code identifier taken from the result of :meth:`~pyrogram.Client.send_code`.
+                Code identifier taken from the result of :meth:`~pyrogram.Client.send_phone_number_code`.
 
             first_name (``str``):
                 New user first name.

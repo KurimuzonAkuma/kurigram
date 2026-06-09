@@ -17,10 +17,10 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-from ..object import Object
+from pyrogram import raw, types
+
 from ... import utils
+from ..object import Object
 
 
 class Dialog(Object):
@@ -47,6 +47,9 @@ class Dialog(Object):
 
         unread_reactions_count (``int``):
             Amount of unread messages containing a reaction in this dialog.
+
+        unread_poll_vote_count (``int``):
+            Number of messages with unread poll votes in the chat.
 
         unread_mark (``bool``):
             True, if the dialog has the unread mark set.
@@ -75,6 +78,7 @@ class Dialog(Object):
         unread_messages_count: int,
         unread_mentions_count: int,
         unread_reactions_count: int,
+        unread_poll_vote_count: int,
         unread_mark: bool,
         is_pinned: bool,
         folder_id: int = None,
@@ -90,6 +94,7 @@ class Dialog(Object):
         self.unread_messages_count = unread_messages_count
         self.unread_mentions_count = unread_mentions_count
         self.unread_reactions_count = unread_reactions_count
+        self.unread_poll_vote_count = unread_poll_vote_count
         self.unread_mark = unread_mark
         self.is_pinned = is_pinned
         self.folder_id = folder_id
@@ -106,6 +111,7 @@ class Dialog(Object):
             unread_messages_count=dialog.unread_count,
             unread_mentions_count=dialog.unread_mentions_count,
             unread_reactions_count=dialog.unread_reactions_count,
+            unread_poll_vote_count=dialog.unread_poll_votes_count,
             unread_mark=dialog.unread_mark,
             is_pinned=dialog.pinned,
             folder_id=getattr(dialog, "folder_id", None),

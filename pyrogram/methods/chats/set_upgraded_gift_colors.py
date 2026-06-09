@@ -25,7 +25,7 @@ class SetUpgradedGiftColors:
         self: "pyrogram.Client",
         upgraded_gift_colors_id: int
     ) -> bool:
-        """Update color
+        """Changes color scheme for the current user based on an owned or a hosted upgraded gift.
 
         .. include:: /_includes/usable-by/users.rst
 

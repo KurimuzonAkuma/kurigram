@@ -36,7 +36,7 @@ class VerificationStatus(Object):
         is_fake (``bool``, *optional*):
             True, if this user has been flagged for impersonation.
 
-        bot_verification_icon_custom_emoji_id (``int``, *optional*):
+        bot_verification_icon_custom_emoji_id (``str``, *optional*):
             Contains information about verification status of a user.
     """
 
@@ -46,7 +46,7 @@ class VerificationStatus(Object):
         is_verified: Optional[bool] = None,
         is_scam: Optional[bool] = None,
         is_fake: Optional[bool] = None,
-        bot_verification_icon_custom_emoji_id: Optional[int] = None,
+        bot_verification_icon_custom_emoji_id: Optional[str] = None,
     ):
         super().__init__()
 
@@ -71,5 +71,5 @@ class VerificationStatus(Object):
             is_verified=chat.verified,
             is_scam=chat.scam,
             is_fake=chat.fake,
-            bot_verification_icon_custom_emoji_id=bot_verification_icon
+            bot_verification_icon_custom_emoji_id=str(bot_verification_icon) if bot_verification_icon else None
         )

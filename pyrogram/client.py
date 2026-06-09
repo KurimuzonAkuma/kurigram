@@ -117,9 +117,10 @@ class Client(Methods):
             after which the server address will be updated (works both ways).
             Defaults to False (IPv4).
 
-        proxy (``dict``, *optional*):
+        proxy (``dict`` | ``str``, *optional*):
             The Proxy settings as dict.
-            E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*.
+            E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*
+            or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"* or *"tg://user:pass@11.22.33.44:1234"*.
             The *username* and *password* can be omitted if the proxy doesn't require authorization.
 
         test_mode (``bool``, *optional*):
@@ -178,6 +179,7 @@ class Client(Methods):
 
         skip_updates (``bool``, *optional*):
             Pass True to skip pending updates that arrived while the client was offline.
+            Doesn't work if *in_memory* is set to True.
             Defaults to True.
 
         takeout (``bool``, *optional*):
@@ -258,6 +260,7 @@ class Client(Methods):
 
     INVITE_LINK_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:joinchat/|\+))([\w-]+)$")
     UPGRADED_GIFT_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:nft/|\+))([\w-]+)$")
+    CHATLIST_INVITE_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:addlist/|\+))([\w-]+)$")
     SAVED_GIFT_RE = re.compile(r"^(-\d+)_(\d+)$")
     CHANNEL_MESSAGE_LINK_RE = re.compile(r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:c/)?)([\w]+)(?:.+)?$")
     WORKERS = min(32, (os.cpu_count() or 0) + 4)  # os.cpu_count() can be None
@@ -285,7 +288,7 @@ class Client(Methods):
         lang_code: str = LANG_CODE,
         system_lang_code: str = SYSTEM_LANG_CODE,
         ipv6: Optional[bool] = False,
-        proxy: Optional[dict] = None,
+        proxy: Optional[Union[dict, str]] = None,
         test_mode: Optional[bool] = False,
         bot_token: Optional[str] = None,
         session_string: Optional[str] = None,
@@ -380,10 +383,7 @@ class Client(Methods):
         self.dispatcher: Dispatcher = Dispatcher(self)
 
         self.rnd_id = MsgId
-        self._last_sync_time = time.time()
-        self._last_monotonic = time.monotonic()
-
-        self._is_server_time_synced = False
+        self._server_time_offset = 0.0
 
         self.parser: Parser = Parser(self)
 
@@ -423,9 +423,19 @@ class Client(Methods):
         if isinstance(loop, asyncio.AbstractEventLoop):
             self.loop = loop
         else:
-            self.loop = utils.get_event_loop()
+            self.loop = None
 
         self.__config: "raw.types.Config" = None
+
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        if not self._loop:
+            self._loop = utils.get_event_loop()
+        return self._loop
+
+    @loop.setter
+    def loop(self, value: asyncio.AbstractEventLoop):
+        self._loop = value
 
     def __enter__(self):
         return self.start()
@@ -486,7 +496,7 @@ class Client(Methods):
                     else:
                         self.phone_number = value
 
-                sent_code = await self.send_code(self.phone_number)
+                sent_code = await self.send_phone_number_code(self.phone_number)
             except BadRequest as e:
                 print(e.MESSAGE)
                 self.phone_number = None
@@ -816,7 +826,7 @@ class Client(Methods):
                 pts = getattr(update, "pts", None)
                 pts_count = getattr(update, "pts_count", None)
 
-                if pts and not self.skip_updates:
+                if pts:
                     await self.storage.update_state(
                         (
                             utils.get_channel_id(channel_id) if channel_id else 0,
@@ -858,16 +868,15 @@ class Client(Methods):
 
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
-            if not self.skip_updates:
-                await self.storage.update_state(
-                    (
-                        0,
-                        updates.pts,
-                        None,
-                        updates.date,
-                        None
-                    )
+            await self.storage.update_state(
+                (
+                    0,
+                    updates.pts,
+                    None,
+                    updates.date,
+                    None
                 )
+            )
 
             diff = await self.invoke(
                 raw.functions.updates.GetDifference(
@@ -1086,13 +1095,10 @@ class Client(Methods):
                 file.close()
                 os.remove(temp_file_path)
 
-            if isinstance(e, asyncio.CancelledError):
-                raise e
+            if isinstance(e, pyrogram.StopTransmission):
+                return None
 
-            if isinstance(e, (FloodWait, FloodPremiumWait)):
-                raise e
-
-            return None
+            raise e
         else:
             if in_memory:
                 file.name = file_name
@@ -1287,12 +1293,8 @@ class Client(Methods):
                         raise e
                     finally:
                         await cdn_session.stop()
-            except pyrogram.StopTransmission:
-                raise
-            except (FloodWait, FloodPremiumWait):
-                raise
             except Exception as e:
-                log.exception(e)
+                raise e
 
     async def get_session(
         self,
@@ -1516,16 +1518,12 @@ class Client(Methods):
 
     @property
     def server_time(self) -> float:
-        return self._last_sync_time + (time.monotonic() - self._last_monotonic)
+        return time.time() + self._server_time_offset
 
     def _set_server_time(self, msg_id: int):
-        if self._is_server_time_synced:
-            return
-
-        self._last_sync_time = msg_id / float(2**32)
-        self._last_monotonic = time.monotonic()
-        self._is_server_time_synced = True
-        log.info(f"Time synced: {utils.timestamp_to_datetime(self._last_sync_time)}")
+        server_ts = msg_id / float(2**32)
+        self._server_time_offset = server_ts - time.time()
+        log.info(f"Time synced: offset={self._server_time_offset:.3f}s, server_time={utils.timestamp_to_datetime(server_ts)}")
 
     def guess_mime_type(self, filename: Union[str, BytesIO]) -> Optional[str]:
         if isinstance(filename, BytesIO):

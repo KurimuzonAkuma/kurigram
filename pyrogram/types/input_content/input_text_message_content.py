@@ -50,6 +50,7 @@ class InputTextMessageContent(InputMessageContent):
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: List["types.MessageEntity"] = None,
         link_preview_options: "types.LinkPreviewOptions" = None,
+
         disable_web_page_preview: bool = None
     ):
         super().__init__()
@@ -64,12 +65,28 @@ class InputTextMessageContent(InputMessageContent):
         self.parse_mode = parse_mode
         self.entities = entities
         self.link_preview_options = link_preview_options
+
         self.disable_web_page_preview = disable_web_page_preview
 
     async def write(self, client: "pyrogram.Client", reply_markup):
         message, entities = (await utils.parse_text_entities(
             client, self.message_text, self.parse_mode, self.entities
         )).values()
+
+        if self.link_preview_options is None:
+            self.link_preview_options = client.link_preview_options
+
+        if self.link_preview_options and self.link_preview_options.url:
+            return raw.types.InputBotInlineMessageMediaWebPage(
+                invert_media=self.link_preview_options.show_above_text,
+                force_large_media=self.link_preview_options.prefer_large_media,
+                force_small_media=self.link_preview_options.prefer_small_media,
+                optional=bool(message),
+                url=self.link_preview_options.url,
+                reply_markup=await reply_markup.write(client) if reply_markup else None,
+                message=message,
+                entities=entities
+            )
 
         return raw.types.InputBotInlineMessageText(
             no_webpage=getattr(self.link_preview_options, "is_disabled", None) or None,

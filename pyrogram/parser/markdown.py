@@ -18,9 +18,11 @@
 
 import html
 import re
+import urllib.parse
 from typing import List, Optional, Tuple, Union
 
 import pyrogram
+from pyrogram import types
 from pyrogram.enums import MessageEntityType
 
 from . import utils
@@ -56,11 +58,14 @@ MARKDOWN_RE = re.compile(r"({d})|(!?)\[(.+?)\]\((.+?)\)".format(
 OPENING_TAG = "<{}>"
 CLOSING_TAG = "</{}>"
 URL_MARKUP = '<a href="{}">{}</a>'
-EMOJI_MARKUP = "<emoji id={}>{}</emoji>"
+EMOJI_MARKUP = '<tg-emoji emoji-id="{}">{}</tg-emoji>'
+DATE_TIME_MARKUP = '<tg-time unix="{}">{}</tg-time>'
+FORMATTED_DATE_TIME_MARKUP = '<tg-time unix="{}" format="{}">{}</tg-time>'
 FIXED_WIDTH_DELIMS = [CODE_DELIM, PRE_DELIM]
 
 
 class Markdown:
+    # TODO: Full refactor
     def __init__(self, client: Optional["pyrogram.Client"]):
         self.html = HTML(client)
 
@@ -166,9 +171,9 @@ class Markdown:
         delims = set()
         is_fixed_width = False
 
-        for i, match in enumerate(re.finditer(MARKDOWN_RE, text)):
+        for match in re.finditer(MARKDOWN_RE, text):
             start, _ = match.span()
-            delim, is_emoji, text_url, url = match.groups()
+            delim, is_emoji_like, text_url, url = match.groups()
             full = match.group(0)
 
             if delim in FIXED_WIDTH_DELIMS:
@@ -177,14 +182,29 @@ class Markdown:
             if is_fixed_width and delim not in FIXED_WIDTH_DELIMS:
                 continue
 
-            if not is_emoji and text_url:
+            if not is_emoji_like and text_url:
                 text = utils.replace_once(text, full, URL_MARKUP.format(url, text_url), start)
                 continue
 
-            if is_emoji:
-                emoji = text_url
-                emoji_id = url.lstrip("tg://emoji?id=")
-                text = utils.replace_once(text, full, EMOJI_MARKUP.format(emoji_id, emoji), start)
+            if is_emoji_like:
+                parsed = urllib.parse.urlparse(url)
+                params = urllib.parse.parse_qs(parsed.query)
+                emoji_date = text_url
+
+                if parsed.netloc == "time":
+                    unix_time = params.get("unix", [""])[0]
+                    date_time_format = params.get("format", [""])[0]
+
+                    if date_time_format:
+                        markup = FORMATTED_DATE_TIME_MARKUP.format(unix_time, date_time_format, emoji_date)
+                    else:
+                        markup = DATE_TIME_MARKUP.format(unix_time, emoji_date)
+                    text = utils.replace_once(text, full, markup, start)
+                elif parsed.netloc == "emoji":
+                    emoji_id = params.get("id", [""])[0]
+                    markup = EMOJI_MARKUP.format(emoji_id, emoji_date)
+                    text = utils.replace_once(text, full, markup, start)
+
                 continue
 
             if delim == BOLD_DELIM:
@@ -222,7 +242,7 @@ class Markdown:
         return await self.html.parse(text)
 
     @staticmethod
-    def unparse(text: str, entities: list):
+    def unparse(text: str, entities: List["types.MessageEntity"]):
         text = utils.add_surrogates(text)
 
         entities_offsets = []
@@ -276,6 +296,14 @@ class Markdown:
                 emoji_id = entity.custom_emoji_id
                 start_tag = "!["
                 end_tag = f"](tg://emoji?id={emoji_id})"
+            elif entity_type == MessageEntityType.DATE_TIME:
+                unix_time = entity.unix_time
+                date_time_format = entity.date_time_format
+                start_tag = "!["
+                if date_time_format:
+                    end_tag = f"](tg://time?unix={unix_time}&format={date_time_format})"
+                else:
+                    end_tag = f"](tg://time?unix={unix_time})"
             else:
                 continue
 

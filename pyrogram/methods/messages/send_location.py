@@ -31,6 +31,10 @@ class SendLocation:
         chat_id: Union[int, str],
         latitude: float,
         longitude: float,
+        horizontal_accuracy: float = None,
+        live_period: int = None,
+        heading: int = None,
+        proximity_alert_radius: int = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
         direct_messages_topic_id: int = None,
@@ -71,6 +75,22 @@ class SendLocation:
 
             longitude (``float``):
                 Longitude of the location.
+
+            horizontal_accuracy (``float``, *optional*):
+                The radius of uncertainty for the location, measured in meters, 0-1500.
+
+            live_period (``int``, *optional*):
+                For live locations, a period for which the location can be updated, in seconds.
+                Must be between 60 and 86400 for a temporary live location, 0x7FFFFFFF for permanent live location.
+
+            heading (``int``, *optional*):
+                For live locations, a direction in which the user is moving, in degrees.
+                Must be between 1 and 360 if specified.
+
+            proximity_alert_radius (``int``, *optional*):
+                For live locations, a maximum distance for proximity alerts about approaching another chat member, in meters.
+                Must be between 1 and 100000 if specified.
+                Can't be enabled in channels and Saved Messages.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -173,15 +193,30 @@ class SendLocation:
                 quote_position=quote_offset
             )
 
+        if live_period is not None:
+            media = raw.types.InputMediaGeoLive(
+                geo_point=raw.types.InputGeoPoint(
+                    lat=latitude,
+                    long=longitude,
+                    accuracy_radius=horizontal_accuracy
+                ),
+                heading=heading,
+                period=live_period,
+                proximity_notification_radius=proximity_alert_radius
+            )
+        else:
+            media = raw.types.InputMediaGeoPoint(
+                geo_point=raw.types.InputGeoPoint(
+                    lat=latitude,
+                    long=longitude,
+                    accuracy_radius=horizontal_accuracy
+                )
+            )
+
         r = await self.invoke(
             raw.functions.messages.SendMedia(
                 peer=await self.resolve_peer(chat_id),
-                media=raw.types.InputMediaGeoPoint(
-                    geo_point=raw.types.InputGeoPoint(
-                        lat=latitude,
-                        long=longitude
-                    )
-                ),
+                media=media,
                 message="",
                 silent=disable_notification or None,
                 reply_to=await utils.get_reply_to(

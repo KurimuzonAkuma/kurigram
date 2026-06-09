@@ -41,7 +41,7 @@ class TransferGift:
 
         Parameters:
             owned_gift_id (``str``):
-                Unique identifier of the regular gift that should be transferred.
+                Unique identifier of the gift that should be transferred.
                 For a user gift, you can use the message ID (int) of the gift message.
                 For a channel gift, you can use the packed format `chatID_savedID` (str).
                 For a upgraded gift, you can use the gift link.

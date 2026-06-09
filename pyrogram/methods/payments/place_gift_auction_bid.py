@@ -29,7 +29,7 @@ class PlaceGiftAuctionBid:
         gift_id: int,
         star_count: int,
         user_id: Optional[Union[int, str]] = None,
-        text: Optional["types.FormattedText"] = None,
+        text: Optional[Union[str, "types.FormattedText"]] = None,
         is_private: Optional[bool] = False,
     ) -> bool:
         """Places a bid on an auction gift.
@@ -48,7 +48,7 @@ class PlaceGiftAuctionBid:
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            text (:obj:`~pyrogram.types.FormattedText`, *optional*):
+            text (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
                 Text to show along with the gift.
                 Must be empty if the receiver enabled paid messages.
 
@@ -77,6 +77,9 @@ class PlaceGiftAuctionBid:
                     )
                 )
         """
+        if isinstance(text, str):
+            text = types.FormattedText(text=text)
+
         invoice = raw.types.InputInvoiceStarGiftAuctionBid(
             gift_id=gift_id,
             bid_amount=star_count,

@@ -28,10 +28,10 @@ class Folder(Object):
     """Represents a folder for user chats.
 
     Parameters:
-        id (``int``):
+        id (``int``, *optional*):
             Unique chat folder identifier.
 
-        name (``str``):
+        name (``str``, *optional*):
             The text of the chat folder name, 1-12 characters without line feeds.
 
         entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
@@ -94,8 +94,8 @@ class Folder(Object):
         self,
         *,
         client: "pyrogram.Client" = None,
-        id: int,
-        name: str,
+        id: Optional[int] = None,
+        name: Optional[str] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
         animate_custom_emoji: Optional[bool] = None,
         icon: Optional[str] = None,

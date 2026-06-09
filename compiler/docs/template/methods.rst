@@ -60,6 +60,19 @@ Messages
 
     {messages}
 
+Folders
+-------
+
+.. autosummary::
+    :nosignatures:
+
+    {folders}
+
+.. toctree::
+    :hidden:
+
+    {folders}
+
 Chats
 -----
 

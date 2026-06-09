@@ -16,9 +16,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from typing import TYPE_CHECKING, Any, Callable, Dict
 
 from .handler import Handler
+
+if TYPE_CHECKING:
+    import pyrogram
+    from pyrogram import raw
 
 
 class RawUpdateHandler(Handler):
@@ -42,18 +46,17 @@ class RawUpdateHandler(Handler):
         client (:obj:`~pyrogram.Client`):
             The Client itself, useful when you want to call other API methods inside the update handler.
 
-        update (``Update``):
+        update (:obj:`~pyrogram.raw.base.Update`):
             The received update, which can be one of the many single Updates listed in the
             :obj:`~pyrogram.raw.base.Update` base type.
 
         users (``dict``):
-            Dictionary of all :obj:`~pyrogram.types.User` mentioned in the update.
+            Dictionary of all :obj:`~pyrogram.raw.base.User` mentioned in the update.
             You can access extra info about the user (such as *first_name*, *last_name*, etc...) by using
             the IDs you find in the *update* argument (e.g.: *users[1768841572]*).
 
         chats (``dict``):
-            Dictionary of all :obj:`~pyrogram.types.Chat` and
-            :obj:`~pyrogram.raw.types.Channel` mentioned in the update.
+            Dictionary of all :obj:`~pyrogram.raw.base.Chat` mentioned in the update.
             You can access extra info about the chat (such as *title*, *participants_count*, etc...)
             by using the IDs you find in the *update* argument (e.g.: *chats[1701277281]*).
 
@@ -68,5 +71,17 @@ class RawUpdateHandler(Handler):
         - :obj:`~pyrogram.raw.types.ChannelForbidden`
     """
 
-    def __init__(self, callback: Callable, filters=None):
+    def __init__(
+        self,
+        callback: Callable[
+            [
+                "pyrogram.Client",
+                "raw.base.Update",
+                Dict[int, "raw.base.User"],
+                Dict[int, "raw.base.Chat"],
+            ],
+            Any,
+        ],
+        filters=None,
+    ):
         super().__init__(callback, filters)

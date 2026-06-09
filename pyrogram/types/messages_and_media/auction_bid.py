@@ -30,7 +30,7 @@ class AuctionBid(Object):
         star_count (``int``):
             The number of Telegram Stars that were put in the bid.
 
-        bid_date (``datetime``):
+        bid_date (:py:obj:`~datetime.datetime`):
             Date when the bid was made.
 
         position (``int``):

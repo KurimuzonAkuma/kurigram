@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional, Union
+
 from pyrogram import raw
 from ..object import Object
 
@@ -24,7 +26,7 @@ class WebAppData(Object):
     """Contains data sent from a `Web App <https://core.telegram.org/bots/webapps>`_ to the bot.
 
     Parameters:
-        data (``str``):
+        data (``str``, *optional*):
             The data.
 
         button_text (``str``):
@@ -35,7 +37,7 @@ class WebAppData(Object):
     def __init__(
         self,
         *,
-        data: str,
+        data: Optional[str],
         button_text: str,
     ):
         super().__init__()
@@ -44,8 +46,8 @@ class WebAppData(Object):
         self.button_text = button_text
 
     @staticmethod
-    def _parse(action: "raw.types.MessageActionWebViewDataSentMe"):
+    def _parse(action: Union["raw.types.MessageActionWebViewDataSent", "raw.types.MessageActionWebViewDataSentMe"]):
         return WebAppData(
-            data=action.data,
+            data=getattr(action, "data", None),
             button_text=action.text
         )

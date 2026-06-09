@@ -19,7 +19,7 @@
 from typing import Optional, Union, AsyncGenerator
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class GetChatGifts:
@@ -95,6 +95,7 @@ class GetChatGifts:
                     print(gift)
         """
         peer = await self.resolve_peer(chat_id)
+        raw_peer_id = utils.get_raw_peer_id(peer)
 
         current = 0
         total = abs(limit) or (1 << 31) - 1
@@ -123,8 +124,10 @@ class GetChatGifts:
             users = {i.id: i for i in r.users}
             chats = {i.id: i for i in r.chats}
 
+            receiver = users.get(raw_peer_id) or chats.get(raw_peer_id)
+
             user_star_gifts = [
-                await types.Gift._parse_saved(self, gift, users, chats)
+                await types.Gift._parse(self, gift, receiver, users=users, chats=chats)
                 for gift in r.gifts
             ]
 

@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import pyrogram
 from pyrogram import raw, utils
@@ -59,10 +59,10 @@ class ChatMemberUpdated(Object, Update):
         chat: "types.Chat",
         from_user: "types.User",
         date: datetime,
-        old_chat_member: "types.ChatMember",
-        new_chat_member: "types.ChatMember",
-        invite_link: "types.ChatInviteLink" = None,
-        via_join_request: bool = None
+        old_chat_member: Optional["types.ChatMember"] = None,
+        new_chat_member: Optional["types.ChatMember"] = None,
+        invite_link: Optional["types.ChatInviteLink"] = None,
+        via_join_request: Optional[bool] = None
     ):
         super().__init__(client)
 

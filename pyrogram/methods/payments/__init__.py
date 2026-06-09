@@ -21,6 +21,7 @@ from .apply_gift_code import ApplyGiftCode
 from .buy_gift_upgrade import BuyGiftUpgrade
 from .check_gift_code import CheckGiftCode
 from .convert_gift_to_stars import ConvertGiftToStars
+from .craft_gift import CraftGift
 from .create_gift_collection import CreateGiftCollection
 from .delete_gift_collection import DeleteGiftCollection
 from .drop_gift_original_details import DropGiftOriginalDetails
@@ -32,6 +33,7 @@ from .get_chat_gifts_count import GetChatGiftsCount
 from .get_gift_collections import GetGiftCollections
 from .get_gift_upgrade_preview import GetGiftUpgradePreview
 from .get_gift_upgrade_variants import GetGiftUpgradeVariants
+from .get_gifts_for_crafting import GetGiftsForCrafting
 from .get_payment_form import GetPaymentForm
 from .get_stars_balance import GetStarsBalance
 from .get_ton_balance import GetTonBalance
@@ -66,6 +68,7 @@ class Payments(
     BuyGiftUpgrade,
     CheckGiftCode,
     ConvertGiftToStars,
+    CraftGift,
     CreateGiftCollection,
     DeleteGiftCollection,
     DropGiftOriginalDetails,
@@ -77,6 +80,7 @@ class Payments(
     GetGiftCollections,
     GetGiftUpgradePreview,
     GetGiftUpgradeVariants,
+    GetGiftsForCrafting,
     GetPaymentForm,
     GetStarsBalance,
     GetTonBalance,

@@ -57,6 +57,9 @@ class ReplyParameters(Object):
 
         checklist_task_id (``int``, *optional*):
             Identifier of the specific checklist task to be replied to.
+
+        poll_option_id (``str``, *optional*):
+            Persistent identifier of the specific poll option to be replied to.
     """
 
     def __init__(
@@ -69,7 +72,8 @@ class ReplyParameters(Object):
         quote_parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
         quote_position: Optional[int] = None,
-        checklist_task_id: Optional[int] = None
+        checklist_task_id: Optional[int] = None,
+        poll_option_id: Optional[str] = None,
     ):
         super().__init__()
 
@@ -81,3 +85,4 @@ class ReplyParameters(Object):
         self.quote_entities = quote_entities
         self.quote_position = quote_position
         self.checklist_task_id = checklist_task_id
+        self.poll_option_id = poll_option_id

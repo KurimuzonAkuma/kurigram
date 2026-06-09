@@ -27,6 +27,8 @@ class SearchGiftsForResale:
         self: "pyrogram.Client",
         gift_id: int,
         order: "enums.GiftForResaleOrder" = enums.GiftForResaleOrder.CHANGE_DATE,
+        for_crafting: Optional[bool] = None,
+        for_stars: Optional[bool] = None,
         attributes: Optional[List["types.UpgradedGiftAttributeId"]] = None,
         limit: int = 0,
         offset: str = ""
@@ -41,6 +43,12 @@ class SearchGiftsForResale:
 
             order (:obj:`~pyrogram.enums.GiftForResaleOrder`):
                 Order in which the results will be sorted.
+
+            for_crafting (``bool``, *optional*):
+                Pass True to get only gifts suitable for crafting.
+
+            for_stars (``bool``, *optional*):
+                Pass True to get only gifts that can be bought using Telegram Stars.
 
             attributes (List of :obj:`~pyrogram.types.UpgradedGiftAttributeId`, *optional*):
                 Attributes used to filter received gifts.
@@ -78,6 +86,8 @@ class SearchGiftsForResale:
                     limit=limit,
                     sort_by_price=order == enums.GiftForResaleOrder.PRICE,
                     sort_by_num=order == enums.GiftForResaleOrder.NUMBER,
+                    for_craft=for_crafting,
+                    stars_only=for_stars,
                     attributes=[attr.write() for attr in attributes] if attributes else None,
 
                 ),
@@ -88,7 +98,7 @@ class SearchGiftsForResale:
             chats = {i.id: i for i in r.chats}
 
             gifts = [
-                await types.Gift._parse(self, gift, users, chats)
+                await types.Gift._parse(self, gift, users=users, chats=chats)
                 for gift in r.gifts
             ]
 

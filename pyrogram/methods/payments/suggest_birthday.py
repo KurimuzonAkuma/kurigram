@@ -29,18 +29,17 @@ class SuggestBirthday:
         chat_id: Union[int, str],
         birthday: "types.Birthday"
     ) -> bool:
-        """Drops original details for an upgraded gift.
+        """Suggests a birthdate to another regular user with common messages and allowing non-paid messages.
 
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
-                For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
             birthday (:obj:`types.Birthday`):
-                Birthday in the format "YYYY-MM-DD".
+                Birthdate to suggest.
 
         Returns:
             ``bool``: On success, True is returned.

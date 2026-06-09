@@ -45,7 +45,7 @@ class ForumTopicEdited(Object):
         self, *,
         title: str = None,
         icon_color: int = None,
-        custom_emoji_id: int = None,
+        custom_emoji_id: str = None,
         is_closed: bool = None,
         is_hidden: bool = None
     ):
@@ -59,10 +59,12 @@ class ForumTopicEdited(Object):
 
     @staticmethod
     def _parse(action: "raw.types.MessageActionTopicEdit") -> "ForumTopicEdited":
+        custom_emoji_id = getattr(action, "icon_emoji_id", None)
+
         return ForumTopicEdited(
             title=getattr(action, "title", None),
             icon_color=getattr(action, "icon_color", None),
-            custom_emoji_id=getattr(action, "icon_emoji_id", None),
+            custom_emoji_id=str(custom_emoji_id) if custom_emoji_id else None,
             is_closed=getattr(action, "closed", None),
             is_hidden=getattr(action, "hidden", None)
         )

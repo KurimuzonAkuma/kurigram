@@ -271,11 +271,12 @@ class SendMessage:
                 peer=peer,
                 media=raw.types.InputMediaWebPage(
                     url=link_preview_options.url,
-                    force_large_media=getattr(link_preview_options, "prefer_large_media", None),
-                    force_small_media=getattr(link_preview_options, "prefer_small_media", None),
+                    force_large_media=link_preview_options.prefer_large_media,
+                    force_small_media=link_preview_options.prefer_small_media,
+                    optional=True
                 ),
                 silent=disable_notification or None,
-                invert_media=getattr(link_preview_options, "show_above_text", None),
+                invert_media=link_preview_options.show_above_text,
                 reply_to=await utils.get_reply_to(
                     self,
                     reply_parameters,

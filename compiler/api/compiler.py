@@ -212,6 +212,19 @@ def get_references(t: str, kind: str):
     return None, 0
 
 
+def indent_desc(desc: str, indent: str = "    ") -> str:
+    lines = desc.splitlines()
+
+    if len(lines) <= 1:
+        return desc
+
+    first, *rest = lines
+
+    return first + "\n" + "\n".join(
+        (indent + line if line.strip() else "") for line in rest
+    )
+
+
 # noinspection PyShadowingBuiltins
 def start(format: bool = False):
     shutil.rmtree(DESTINATION_PATH / "types", ignore_errors=True)
@@ -348,7 +361,7 @@ def start(format: bool = False):
         else:
             type_docs = "Telegram API base type."
 
-        docstring = type_docs
+        docstring = indent_desc(type_docs)
 
         docstring += f"\n\n    Constructors:\n" \
                      f"        This base type has {constr_count} constructor{'s' if constr_count > 1 else ''} available.\n\n" \
@@ -412,7 +425,7 @@ def start(format: bool = False):
             arg_docs = combinator_docs.get(c.qualname, None)
 
             if arg_docs:
-                arg_docs = arg_docs["params"].get(arg_name, "N/A")
+                arg_docs = indent_desc(arg_docs["params"].get(arg_name, "N/A"), indent="            ")
             else:
                 arg_docs = "N/A"
 
@@ -433,13 +446,22 @@ def start(format: bool = False):
             else:
                 constructor_docs = "Telegram API type."
 
-            docstring += constructor_docs + "\n"
+            docstring += indent_desc(constructor_docs) + "\n"
             docstring += f"\n    Constructor of :obj:`~pyrogram.raw.base.{c.qualtype}`."
         else:
             function_docs = docs["method"].get(c.qualname, None)
 
             if function_docs:
-                docstring += function_docs["desc"] + "\n"
+                docstring += indent_desc(function_docs.get("desc", "").strip()) + "\n"
+
+                if function_docs.get("usable_by"):
+                    docstring += "\n    .. include:: /_includes/usable-by/" + function_docs["usable_by"] + ".rst"
+
+                if function_docs.get("can_use_without_auth"):
+                    docstring += "\n\n    .. note::\n\n        " + "This method can be used by not yet logged in connections."
+
+                if function_docs.get("can_use_business_connection"):
+                    docstring += "\n\n    .. note::\n\n        " + "This method can be invoked over a `business connection » <https://corefork.telegram.org/api/bots/connected-business-bots>`__"
             else:
                 docstring += "Telegram API function."
 

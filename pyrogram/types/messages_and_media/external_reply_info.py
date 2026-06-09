@@ -282,7 +282,7 @@ class ExternalReplyInfo(Object):
                         document = types.Document._parse(client, doc, file_name)
                         media_type = enums.MessageMediaType.DOCUMENT
             elif isinstance(media, raw.types.MessageMediaPoll):
-                poll = types.Poll._parse(client, media)
+                poll = await types.Poll._parse(client, media, None, users=users, chats=chats)
                 media_type = enums.MessageMediaType.POLL
             elif isinstance(media, raw.types.MessageMediaDice):
                 dice = types.Dice._parse(client, media)

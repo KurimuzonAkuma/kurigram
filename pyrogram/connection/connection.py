@@ -18,7 +18,7 @@
 
 import asyncio
 import logging
-from typing import Optional, Type
+from typing import Optional, Type, Union
 
 from pyrogram import utils
 
@@ -36,7 +36,7 @@ class Connection:
         server_address: str,
         port: int,
         test_mode: bool,
-        proxy: dict,
+        proxy: Optional[Union[dict, str]] = None,
         media: bool = False,
         protocol_factory: Type[TCP] = TCPAbridged,
         crypto_executor_workers: int = 1,
