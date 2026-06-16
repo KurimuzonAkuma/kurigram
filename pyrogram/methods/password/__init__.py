@@ -22,7 +22,6 @@ from .confirm_cloud_password_email import ConfirmCloudPasswordEmail
 from .enable_cloud_password import EnableCloudPassword
 from .remove_cloud_password import RemoveCloudPassword
 from .resend_cloud_password_email import ResendCloudPasswordEmail
-from .set_cloud_password_email import SetCloudPasswordEmail
 
 
 class Password(
@@ -31,7 +30,6 @@ class Password(
     ChangeCloudPassword,
     ConfirmCloudPasswordEmail,
     EnableCloudPassword,
-    ResendCloudPasswordEmail,
-    SetCloudPasswordEmail
+    ResendCloudPasswordEmail
 ):
     pass

@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from typing import Optional
 
 import pyrogram
 from pyrogram import raw
@@ -27,10 +28,11 @@ class ChangeCloudPassword:
     async def change_cloud_password(
         self: "pyrogram.Client",
         current_password: str,
-        new_password: str,
-        new_hint: str = ""
+        new_password: Optional[str] = None,
+        new_hint: str = "",
+        new_email: Optional[str] = None
     ) -> bool:
-        """Change your Two-Step Verification password (Cloud Password) with a new one.
+        """Change your Two-Step Verification password and/or recovery email.
 
         .. include:: /_includes/usable-by/users.rst
 
@@ -38,11 +40,14 @@ class ChangeCloudPassword:
             current_password (``str``):
                 Your current password.
 
-            new_password (``str``):
+            new_password (``str``, *optional*):
                 Your new password.
 
             new_hint (``str``, *optional*):
                 A new password hint.
+
+            new_email (``str``, *optional*):
+                New recovery email for the current cloud password.
 
         Returns:
             ``bool``: True on success.
@@ -58,24 +63,37 @@ class ChangeCloudPassword:
 
                 # Change password and hint
                 await app.change_cloud_password("current_password", "new_password", new_hint="hint")
+
+                # Change only recovery email
+                await app.change_cloud_password("current_password", new_email="user@email.com")
         """
         r = await self.invoke(raw.functions.account.GetPassword())
 
         if not r.has_password:
             raise ValueError("There is no cloud password to change")
 
-        r.new_algo.salt1 += os.urandom(32)
-        new_hash = btoi(compute_password_hash(r.new_algo, new_password))
-        new_hash = itob(pow(r.new_algo.g, new_hash, btoi(r.new_algo.p)))
+        if not new_password and not new_email:
+            raise ValueError("You must provide new_password or new_email")
+
+        settings = {}
+
+        if new_password:
+            r.new_algo.salt1 += os.urandom(32)
+            new_hash = btoi(compute_password_hash(r.new_algo, new_password))
+            new_hash = itob(pow(r.new_algo.g, new_hash, btoi(r.new_algo.p)))
+            settings.update(
+                new_algo=r.new_algo,
+                new_password_hash=new_hash,
+                hint=new_hint
+            )
+
+        if new_email is not None:
+            settings["email"] = new_email
 
         await self.invoke(
             raw.functions.account.UpdatePasswordSettings(
                 password=compute_password_check(r, current_password),
-                new_settings=raw.types.account.PasswordInputSettings(
-                    new_algo=r.new_algo,
-                    new_password_hash=new_hash,
-                    hint=new_hint
-                )
+                new_settings=raw.types.account.PasswordInputSettings(**settings)
             )
         )
 
