@@ -98,6 +98,9 @@ class SendVoice:
             duration (``int``, *optional*):
                 Duration of the voice message in seconds.
 
+            waveform (``bytes``, *optional*):
+                A 5-bit byte-string waveform info.
+
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
                 Users will receive a notification with no sound.
