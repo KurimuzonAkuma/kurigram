@@ -16,22 +16,23 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .cancel_cloud_password_email import CancelCloudPasswordEmail
-from .change_cloud_password import ChangeCloudPassword
-from .confirm_cloud_password_email import ConfirmCloudPasswordEmail
-from .enable_cloud_password import EnableCloudPassword
-from .remove_cloud_password import RemoveCloudPassword
-from .resend_cloud_password_email import ResendCloudPasswordEmail
-from .set_cloud_password_email import SetCloudPasswordEmail
+import pyrogram
+from pyrogram import raw
 
 
-class Password(
-    CancelCloudPasswordEmail,
-    RemoveCloudPassword,
-    ChangeCloudPassword,
-    ConfirmCloudPasswordEmail,
-    EnableCloudPassword,
-    ResendCloudPasswordEmail,
-    SetCloudPasswordEmail
-):
-    pass
+class ResendCloudPasswordEmail:
+    async def resend_cloud_password_email(
+        self: "pyrogram.Client"
+    ) -> bool:
+        """Resend the verification code for the pending 2FA recovery email.
+
+        .. include:: /_includes/usable-by/users.rst
+
+        Returns:
+            ``bool``: True on success.
+        """
+        return bool(
+            await self.invoke(
+                raw.functions.account.ResendPasswordEmail()
+            )
+        )
