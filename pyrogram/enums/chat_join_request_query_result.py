@@ -16,26 +16,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import pyrogram
+from pyrogram import raw
 
-from ..object import Object
+from .auto_name import AutoName
 
 
-class InputMessageContent(Object):
-    """Content of a message to be sent as a result of an inline query.
+class ChatJoinRequestQueryResult(AutoName):
+    """Media area type enumeration used in :meth:`~pyrogram.Client.answer_chat_join_request_query`."""
 
-    Pyrogram currently supports the following types:
+    APPROVE = raw.types.JoinChatBotResultApproved
+    "Allow the user to join the chat."
 
-    - :obj:`~pyrogram.types.InputTextMessageContent`
-    - :obj:`~pyrogram.types.InputRichTextMessageContent`
-    - :obj:`~pyrogram.types.InputLocationMessageContent`
-    - :obj:`~pyrogram.types.InputVenueMessageContent`
-    - :obj:`~pyrogram.types.InputContactMessageContent`
-    - :obj:`~pyrogram.types.InputInvoiceMessageContent`
-    """
+    DECLINE = raw.types.JoinChatBotResultDeclined
+    "Disallow the user to join the chat."
 
-    def __init__(self):
-        super().__init__()
-
-    async def write(self, client: "pyrogram.Client", reply_markup):
-        raise NotImplementedError
+    QUEUE = raw.types.JoinChatBotResultQueued
+    "Leave the decision to other administrators."

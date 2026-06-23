@@ -19,16 +19,14 @@
 from typing import Union
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types, errors
 
 
 class JoinChat:
     async def join_chat(
-        self: "pyrogram.Client",
-        chat_id: Union[int, str]
-    ) -> "types.Chat":
-        """Join a group chat or channel.
+        self: "pyrogram.Client", chat_id: Union[int, str]
+    ) -> "types.ChatJoinResult":
+        """Adds the current user as a new member to a chat. Private and secret chats can't be joined using this method.
 
         .. include:: /_includes/usable-by/users.rst
 
@@ -38,7 +36,7 @@ class JoinChat:
                 channel/supergroup (in the format @username) or a chat id of a linked chat (channel or supergroup).
 
         Returns:
-            :obj:`~pyrogram.types.Chat`: On success, a chat object is returned.
+            :obj:`~pyrogram.types.ChatJoinResult`: On success, a chat join result object is returned.
 
         Example:
             .. code-block:: python
@@ -50,25 +48,18 @@ class JoinChat:
                 await app.join_chat("pyrogram")
 
                 # Join a linked chat
-                await app.join_chat(app.get_chat("pyrogram").linked_chat.id)
+                await app.join_chat((await app.get_chat("pyrogram")).linked_chat.id)
         """
         match = self.INVITE_LINK_RE.match(str(chat_id))
 
         if match:
-            chat = await self.invoke(
-                raw.functions.messages.ImportChatInvite(
-                    hash=match.group(1)
-                )
-            )
-            if isinstance(chat.chats[0], raw.types.Chat):
-                return types.Chat._parse_chat_chat(self, chat.chats[0])
-            elif isinstance(chat.chats[0], raw.types.Channel):
-                return types.Chat._parse_channel_chat(self, chat.chats[0])
+            rpc = raw.functions.messages.ImportChatInvite(hash=match.group(1))
         else:
-            chat = await self.invoke(
-                raw.functions.channels.JoinChannel(
-                    channel=await self.resolve_peer(chat_id)
-                )
-            )
+            rpc = raw.functions.channels.JoinChannel(channel=await self.resolve_peer(chat_id))
 
-            return types.Chat._parse_channel_chat(self, chat.chats[0])
+        try:
+            r = await self.invoke(rpc)
+        except errors.InviteRequestSent:
+            return types.ChatJoinResultRequestSent()
+
+        return await types.ChatJoinResult._parse(self, r)

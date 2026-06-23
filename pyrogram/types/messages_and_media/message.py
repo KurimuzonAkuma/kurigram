@@ -128,6 +128,9 @@ class Message(Object, Update):
             Unique identifier of the message effect.
             For private chats only.
 
+        rich_message (:obj:`~pyrogram.types.Message`, *optional*):
+            Message is a rich formatted message.
+
         reply_to_message_id (``int``, *optional*):
             The id of the message which this message directly replied to.
 
@@ -637,6 +640,7 @@ class Message(Object, Update):
         message_thread_id: Optional[int] = None,
         direct_messages_topic_id: Optional[int] = None,
         effect_id: Optional[int] = None,
+        rich_message: Optional["types.RichMessage"] = None,
         reply_to_message_id: Optional[int] = None,
         reply_to_story_id: Optional[int] = None,
         reply_to_story_user_id: Optional[int] = None,
@@ -810,6 +814,7 @@ class Message(Object, Update):
         self.message_thread_id = message_thread_id
         self.direct_messages_topic_id = direct_messages_topic_id
         self.effect_id = effect_id
+        self.rich_message = rich_message
         self.reply_to_message_id = reply_to_message_id
         self.reply_to_story_id = reply_to_story_id
         self.reply_to_story_user_id = reply_to_story_user_id
@@ -1671,6 +1676,7 @@ class Message(Object, Update):
         parsed_message = Message(
             id=message.id,
             effect_id=getattr(message, "effect", None),
+            rich_message=await types.RichMessage._parse(client, message.rich_message, users, chats),
             date=utils.timestamp_to_datetime(message.date),
             guest_query_id=str(guest_query_id) if guest_query_id else None,
             chat=chat,

@@ -16,7 +16,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .input_chat_photo import InputChatPhoto, InputChatPhotoPrevious, InputChatPhotoStatic, InputChatPhotoAnimation
+from .input_chat_photo import (
+    InputChatPhoto,
+    InputChatPhotoAnimation,
+    InputChatPhotoPrevious,
+    InputChatPhotoStatic,
+)
 from .input_checklist import InputChecklist
 from .input_contact_message_content import InputContactMessageContent
 from .input_credentials import InputCredentials
@@ -33,17 +38,18 @@ from .input_media import InputMedia
 from .input_media_animation import InputMediaAnimation
 from .input_media_audio import InputMediaAudio
 from .input_media_document import InputMediaDocument
+from .input_media_link import InputMediaLink
 from .input_media_live_photo import InputMediaLivePhoto
 from .input_media_location import InputMediaLocation
 from .input_media_photo import InputMediaPhoto
-from .input_media_video import InputMediaVideo
 from .input_media_sticker import InputMediaSticker
 from .input_media_venue import InputMediaVenue
+from .input_media_video import InputMediaVideo
 from .input_message_content import InputMessageContent
 from .input_phone_contact import InputPhoneContact
 from .input_poll_media import InputPollMedia
-from .input_poll_option_media import InputPollOptionMedia
 from .input_poll_option import InputPollOption
+from .input_poll_option_media import InputPollOptionMedia
 from .input_privacy_rule import InputPrivacyRule
 from .input_privacy_rule_allow_all import InputPrivacyRuleAllowAll
 from .input_privacy_rule_allow_bots import InputPrivacyRuleAllowBots
@@ -57,14 +63,16 @@ from .input_privacy_rule_disallow_bots import InputPrivacyRuleDisallowBots
 from .input_privacy_rule_disallow_chats import InputPrivacyRuleDisallowChats
 from .input_privacy_rule_disallow_contacts import InputPrivacyRuleDisallowContacts
 from .input_privacy_rule_disallow_users import InputPrivacyRuleDisallowUsers
+from .input_rich_message import InputRichMessage
+from .input_rich_message_content import InputRichMessageContent
 from .input_text_message_content import InputTextMessageContent
 from .input_venue_message_content import InputVenueMessageContent
 
 __all__ = [
     "InputChatPhoto",
+    "InputChatPhotoAnimation",
     "InputChatPhotoPrevious",
     "InputChatPhotoStatic",
-    "InputChatPhotoAnimation",
     "InputChecklist",
     "InputContactMessageContent",
     "InputCredentials",
@@ -81,17 +89,18 @@ __all__ = [
     "InputMediaAnimation",
     "InputMediaAudio",
     "InputMediaDocument",
+    "InputMediaLink",
     "InputMediaLivePhoto",
     "InputMediaLocation",
-    "InputMediaVenue",
     "InputMediaPhoto",
-    "InputMediaVideo",
     "InputMediaSticker",
+    "InputMediaVenue",
+    "InputMediaVideo",
     "InputMessageContent",
     "InputPhoneContact",
     "InputPollMedia",
-    "InputPollOptionMedia",
     "InputPollOption",
+    "InputPollOptionMedia",
     "InputPrivacyRule",
     "InputPrivacyRuleAllowAll",
     "InputPrivacyRuleAllowBots",
@@ -105,6 +114,8 @@ __all__ = [
     "InputPrivacyRuleDisallowChats",
     "InputPrivacyRuleDisallowContacts",
     "InputPrivacyRuleDisallowUsers",
+    "InputRichMessage",
+    "InputRichMessageContent",
     "InputTextMessageContent",
     "InputVenueMessageContent"
 ]

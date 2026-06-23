@@ -27,25 +27,26 @@ from .business_weekly_open import BusinessWeeklyOpen
 from .business_working_hours import BusinessWorkingHours
 from .chat import Chat
 from .chat_admin_with_invite_links import ChatAdminWithInviteLinks
+from .chat_administrator_rights import ChatAdministratorRights, ChatPrivileges
 from .chat_color import ChatColor
 from .chat_event import ChatEvent
-from .chat_folder_invite_link_info import ChatFolderInviteLinkInfo
-from .folder_invite_link import FolderInviteLink
 from .chat_event_filter import ChatEventFilter
+from .chat_folder_invite_link_info import ChatFolderInviteLinkInfo
 from .chat_invite_link import ChatInviteLink
 from .chat_join_request import ChatJoinRequest
+from .chat_join_result import ChatJoinResult, ChatJoinResultSuccess, ChatJoinResultRequestSent, ChatJoinResultGuardBotApprovalRequired, ChatJoinResultDeclined
 from .chat_joiner import ChatJoiner
 from .chat_member import ChatMember
 from .chat_member_updated import ChatMemberUpdated
 from .chat_permissions import ChatPermissions
 from .chat_photo import ChatPhoto
-from .chat_administrator_rights import ChatAdministratorRights, ChatPrivileges
 from .chat_reactions import ChatReactions
 from .chat_settings import ChatSettings
 from .dialog import Dialog
 from .emoji_status import EmojiStatus
 from .failed_to_add_member import FailedToAddMember
 from .folder import Folder
+from .folder_invite_link import FolderInviteLink
 from .found_contacts import FoundContacts
 from .global_privacy_settings import GlobalPrivacySettings
 from .group_call_member import GroupCallMember
@@ -56,8 +57,8 @@ from .phone_call_started import PhoneCallStarted
 from .privacy_rule import PrivacyRule
 from .restriction import Restriction
 from .stories_stealth_mode import StoriesStealthMode
-from .user_rating import UserRating
 from .user import User
+from .user_rating import UserRating
 from .username import Username
 from .verification_status import VerificationStatus
 from .video_chat_ended import VideoChatEnded
@@ -76,43 +77,48 @@ __all__ = [
     "BusinessWeeklyOpen",
     "BusinessWorkingHours",
     "Chat",
+    "ChatAdminWithInviteLinks",
+    "ChatAdministratorRights",
+    "ChatColor",
+    "ChatEvent",
+    "ChatEventFilter",
+    "ChatFolderInviteLinkInfo",
+    "ChatInviteLink",
+    "ChatJoinRequest",
+    "ChatJoinResult",
+    "ChatJoinResultSuccess",
+    "ChatJoinResultRequestSent",
+    "ChatJoinResultGuardBotApprovalRequired",
+    "ChatJoinResultDeclined",
+    "ChatJoiner",
     "ChatMember",
+    "ChatMemberUpdated",
     "ChatPermissions",
     "ChatPhoto",
-    "Dialog",
-    "User",
-    "Username",
-    "VerificationStatus",
-    "Restriction",
-    "StoriesStealthMode",
-    "UserRating",
-    "ChatEvent",
-    "ChatFolderInviteLinkInfo",
-    "FolderInviteLink",
-    "ChatEventFilter",
-    "ChatInviteLink",
-    "InviteLinkImporter",
-    "PhoneCallEnded",
-    "PhoneCallStarted",
-    "PrivacyRule",
-    "ChatAdminWithInviteLinks",
-    "ChatColor",
-    "VideoChatStarted",
-    "VideoChatEnded",
-    "VideoChatMembersInvited",
-    "ChatMemberUpdated",
-    "VideoChatScheduled",
-    "ChatJoinRequest",
-    "ChatAdministratorRights",
     "ChatPrivileges",
-    "ChatJoiner",
+    "ChatReactions",
+    "ChatSettings",
+    "Dialog",
     "EmojiStatus",
     "FailedToAddMember",
     "Folder",
+    "FolderInviteLink",
     "FoundContacts",
     "GlobalPrivacySettings",
     "GroupCallMember",
     "HistoryCleared",
-    "ChatReactions",
-    "ChatSettings"
+    "InviteLinkImporter",
+    "PhoneCallEnded",
+    "PhoneCallStarted",
+    "PrivacyRule",
+    "Restriction",
+    "StoriesStealthMode",
+    "User",
+    "UserRating",
+    "Username",
+    "VerificationStatus",
+    "VideoChatEnded",
+    "VideoChatMembersInvited",
+    "VideoChatScheduled",
+    "VideoChatStarted"
 ]

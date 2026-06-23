@@ -617,6 +617,42 @@ def get_first_url(text):
     return f"{matches[0][0]}://{matches[0][1]}{matches[0][2]}" if matches else None
 
 
+def split_text(text: str, max_length: int = 4096) -> List[str]:
+    """Split text into chunks no longer than max_length"""
+    if len(text) <= max_length:
+        return [text]
+
+    chunks = []
+    remaining = text
+
+    while remaining:
+        if len(remaining) <= max_length:
+            chunks.append(remaining)
+            break
+
+        cut = remaining[:max_length]
+
+        last_newline = cut.rfind('\n')
+
+        if last_newline > 0:
+            chunk = cut[:last_newline]
+            remaining = remaining[last_newline + 1:]
+        else:
+            last_space = cut.rfind(' ')
+
+            if last_space > 0 and last_space > len(cut) // 2:
+                chunk = cut[:last_space]
+                remaining = remaining[last_space + 1:]
+            else:
+                chunk = cut
+                remaining = remaining[max_length:]
+
+        if chunk:
+            chunks.append(chunk)
+
+    return chunks
+
+
 def parse_text_with_entities(client, message: "raw.types.TextWithEntities", users):
     entities = types.List(
         filter(

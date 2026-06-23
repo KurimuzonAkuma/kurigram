@@ -249,6 +249,8 @@ def pyrogram_api():
             send_contact
             send_cached_media
             send_reaction
+            send_rich_message_draft
+            send_rich_message
             edit_message_text
             fix_text_with_ai
             edit_message_caption
@@ -518,6 +520,8 @@ def pyrogram_api():
             set_managed_bot_access_settings
             send_invoice
             answer_callback_query
+            answer_chat_join_request_query
+            send_chat_join_request_web_app
             answer_guest_query
             answer_inline_query
             request_callback_answer
@@ -690,6 +694,11 @@ def pyrogram_api():
             ChatEventFilter
             ChatMemberUpdated
             ChatJoinRequest
+            ChatJoinResult
+            ChatJoinResultSuccess
+            ChatJoinResultRequestSent
+            ChatJoinResultGuardBotApprovalRequired
+            ChatJoinResultDeclined
             ChatJoiner
             Dialog
             Restriction
@@ -762,6 +771,59 @@ def pyrogram_api():
             Dice
             Reaction
             RestrictionReason
+            RichBlock
+            RichBlockAnchor
+            RichBlockAnimation
+            RichBlockAudio
+            RichBlockBlockQuotation
+            RichBlockCaption
+            RichBlockCollage
+            RichBlockDetails
+            RichBlockDivider
+            RichBlockFooter
+            RichBlockList
+            RichBlockListItem
+            RichBlockMap
+            RichBlockMathematicalExpression
+            RichBlockParagraph
+            RichBlockPhoto
+            RichBlockPreformatted
+            RichBlockPullQuotation
+            RichBlockSectionHeading
+            RichBlockSlideshow
+            RichBlockTable
+            RichBlockTableCell
+            RichBlockThinking
+            RichBlockVideo
+            RichBlockVoiceNote
+            RichBlockUnsupported
+            RichMessage
+            RichText
+            RichTextAnchor
+            RichTextAnchorLink
+            RichTextBankCardNumber
+            RichTextBold
+            RichTextBotCommand
+            RichTextCashtag
+            RichTextCode
+            RichTextCustomEmoji
+            RichTextDateTime
+            RichTextEmailAddress
+            RichTextHashtag
+            RichTextItalic
+            RichTextMarked
+            RichTextMathematicalExpression
+            RichTextMention
+            RichTextPhoneNumber
+            RichTextReference
+            RichTextReferenceLink
+            RichTextSpoiler
+            RichTextStrikethrough
+            RichTextSubscript
+            RichTextSuperscript
+            RichTextTextMention
+            RichTextUnderline
+            RichTextUrl
             Gift
             VideoChatScheduled
             VideoChatStarted
@@ -932,6 +994,7 @@ def pyrogram_api():
             InputMediaAnimation
             InputMediaAudio
             InputMediaDocument
+            InputMediaLink
             InputMediaLocation
             InputMediaVenue
             InputMediaPhoto
@@ -943,6 +1006,7 @@ def pyrogram_api():
             InputPollOption
             InputPollMedia
             InputPollOptionMedia
+            InputRichMessage
             InputPrivacyRule
             InputPrivacyRuleAllowAll
             InputPrivacyRuleAllowBots
@@ -957,6 +1021,7 @@ def pyrogram_api():
             InputPrivacyRuleDisallowContacts
             InputPrivacyRuleDisallowUsers
             InputTextMessageContent
+            InputRichMessageContent
             InputVenueMessageContent
         """,
         inline_mode="""

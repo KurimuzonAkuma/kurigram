@@ -59,16 +59,16 @@ Community = "https://t.me/kurigram_chat"
 [project.optional-dependencies]
 dev = [
     "keyring<=25.7.0",
-    "hatch<=1.16.5",
-    "pytest<=9.0.3",
-    "pytest-asyncio<=1.3.0",
+    "hatch<=1.17.0",
+    "pytest<=9.1.1",
+    "pytest-asyncio<=1.4.0",
     "pytest-cov<=7.1.0",
     "twine<=6.2.0",
 ]
 
 docs = [
     "Sphinx<=9.1.0",
-    "shibuya<=2026.1.9",
+    "shibuya<=2026.5.19",
     "sphinx-autobuild<=2025.8.25",
     "sphinx-copybutton<=0.5.2",
     "sphinx-iconify<=0.3.0",

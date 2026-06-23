@@ -16,26 +16,37 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Callable, Optional, Union
+
 import pyrogram
+from pyrogram import raw
 
-from ..object import Object
+from .input_media import InputMedia
 
 
-class InputMessageContent(Object):
-    """Content of a message to be sent as a result of an inline query.
+class InputMediaLink(InputMedia):
+    """Represents an HTTP link to be sent.
 
-    Pyrogram currently supports the following types:
-
-    - :obj:`~pyrogram.types.InputTextMessageContent`
-    - :obj:`~pyrogram.types.InputRichTextMessageContent`
-    - :obj:`~pyrogram.types.InputLocationMessageContent`
-    - :obj:`~pyrogram.types.InputVenueMessageContent`
-    - :obj:`~pyrogram.types.InputContactMessageContent`
-    - :obj:`~pyrogram.types.InputInvoiceMessageContent`
+    Parameters:
+        url (``str``):
+            HTTP URL of the link.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        url: str,
+    ):
         super().__init__()
 
-    async def write(self, client: "pyrogram.Client", reply_markup):
-        raise NotImplementedError
+        self.url = url
+
+    async def write(
+        self,
+        *,
+        client: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+        **kwargs,
+    ) -> "raw.base.InputMedia":
+        return raw.types.InputMediaWebPage(url=self.url)

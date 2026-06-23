@@ -38,6 +38,7 @@ class SendVoice:
         parse_mode: Optional["enums.ParseMode"] = None,
         caption_entities: List["types.MessageEntity"] = None,
         duration: int = 0,
+        waveform: Optional[bytes] = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
         direct_messages_topic_id: int = None,
@@ -96,6 +97,9 @@ class SendVoice:
 
             duration (``int``, *optional*):
                 Duration of the voice message in seconds.
+
+            waveform (``bytes``, *optional*):
+                A 5-bit byte-string waveform info.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -254,7 +258,8 @@ class SendVoice:
                         attributes=[
                             raw.types.DocumentAttributeAudio(
                                 voice=True,
-                                duration=duration
+                                duration=duration,
+                                waveform=waveform,
                             )
                         ],
                         ttl_seconds=(1 << 31) - 1 if view_once else None
@@ -276,7 +281,8 @@ class SendVoice:
                     attributes=[
                         raw.types.DocumentAttributeAudio(
                             voice=True,
-                            duration=duration
+                            duration=duration,
+                            waveform=waveform,
                         )
                     ],
                     ttl_seconds=(1 << 31) - 1 if view_once else None

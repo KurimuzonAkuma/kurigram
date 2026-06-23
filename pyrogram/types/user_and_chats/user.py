@@ -396,6 +396,10 @@ class User(Object, Update):
             True, if the bot supports guest queries from chats it is not a member of.
             Returned only in :meth:`~pyrogram.Client.get_me`
 
+        supports_join_request_queries (``bool``, *optional*):
+            True, if the bot supports join request queries and can be assigned to process them.
+            Returned only in :meth:`~pyrogram.Client.get_me`
+
         raw (:obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.UserStatus`, *optional*):
             The raw user or user status object, as received from the Telegram API.
 
@@ -506,6 +510,7 @@ class User(Object, Update):
         accepted_gift_types: Optional["types.AcceptedGiftTypes"] = None,
         note: Optional["types.FormattedText"] = None,
         supports_guest_queries: Optional[bool] = None,
+        supports_join_request_queries: Optional[bool] = None,
         raw: Optional[Union["raw.base.User", "raw.base.UserStatus"]] = None
     ):
         super().__init__(client)
@@ -603,6 +608,7 @@ class User(Object, Update):
         self.accepted_gift_types = accepted_gift_types
         self.note = note
         self.supports_guest_queries = supports_guest_queries
+        self.supports_join_request_queries = supports_join_request_queries
         self.raw = raw
 
     @property
@@ -692,6 +698,7 @@ class User(Object, Update):
             allows_users_to_create_topics=user.bot_forum_can_manage_topics,
             paid_message_star_count=user.send_paid_messages_stars,
             supports_guest_queries=user.bot_guestchat,
+            supports_join_request_queries=user.bot_guard,
             raw=user,
             client=client
         )

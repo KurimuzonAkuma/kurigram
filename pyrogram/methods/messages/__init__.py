@@ -86,6 +86,8 @@ from .send_paid_reaction import SendPaidReaction
 from .send_photo import SendPhoto
 from .send_poll import SendPoll
 from .send_reaction import SendReaction
+from .send_rich_message_draft import SendRichMessageDraft
+from .send_rich_message import SendRichMessage
 from .send_screenshot_notification import SendScreenshotNotification
 from .send_sticker import SendSticker
 from .send_venue import SendVenue
@@ -182,6 +184,8 @@ class Messages(
     SearchGlobalCount,
     GetDiscussionMessage,
     SendReaction,
+    SendRichMessageDraft,
+    SendRichMessage,
     GetDiscussionReplies,
     GetDiscussionRepliesCount,
     GetMainWebApp,

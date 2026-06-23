@@ -31,6 +31,7 @@ class InputPollOptionMedia(InputMedia):
     It should be one of:
 
     - :obj:`~pyrogram.types.InputMediaAnimation`
+    - :obj:`~pyrogram.types.InputMediaLink`
     - :obj:`~pyrogram.types.InputMediaLivePhoto`
     - :obj:`~pyrogram.types.InputMediaLocation`
     - :obj:`~pyrogram.types.InputMediaPhoto`
