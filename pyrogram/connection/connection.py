@@ -22,7 +22,7 @@ from typing import Optional, Type, Union
 
 from pyrogram import utils
 
-from .transport import TCP, TCPAbridged
+from .transport import TCP, TCPAbridged, TCPMTProxyAbridged, TCPMTProxyIntermediate, TCPMTProxyRandomizedIntermediate
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +51,18 @@ class Connection:
         self.media = media
         self.protocol_factory = protocol_factory
         self.crypto_executor_workers = crypto_executor_workers
+        self.is_mtproxy = False
+
+        # if isinstance(proxy, str) and proxy.lower().startswith("mtproxy://"):
+        #     self.is_mtproxy = True
+
+        if isinstance(proxy, dict) and proxy.get("scheme", "").lower() == "mtproxy":
+            self.is_mtproxy = True
+
+        self.is_mtproxy_protocol_factory = bool(protocol_factory in (TCPMTProxyAbridged, TCPMTProxyIntermediate, TCPMTProxyRandomizedIntermediate))
+
+        if self.is_mtproxy and not self.is_mtproxy_protocol_factory:
+            self.protocol_factory = TCPMTProxyRandomizedIntermediate
 
         self.protocol: Optional[TCP] = None
 
@@ -61,8 +73,10 @@ class Connection:
 
     async def connect(self) -> None:
         for i in range(Connection.MAX_CONNECTION_ATTEMPTS):
-            self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=self.proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
-
+            if self.is_mtproxy:
+                self.protocol = self.protocol_factory(dc_id=self.dc_id, ipv6=self.ipv6, proxy=self.proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
+            else:
+                self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=self.proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
             try:
                 log.info("Connecting...")
                 await self.protocol.connect((self.server_address, self.port))

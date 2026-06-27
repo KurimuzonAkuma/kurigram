@@ -181,6 +181,14 @@ class Session:
 
             init_connection_params = self.client.init_connection_params
 
+            proxy = None
+            
+            if isinstance(proxy, dict) and proxy.get("scheme", "").lower() == "mtproxy":
+                proxy = raw.types.InputClientProxy(
+                    address=proxy.get("hostname", ""),
+                    port=proxy.get("port", 0)
+                )
+
             if isinstance(init_connection_params, dict):
                 init_connection_params = utils.obj_to_jsonvalue(init_connection_params)
 
@@ -198,6 +206,7 @@ class Session:
                             lang_code=self.client.lang_code,
                             query=raw.functions.help.GetConfig(),
                             params=init_connection_params,
+                            proxy=proxy
                         )
                     ),
                     timeout=self.START_TIMEOUT

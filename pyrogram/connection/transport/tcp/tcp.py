@@ -36,6 +36,7 @@ class ProxyDict(TypedDict):
     scheme: str
     hostname: str
     port: int
+    secret: Optional[str]
     username: Optional[str]
     password: Optional[str]
 
@@ -154,7 +155,7 @@ class TCP:
         log.info("Connection established")
 
     async def _connect(self, destination: Tuple[str, int]) -> None:
-        if self.proxy:
+        if self.proxy and isinstance(self.proxy, dict) and self.proxy.get("scheme", "").lower() != "mtproxy":
             await self._connect_via_proxy(destination)
         else:
             await self._connect_via_direct(destination)
