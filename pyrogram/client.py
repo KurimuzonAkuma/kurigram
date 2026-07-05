@@ -1002,7 +1002,7 @@ class Client(Methods):
                                         self.name, type(handler).__name__, name, group, module_path))
 
                                     count += 1
-                        except Exception:
+                        except AttributeError:
                             pass
             else:
                 for path, handlers in include:

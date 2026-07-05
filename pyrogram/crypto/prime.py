@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from random import randint
+from secrets import randbelow
 
 CURRENT_DH_PRIME = int(
     "C71CAEB9C6B1C9048E6C522F70F13F73980D40238E3E21C14934D037563D930F"
@@ -47,7 +47,7 @@ def decompose(pq: int) -> int:
     if pq % 2 == 0:
         return 2
 
-    y, c, m = randint(1, pq - 1), randint(1, pq - 1), randint(1, pq - 1)
+    y, c, m = randbelow(pq - 1) + 1, randbelow(pq - 1) + 1, randbelow(pq - 1) + 1
     g = r = q = 1
     x = ys = 0
 
