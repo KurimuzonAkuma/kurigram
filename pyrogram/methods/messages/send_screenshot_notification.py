@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Union, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -25,8 +25,8 @@ class SendScreenshotNotification:
     async def send_screenshot_notification(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        reply_parameters: "types.ReplyParameters" = None
-    ) -> "types.Message":
+        reply_parameters: Optional["types.ReplyParameters"] = None
+    ) -> Optional["types.Message"]:
         """Notify the other user in a private chat that a screenshot of the chat was taken.
 
         .. include:: /_includes/usable-by/users.rst

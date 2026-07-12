@@ -61,7 +61,7 @@ class SendMessage:
         quote_entities: Optional[List["types.MessageEntity"]] = None,
         quote_offset: Optional[int] = None,
         disable_web_page_preview: Optional[bool] = None, # TODO: Remove later
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send text messages.
 
         .. include:: /_includes/usable-by/users-bots.rst

@@ -47,7 +47,7 @@ class SendRichMessage:
                 "types.ForceReply",
             ]
         ] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send text messages.
 
         .. include:: /_includes/usable-by/bots.rst

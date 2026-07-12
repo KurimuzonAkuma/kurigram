@@ -66,7 +66,7 @@ class SendPoll:
                 "types.ForceReply"
             ]
         ] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """A message with a poll.
 
         .. note::
