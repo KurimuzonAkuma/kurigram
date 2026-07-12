@@ -79,6 +79,14 @@ class SendWebPage:
                 Link that will be previewed.
                 If url not specified, the first URL found in the text will be used.
 
+            prefer_large_media (``bool``, *optional*):
+                True, if the media in the link preview is supposed to be enlarged.
+                Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
+
+            prefer_small_media (``bool``, *optional*):
+                True, if the media in the link preview is supposed to be shrunk.
+                Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
+
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
@@ -105,11 +113,12 @@ class SendWebPage:
                 Unique identifier of the message effect.
                 For private chats only.
 
+            show_caption_above_media (``bool``, *optional*):
+                True, if the link preview must be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
+
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
-
-            quote_offset (``int``, *optional*):
-                Offset for quote in original message.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -135,6 +144,9 @@ class SendWebPage:
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
+
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the sent message is returned.

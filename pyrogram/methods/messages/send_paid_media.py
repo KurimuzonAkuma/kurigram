@@ -76,7 +76,7 @@ class SendPaidMedia:
             caption (``str``, *optional*):
                 Media caption, 0-1024 characters after entities parsing.
 
-            invoice_payload (``str``):
+            payload (``str``):
                 Bot-defined invoice payload, 1-128 bytes. This will not be displayed to the user, use for your internal processes.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
