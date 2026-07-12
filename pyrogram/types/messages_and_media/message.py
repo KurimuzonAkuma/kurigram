@@ -20,6 +20,7 @@ import contextlib
 import logging
 from datetime import datetime
 from functools import partial
+from io import BytesIO
 from typing import BinaryIO, Callable, Dict, List, Match, Optional, Union
 
 import pyrogram
@@ -9308,7 +9309,7 @@ class Message(Object, Update):
         block: bool = True,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> str:
+    ) -> Union[str, BytesIO, List[str], List[BytesIO], None]:
         """Shortcut for method :obj:`~pyrogram.Client.download_media` will automatically fill method attributes:
 
         * message
@@ -9352,7 +9353,11 @@ class Message(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the absolute path of the downloaded file as string is returned, None otherwise.
+            ``str`` | ``None`` | ``BytesIO`` | ``List[str]`` | ``List[BytesIO]``: On success, the absolute path of the downloaded file is returned,
+            otherwise, in case the download failed or was deliberately stopped with
+            :meth:`~pyrogram.Client.stop_transmission`, None is returned.
+            Otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.
+            If the message contains multiple media (purchased paid media), a list of paths or binary file-like objects is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.

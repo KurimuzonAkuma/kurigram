@@ -18,6 +18,7 @@
 
 import os
 from datetime import datetime
+from io import BytesIO
 from typing import Union, Optional, Callable, BinaryIO, List, Literal, overload
 
 import pyrogram
@@ -137,7 +138,7 @@ class DownloadMedia:
         block: bool = True,
         progress: Optional[Callable] = None,
         progress_args: tuple = ()
-    ) -> Union[str, BinaryIO, List[str], List[BinaryIO], None]:
+    ) -> Union[str, BytesIO, List[str], List[BytesIO], None]:
         """Download the media from a message.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -185,7 +186,7 @@ class DownloadMedia:
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``str`` | ``None`` | ``BinaryIO`` | ``List[str]`` | ``List[BinaryIO]``: On success, the absolute path of the downloaded file is returned,
+            ``str`` | ``None`` | ``BytesIO`` | ``List[str]`` | ``List[BytesIO]``: On success, the absolute path of the downloaded file is returned,
             otherwise, in case the download failed or was deliberately stopped with
             :meth:`~pyrogram.Client.stop_transmission`, None is returned.
             Otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.

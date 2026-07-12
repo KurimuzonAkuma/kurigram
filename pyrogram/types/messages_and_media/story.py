@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+from io import BytesIO
 from typing import BinaryIO, Callable, Dict, List, Optional, Union
 
 import pyrogram
@@ -2064,7 +2065,7 @@ class Story(Object, Update):
         block: bool = True,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> Optional[Union[str, BinaryIO]]:
+    ) -> Optional[Union[str, BytesIO]]:
         """Bound method *download* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -2117,7 +2118,10 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the absolute path of the downloaded file as string is returned, None otherwise.
+            ``str`` | ``None`` | ``BytesIO``: On success, the absolute path of the downloaded file is returned,
+            otherwise, in case the download failed or was deliberately stopped with
+            :meth:`~pyrogram.Client.stop_transmission`, None is returned.
+            Otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
