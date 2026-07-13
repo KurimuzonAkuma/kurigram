@@ -27,7 +27,7 @@ from .tcp import TCP, ProxyDict
 log = logging.getLogger(__name__)
 
 
-class TCPPadded(TCP):
+class TCPIntermediatePadded(TCP):
     def __init__(
         self,
         ipv6: bool = False,
