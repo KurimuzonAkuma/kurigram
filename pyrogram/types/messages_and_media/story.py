@@ -1705,7 +1705,8 @@ class Story(Object, Update):
         privacy: Optional["enums.StoriesPrivacyRules"] = None,
         allowed_users: Optional[List[int]] = None,
         disallowed_users: Optional[List[int]] = None,
-        protect_content: Optional[bool] = None
+        protect_content: Optional[bool] = None,
+        pinned: Optional[bool] = None
     ) -> "types.Story":
         """Bound method *copy* of :obj:`~pyrogram.types.Story`.
 
@@ -1766,6 +1767,9 @@ class Story(Object, Update):
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent story from forwarding and saving.
 
+            pinned (``bool``, *optional*):
+                If True, the story will be pinned.
+
         Returns:
             :obj:`~pyrogram.types.Story`: On success, the copied story is returned.
 
@@ -1790,7 +1794,8 @@ class Story(Object, Update):
             caption_entities=caption_entities,
             privacy=privacy,
             allowed_users=allowed_users,
-            disallowed_users=disallowed_users
+            disallowed_users=disallowed_users,
+            pinned=pinned
         )
 
     async def delete(self):
