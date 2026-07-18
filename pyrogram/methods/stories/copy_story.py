@@ -38,7 +38,8 @@ class CopyStory:
         privacy: "enums.StoriesPrivacyRules" = None,
         allowed_users: List[Union[int, str]] = None,
         disallowed_users: List[Union[int, str]] = None,
-        protect_content: bool = None
+        protect_content: bool = None,
+        pinned: bool = None
     ) -> "types.Story":
         """Copy story.
 
@@ -84,6 +85,9 @@ class CopyStory:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent story from forwarding and saving.
 
+            pinned (``bool``, *optional*):
+                If True, the story will be pinned.
+
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
@@ -112,5 +116,6 @@ class CopyStory:
             caption_entities=caption_entities,
             privacy=privacy,
             allowed_users=allowed_users,
-            disallowed_users=disallowed_users
+            disallowed_users=disallowed_users,
+            pinned=pinned
         )
