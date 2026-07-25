@@ -451,6 +451,11 @@ async def get_reply_to(
                 story_id=reply_parameters.story_id
             )
 
+        if reply_parameters.ephemeral_message_id:
+            return raw.types.InputReplyToEphemeralMessage(
+                id=reply_parameters.ephemeral_message_id
+            )
+
         if reply_parameters.message_id:
             message = None
             entities = None

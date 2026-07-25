@@ -34,19 +34,27 @@ class SendEphemeralMessage:
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
         media: Optional["types.InputMedia"] = None,
-        reply_to_message_id: Optional[int] = None,
+        callback_query_id: Optional[int] = None,
+        reply_parameters: Optional["types.ReplyParameters"] = None,
         reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
         ]] = None,
+        reply_to_message_id: Optional[int] = None,
     ) -> "types.EphemeralMessage":
         """Send an ephemeral message.
 
         Ephemeral messages are lightweight messages that only the ``receiver_id`` user can see.
         They don't become part of the regular chat history and can't be forwarded or fetched later
         with :meth:`~pyrogram.Client.get_messages`.
+
+        A bot may send an ephemeral message to a user within 15 seconds of an eligible incoming
+        action only by providing either ``callback_query_id`` (from a received callback query) or
+        ``reply_parameters.ephemeral_message_id`` (from an incoming ephemeral message/command). If
+        the bot is an administrator of the chat, it can send an ephemeral message to any non-bot
+        member at any time without either of these.
 
         .. include:: /_includes/usable-by/bots.rst
 
@@ -72,12 +80,27 @@ class SendEphemeralMessage:
             media (:obj:`~pyrogram.types.InputMedia`, *optional*):
                 Media to attach to the message.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, the id of the ephemeral message it replies to.
+            callback_query_id (``int``, *optional*):
+                Identifier of the callback query that triggered this response, obtained from
+                :obj:`~pyrogram.types.CallbackQuery.id` or
+                :obj:`~pyrogram.types.EphemeralCallbackQuery.id`. The message will be delivered to
+                the exact client application that triggered the callback query. Required (unless
+                the bot is a chat administrator) if ``reply_parameters.ephemeral_message_id`` isn't
+                provided.
+
+            reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
+                Describes the message to reply to. Pass
+                ``ReplyParameters(ephemeral_message_id=...)`` to reply to an incoming ephemeral
+                message/command; this also satisfies the 15-second reply-authorization requirement
+                for non-administrator bots.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
+
+            reply_to_message_id (``int``, *optional*):
+                Deprecated in favor of *reply_parameters*. If the message is a reply, the id of the
+                ephemeral message it replies to.
 
         Returns:
             :obj:`~pyrogram.types.EphemeralMessage`: On success, the sent ephemeral message is returned.
@@ -85,8 +108,27 @@ class SendEphemeralMessage:
         Example:
             .. code-block:: python
 
-                await app.send_ephemeral_message(chat_id, receiver_id, "This message will vanish!")
+                # Reply to a callback query with an ephemeral message
+                await app.send_ephemeral_message(
+                    chat_id, receiver_id, "This message will vanish!",
+                    callback_query_id=callback_query.id
+                )
+
+                # Reply to an incoming ephemeral message/command
+                await app.send_ephemeral_message(
+                    chat_id, receiver_id, "This message will vanish!",
+                    reply_parameters=types.ReplyParameters(ephemeral_message_id=message.id)
+                )
         """
+        if reply_to_message_id is not None:
+            log.warning(
+                "`reply_to_message_id` is deprecated and will be removed in future updates. "
+                "Use `reply_parameters` instead."
+            )
+
+            if reply_parameters is None:
+                reply_parameters = types.ReplyParameters(ephemeral_message_id=reply_to_message_id)
+
         message, entities = (await utils.parse_text_entities(self, text, parse_mode, entities)).values()
 
         r = await self.invoke(
@@ -95,14 +137,11 @@ class SendEphemeralMessage:
                 receiver_id=await utils.resolve_receiver(self, receiver_id),
                 message=message,
                 random_id=self.rnd_id(),
+                query_id=callback_query_id,
                 entities=entities,
                 media=await media.write(client=self) if media else None,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
-                reply_to=(
-                    raw.types.InputReplyToEphemeralMessage(id=reply_to_message_id)
-                    if reply_to_message_id
-                    else None
-                ),
+                reply_to=await utils.get_reply_to(self, reply_parameters),
             )
         )
 

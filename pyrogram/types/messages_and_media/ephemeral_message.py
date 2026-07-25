@@ -345,7 +345,7 @@ class EphemeralMessage(Object, Update):
                 chat_id=message.chat.id,
                 receiver_id=message.receiver.id,
                 text="hello",
-                reply_to_message_id=message.id
+                reply_parameters=types.ReplyParameters(ephemeral_message_id=message.id)
             )
 
         Example:
@@ -377,7 +377,7 @@ class EphemeralMessage(Object, Update):
             entities=entities,
             media=media,
             reply_markup=reply_markup,
-            reply_to_message_id=self.id,
+            reply_parameters=types.ReplyParameters(ephemeral_message_id=self.id),
         )
 
     async def edit_text(

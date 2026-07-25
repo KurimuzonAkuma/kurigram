@@ -60,6 +60,12 @@ class ReplyParameters(Object):
 
         poll_option_id (``str``, *optional*):
             Persistent identifier of the specific poll option to be replied to.
+
+        ephemeral_message_id (``int``, *optional*):
+            Identifier of the incoming ephemeral message that will be replied to in the current
+            chat. A reply to an ephemeral message must itself be an ephemeral message. An ephemeral
+            message may only be replied to within 15 seconds of being sent. Mutually exclusive with
+            *message_id*.
     """
 
     def __init__(
@@ -74,6 +80,7 @@ class ReplyParameters(Object):
         quote_position: Optional[int] = None,
         checklist_task_id: Optional[int] = None,
         poll_option_id: Optional[str] = None,
+        ephemeral_message_id: Optional[int] = None,
     ):
         super().__init__()
 
@@ -86,3 +93,4 @@ class ReplyParameters(Object):
         self.quote_position = quote_position
         self.checklist_task_id = checklist_task_id
         self.poll_option_id = poll_option_id
+        self.ephemeral_message_id = ephemeral_message_id
