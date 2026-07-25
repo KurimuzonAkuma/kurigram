@@ -293,6 +293,20 @@ def parse_deleted_messages(client, update, users, chats) -> List["types.Message"
     return types.List(parsed_messages)
 
 
+async def parse_ephemeral_message(
+    client: "pyrogram.Client",
+    updates: "raw.base.Updates"
+) -> Optional["types.EphemeralMessage"]:
+    users = {i.id: i for i in getattr(updates, "users", [])}
+    chats = {i.id: i for i in getattr(updates, "chats", [])}
+
+    for u in getattr(updates, "updates", []):
+        if isinstance(u, (raw.types.UpdateNewEphemeralMessage, raw.types.UpdateEditEphemeralMessage)):
+            return await types.EphemeralMessage._parse(client, u.message, users, chats)
+
+    return None
+
+
 def pack_inline_message_id(msg_id: "raw.base.InputBotInlineMessageID"):
     if isinstance(msg_id, raw.types.InputBotInlineMessageID):
         inline_message_id_packed = struct.pack(
@@ -406,6 +420,21 @@ def get_peer_type(peer_id: int) -> str:
         return "user"
 
     raise ValueError(f"Peer id invalid: {peer_id}")
+
+
+async def resolve_receiver(
+    client: "pyrogram.Client",
+    receiver_id: Union[int, str]
+) -> "raw.base.InputUser":
+    """Resolve a receiver_id into an InputUser, for use with the ephemeral message API."""
+    peer = await client.resolve_peer(receiver_id)
+
+    if isinstance(peer, raw.types.InputPeerUser):
+        return raw.types.InputUser(user_id=peer.user_id, access_hash=peer.access_hash)
+    elif isinstance(peer, raw.types.InputPeerSelf):
+        return raw.types.InputUserSelf()
+
+    raise ValueError(f"The receiver_id \"{receiver_id}\" does not belong to a user")
 
 
 async def get_reply_to(

@@ -25,10 +25,14 @@ from .chat_member_updated_handler import ChatMemberUpdatedHandler
 from .chosen_inline_result_handler import ChosenInlineResultHandler
 from .connect_handler import ConnectHandler
 from .deleted_business_messages_handler import DeletedBusinessMessagesHandler
+from .deleted_ephemeral_messages_handler import DeletedEphemeralMessagesHandler
 from .deleted_messages_handler import DeletedMessagesHandler
 from .disconnect_handler import DisconnectHandler
 from .edited_business_message_handler import EditedBusinessMessageHandler
+from .edited_ephemeral_message_handler import EditedEphemeralMessageHandler
 from .edited_message_handler import EditedMessageHandler
+from .ephemeral_callback_query_handler import EphemeralCallbackQueryHandler
+from .ephemeral_message_handler import EphemeralMessageHandler
 from .error_handler import ErrorHandler
 from .guest_message_handler import GuestMessageHandler
 from .handler import Handler

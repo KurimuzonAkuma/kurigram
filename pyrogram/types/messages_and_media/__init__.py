@@ -45,6 +45,7 @@ from .dice import Dice
 from .direct_message_price_changed import DirectMessagePriceChanged
 from .direct_messages_topic import DirectMessagesTopic
 from .document import Document
+from .ephemeral_message import EphemeralMessage
 from .external_reply_info import ExternalReplyInfo
 from .fact_check import FactCheck
 from .formatted_text import FormattedText
@@ -248,6 +249,7 @@ __all__ = [
     "DirectMessagePriceChanged",
     "DirectMessagesTopic",
     "Document",
+    "EphemeralMessage",
     "ExternalReplyInfo",
     "FactCheck",
     "FormattedText",

@@ -26,9 +26,12 @@ from .copy_message import CopyMessage
 from .decline_suggested_post import DeclineSuggestedPost
 from .delete_chat_history import DeleteChatHistory
 from .delete_direct_messages_chat_topic_history import DeleteDirectMessagesChatTopicHistory
+from .delete_ephemeral_messages import DeleteEphemeralMessages
 from .delete_messages import DeleteMessages
 from .delete_poll_option import DeletePollOption
 from .download_media import DownloadMedia
+from .edit_ephemeral_message_media import EditEphemeralMessageMedia
+from .edit_ephemeral_message_text import EditEphemeralMessageText
 from .edit_inline_caption import EditInlineCaption
 from .edit_inline_media import EditInlineMedia
 from .edit_inline_reply_markup import EditInlineReplyMarkup
@@ -62,6 +65,7 @@ from .open_web_app import OpenWebApp
 from .read_chat_history import ReadChatHistory
 from .read_mentions import ReadMentions
 from .read_reactions import ReadReactions
+from .report_ephemeral_message import ReportEphemeralMessage
 from .retract_vote import RetractVote
 from .search_global import SearchGlobal
 from .search_global_count import SearchGlobalCount
@@ -77,6 +81,7 @@ from .send_checklist import SendChecklist
 from .send_contact import SendContact
 from .send_dice import SendDice
 from .send_document import SendDocument
+from .send_ephemeral_message import SendEphemeralMessage
 from .send_location import SendLocation
 from .send_media_group import SendMediaGroup
 from .send_message_draft import SendMessageDraft
@@ -113,8 +118,11 @@ class Messages(
     ApproveSuggestedPost,
     ComposeTextWithAI,
     DeclineSuggestedPost,
+    DeleteEphemeralMessages,
     DeleteMessages,
     DeletePollOption,
+    EditEphemeralMessageMedia,
+    EditEphemeralMessageText,
     EditMessageCaption,
     EditMessageChecklist,
     EditMessageReplyMarkup,
@@ -138,6 +146,7 @@ class Messages(
     SendChecklist,
     SendContact,
     SendDocument,
+    SendEphemeralMessage,
     SendAnimation,
     SendLocation,
     SendMediaGroup,
@@ -194,6 +203,7 @@ class Messages(
     TranslateMessageText,
     TranslateText,
     GetCustomEmojiStickers,
-    GetDirectMessagesChatTopicHistory
+    GetDirectMessagesChatTopicHistory,
+    ReportEphemeralMessage
 ):
     pass
