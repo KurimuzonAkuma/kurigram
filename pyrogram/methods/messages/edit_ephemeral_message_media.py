@@ -74,7 +74,7 @@ class EditEphemeralMessageMedia:
                 peer=await self.resolve_peer(chat_id),
                 receiver_id=await utils.resolve_receiver(self, receiver_id),
                 id=message_id,
-                media=await media.write(self),
+                media=await media.write(client=self),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
             )
         )
