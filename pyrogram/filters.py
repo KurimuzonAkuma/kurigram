@@ -25,6 +25,7 @@ from pyrogram import enums
 from pyrogram.types import (
     CallbackQuery,
     ChosenInlineResult,
+    EphemeralCallbackQuery,
     InlineKeyboardMarkup,
     InlineQuery,
     Message,
@@ -1084,7 +1085,7 @@ def regex(pattern: Union[str, Pattern], flags: int = 0):
     async def func(flt, _, update: Update):
         if isinstance(update, Message):
             value = update.text or update.caption
-        elif isinstance(update, CallbackQuery):
+        elif isinstance(update, (CallbackQuery, EphemeralCallbackQuery)):
             value = update.data
         elif isinstance(update, (ChosenInlineResult, InlineQuery)):
             value = update.query

@@ -96,7 +96,7 @@ class SendEphemeralMessage:
                 message=message,
                 random_id=self.rnd_id(),
                 entities=entities,
-                media=await media.write(self) if media else None,
+                media=await media.write(client=self) if media else None,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 reply_to=(
                     raw.types.InputReplyToEphemeralMessage(id=reply_to_message_id)
