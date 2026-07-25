@@ -29,6 +29,7 @@ from .bot_command_scope_default import BotCommandScopeDefault
 from .callback_game import CallbackGame
 from .callback_query import CallbackQuery
 from .chat_boost_updated import ChatBoostUpdated
+from .ephemeral_callback_query import EphemeralCallbackQuery
 from .force_reply import ForceReply
 from .game_high_score import GameHighScore
 from .inline_keyboard_button import InlineKeyboardButton
@@ -66,6 +67,7 @@ __all__ = [
     "CallbackGame",
     "CallbackQuery",
     "ChatBoostUpdated",
+    "EphemeralCallbackQuery",
     "ForceReply",
     "GameHighScore",
     "InlineKeyboardButton",

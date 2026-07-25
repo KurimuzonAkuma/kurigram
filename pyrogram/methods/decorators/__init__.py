@@ -25,10 +25,14 @@ from .on_chat_member_updated import OnChatMemberUpdated
 from .on_chosen_inline_result import OnChosenInlineResult
 from .on_connect import OnConnect
 from .on_deleted_business_messages import OnDeletedBusinessMessages
+from .on_deleted_ephemeral_messages import OnDeletedEphemeralMessages
 from .on_deleted_messages import OnDeletedMessages
 from .on_disconnect import OnDisconnect
 from .on_edited_business_message import OnEditedBusinessMessage
+from .on_edited_ephemeral_message import OnEditedEphemeralMessage
 from .on_edited_message import OnEditedMessage
+from .on_ephemeral_callback_query import OnEphemeralCallbackQuery
+from .on_ephemeral_message import OnEphemeralMessage
 from .on_error import OnError
 from .on_guest_message import OnGuestMessage
 from .on_inline_query import OnInlineQuery
@@ -57,10 +61,14 @@ class Decorators(
     OnChosenInlineResult,
     OnConnect,
     OnDeletedBusinessMessages,
+    OnDeletedEphemeralMessages,
     OnDeletedMessages,
     OnDisconnect,
     OnEditedBusinessMessage,
+    OnEditedEphemeralMessage,
     OnEditedMessage,
+    OnEphemeralCallbackQuery,
+    OnEphemeralMessage,
     OnError,
     OnGuestMessage,
     OnInlineQuery,

@@ -33,10 +33,14 @@ from pyrogram.handlers import (
     ChatMemberUpdatedHandler,
     ChosenInlineResultHandler,
     DeletedBusinessMessagesHandler,
+    DeletedEphemeralMessagesHandler,
     DeletedMessagesHandler,
     EditedBusinessMessageHandler,
+    EditedEphemeralMessageHandler,
     EditedMessageHandler,
     ErrorHandler,
+    EphemeralCallbackQueryHandler,
+    EphemeralMessageHandler,
     GuestMessageHandler,
     Handler,
     InlineQueryHandler,
@@ -72,14 +76,18 @@ from pyrogram.raw.types import (
     UpdateChannelParticipant,
     UpdateChatParticipant,
     UpdateDeleteChannelMessages,
+    UpdateDeleteEphemeralMessages,
     UpdateDeleteMessages,
     UpdateEditChannelMessage,
+    UpdateEditEphemeralMessage,
     UpdateEditMessage,
+    UpdateEphemeralBotCallbackQuery,
     UpdateInlineBotCallbackQuery,
     UpdateManagedBot,
     UpdateMessagePoll,
     UpdateMessagePollVote,
     UpdateNewChannelMessage,
+    UpdateNewEphemeralMessage,
     UpdateNewMessage,
     UpdateNewScheduledMessage,
     UpdateStory,
@@ -113,6 +121,10 @@ class Dispatcher:
     DELETED_BUSINESS_MESSAGES_UPDATES = (UpdateBotDeleteBusinessMessage,)
     MANAGED_BOT_UPDATES = (UpdateManagedBot,)
     GUEST_MESSAGE_UPDATES = (UpdateBotGuestChatQuery,)
+    NEW_EPHEMERAL_MESSAGE_UPDATES = (UpdateNewEphemeralMessage,)
+    EDIT_EPHEMERAL_MESSAGE_UPDATES = (UpdateEditEphemeralMessage,)
+    DELETE_EPHEMERAL_MESSAGES_UPDATES = (UpdateDeleteEphemeralMessages,)
+    EPHEMERAL_CALLBACK_QUERY_UPDATES = (UpdateEphemeralBotCallbackQuery,)
 
     def __init__(self, client: "pyrogram.Client"):
         self.client = client
@@ -289,6 +301,30 @@ class Dispatcher:
                 GuestMessageHandler
             )
 
+        async def new_ephemeral_message_parser(update, users, chats):
+            return (
+                await pyrogram.types.EphemeralMessage._parse(self.client, update.message, users, chats),
+                EphemeralMessageHandler
+            )
+
+        async def edit_ephemeral_message_parser(update, users, chats):
+            return (
+                await pyrogram.types.EphemeralMessage._parse(self.client, update.message, users, chats),
+                EditedEphemeralMessageHandler
+            )
+
+        async def delete_ephemeral_messages_parser(update, users, chats):
+            return (
+                pyrogram.types.EphemeralMessage._parse_deleted(self.client, update, users, chats),
+                DeletedEphemeralMessagesHandler
+            )
+
+        async def ephemeral_callback_query_parser(update, users, chats):
+            return (
+                await pyrogram.types.EphemeralCallbackQuery._parse(self.client, update, users, chats),
+                EphemeralCallbackQueryHandler
+            )
+
         self.update_parsers = {
             Dispatcher.NEW_MESSAGE_UPDATES: message_parser,
             Dispatcher.EDIT_MESSAGE_UPDATES: edited_message_parser,
@@ -313,6 +349,10 @@ class Dispatcher:
             Dispatcher.DELETED_BUSINESS_MESSAGES_UPDATES: deleted_business_messages_parser,
             Dispatcher.MANAGED_BOT_UPDATES: managed_bot_parser,
             Dispatcher.GUEST_MESSAGE_UPDATES: guest_message_parser,
+            Dispatcher.NEW_EPHEMERAL_MESSAGE_UPDATES: new_ephemeral_message_parser,
+            Dispatcher.EDIT_EPHEMERAL_MESSAGE_UPDATES: edit_ephemeral_message_parser,
+            Dispatcher.DELETE_EPHEMERAL_MESSAGES_UPDATES: delete_ephemeral_messages_parser,
+            Dispatcher.EPHEMERAL_CALLBACK_QUERY_UPDATES: ephemeral_callback_query_parser,
         }
 
         self.update_parsers = {key: value for key_tuple, value in self.update_parsers.items() for key in key_tuple}
