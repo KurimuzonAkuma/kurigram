@@ -1118,7 +1118,7 @@ class Client(Methods):
         file_size: int = 0,
         limit: int = 0,
         offset: int = 0,
-        progress: Callable = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> AsyncGenerator[bytes, None]:
         async with self.get_file_semaphore:
@@ -1428,7 +1428,7 @@ class Client(Methods):
 
     async def get_dc_option(
         self,
-        dc_id: int = None,
+        dc_id: Optional[int] = None,
         is_media: bool = False,
         is_cdn: bool = False,
         ipv6: bool = False

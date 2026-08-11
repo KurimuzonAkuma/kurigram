@@ -130,7 +130,7 @@ class OrFilter(Filter):
 CUSTOM_FILTER_NAME = "CustomFilter"
 
 
-def create(func: Callable, name: str = None, **kwargs) -> Filter:
+def create(func: Callable, name: Optional[str] = None, **kwargs) -> Filter:
     """Easily create a custom filter.
 
     Custom filters give you extra control over which updates are allowed or not to be processed by your handlers.

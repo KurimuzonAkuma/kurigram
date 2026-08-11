@@ -43,7 +43,7 @@ class QRLogin:
             )
         )
 
-    async def wait(self, timeout: float = None) -> Optional["types.User"]:
+    async def wait(self, timeout: Optional[float] = None) -> Optional["types.User"]:
         if timeout is None:
             timeout = self.r.expires - int(datetime.datetime.now().timestamp())
 

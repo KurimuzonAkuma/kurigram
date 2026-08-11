@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from .exceptions import *
 from .rpc_error import UnknownError
 
@@ -54,12 +56,12 @@ class SecurityError(Exception):
 class SecurityCheckMismatch(SecurityError):
     """Raised when a security check mismatch occurs."""
 
-    def __init__(self, msg: str = None):
+    def __init__(self, msg: Optional[str] = None):
         super().__init__("A security check mismatch has occurred." if msg is None else msg)
 
 
 class CDNFileHashMismatch(SecurityError):
     """Raised when a CDN file hash mismatch occurs."""
 
-    def __init__(self, msg: str = None):
+    def __init__(self, msg: Optional[str] = None):
         super().__init__("A CDN file hash mismatch has occurred." if msg is None else msg)

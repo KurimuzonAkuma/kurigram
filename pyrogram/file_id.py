@@ -21,7 +21,7 @@ import logging
 import struct
 from enum import IntEnum
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 
 from pyrogram.raw.core import Bytes, String
 
@@ -163,19 +163,19 @@ class FileId:
         file_type: FileType,
         dc_id: int,
         file_reference: bytes = b"",
-        url: str = None,
-        media_id: int = None,
-        access_hash: int = None,
-        volume_id: int = None,
-        thumbnail_source: ThumbnailSource = None,
-        thumbnail_file_type: FileType = None,
+        url: Optional[str] = None,
+        media_id: Optional[int] = None,
+        access_hash: Optional[int] = None,
+        volume_id: Optional[int] = None,
+        thumbnail_source: Optional[ThumbnailSource] = None,
+        thumbnail_file_type: Optional[FileType] = None,
         thumbnail_size: str = "",
-        secret: int = None,
-        local_id: int = None,
-        chat_id: int = None,
-        chat_access_hash: int = None,
-        sticker_set_id: int = None,
-        sticker_set_access_hash: int = None
+        secret: Optional[int] = None,
+        local_id: Optional[int] = None,
+        chat_id: Optional[int] = None,
+        chat_access_hash: Optional[int] = None,
+        sticker_set_id: Optional[int] = None,
+        sticker_set_access_hash: Optional[int] = None
     ):
         self.major = major
         self.minor = minor
@@ -337,7 +337,7 @@ class FileId:
                 access_hash=access_hash
             )
 
-    def encode(self, *, major: int = None, minor: int = None):
+    def encode(self, *, major: Optional[int] = None, minor: Optional[int] = None):
         major = major if major is not None else self.major
         minor = minor if minor is not None else self.minor
 
@@ -415,10 +415,10 @@ class FileUniqueId:
     def __init__(
         self, *,
         file_unique_type: FileUniqueType,
-        url: str = None,
-        media_id: int = None,
-        volume_id: int = None,
-        local_id: int = None
+        url: Optional[str] = None,
+        media_id: Optional[int] = None,
+        volume_id: Optional[int] = None,
+        local_id: Optional[int] = None
     ):
         self.file_unique_type = file_unique_type
         self.url = url

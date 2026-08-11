@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, Any, Callable, List
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 from pyrogram.filters import Filter
 
@@ -54,7 +54,7 @@ class DeletedMessagesHandler(Handler):
     def __init__(
         self,
         callback: Callable[["pyrogram.Client", List["types.Message"]], Any],
-        filters: Filter = None,
+        filters: Optional[Filter] = None,
     ):
         super().__init__(callback, filters)
 
