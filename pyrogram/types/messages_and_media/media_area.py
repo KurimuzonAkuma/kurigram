@@ -151,7 +151,7 @@ class MediaArea(Object):
     async def _parse(
         client: "pyrogram.Client",
         area: "raw.base.MediaArea",
-        chats: Optional[dict] = None
+        chats: dict
     ) -> "MediaArea":
         sender_chat = None
         message_id = None
