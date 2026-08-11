@@ -300,7 +300,7 @@ class DownloadMedia:
             directory, file_name = os.path.split(file_name)
             file_name = file_name or thumb.name
 
-            if not os.path.isabs(file_name):
+            if not os.path.isabs(directory):
                 directory = self.workdir / (directory or DEFAULT_DOWNLOAD_DIR)
 
             os.makedirs(directory, exist_ok=True) if not in_memory else None
@@ -333,7 +333,7 @@ class DownloadMedia:
         directory, file_name = os.path.split(file_name)
         file_name = file_name or media_file_name or ""
 
-        if not os.path.isabs(file_name):
+        if not os.path.isabs(directory):
             directory = self.workdir / (directory or DEFAULT_DOWNLOAD_DIR)
 
         if not file_name:
