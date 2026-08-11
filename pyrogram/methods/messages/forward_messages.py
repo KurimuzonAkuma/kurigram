@@ -17,13 +17,51 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, overload
 
 import pyrogram
 from pyrogram import raw, types, utils
 
 
 class ForwardMessages:
+    @overload
+    async def forward_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        from_chat_id: Union[int, str],
+        message_ids: int,
+        message_thread_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        hide_sender_name: Optional[bool] = None,
+        hide_captions: Optional[bool] = None,
+        protect_content: Optional[bool] = None,
+        allow_paid_broadcast: Optional[bool] = None,
+        video_start_timestamp: Optional[int] = None,
+        reply_parameters: Optional["types.ReplyParameters"] = None,
+        paid_message_star_count: Optional[int] = None
+    ) -> Optional["types.Message"]: ...
+
+    @overload
+    async def forward_messages(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        from_chat_id: Union[int, str],
+        message_ids: Iterable[int],
+        message_thread_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        hide_sender_name: Optional[bool] = None,
+        hide_captions: Optional[bool] = None,
+        protect_content: Optional[bool] = None,
+        allow_paid_broadcast: Optional[bool] = None,
+        video_start_timestamp: Optional[int] = None,
+        reply_parameters: Optional["types.ReplyParameters"] = None,
+        paid_message_star_count: Optional[int] = None
+    ) -> List["types.Message"]: ...
+
     async def forward_messages(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
@@ -40,7 +78,7 @@ class ForwardMessages:
         video_start_timestamp: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         paid_message_star_count: Optional[int] = None
-    ) -> Union["types.Message", List["types.Message"]]:
+    ) -> Optional[Union["types.Message", List["types.Message"]]]:
         """Forward messages of any kind.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -98,8 +136,9 @@ class ForwardMessages:
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
         Returns:
-            :obj:`~pyrogram.types.Message` | List of :obj:`~pyrogram.types.Message`: In case *message_ids* was not
-            a list, a single message is returned, otherwise a list of messages is returned.
+            :obj:`~pyrogram.types.Message` | List of :obj:`~pyrogram.types.Message` | ``None``: In case *message_ids*
+            was not a list, a single message is returned, or None if nothing was forwarded, otherwise a list of
+            messages is returned.
 
         Example:
             .. code-block:: python
