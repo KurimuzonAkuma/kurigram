@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, List
+from typing import Union, List, Optional
 
 import pyrogram
 from pyrogram import raw
@@ -26,11 +26,11 @@ class SendReaction:
     async def send_reaction(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        message_id: int = None,
-        emoji: Union[int, str, List[Union[int, str]]] = None,
-        story_id: int = None,
+        message_id: Optional[int] = None,
+        emoji: Optional[Union[int, str, List[Union[int, str]]]] = None,
+        story_id: Optional[int] = None,
         big: bool = False,
-        business_connection_id: str = None
+        business_connection_id: Optional[str] = None
     ) -> bool:
         """Send a reaction to a message or story.
 

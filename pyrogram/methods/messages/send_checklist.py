@@ -38,7 +38,7 @@ class SendChecklist:
         schedule_date: Optional[datetime] = None,
         repeat_period: Optional[int] = None,
         business_connection_id: Optional[str] = None,
-        paid_message_star_count: int = None,
+        paid_message_star_count: Optional[int] = None,
         reply_markup: Optional[
             Union[
                 "types.InlineKeyboardMarkup",

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Union
+from typing import List, Optional, Union
 import pyrogram
 from pyrogram import raw, types
 
@@ -26,7 +26,7 @@ class CreateFolderInviteLink:
         self: "pyrogram.Client",
         chat_folder_id: int,
         chat_ids: List[Union[int, str]],
-        name: str = None,
+        name: Optional[str] = None,
     ) -> "types.FolderInviteLink":
         """Create a new invite link for a chat folder.
 

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, types
@@ -27,8 +27,8 @@ class CreateForumTopic:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         title: str,
-        icon_color: int = None,
-        icon_emoji_id: int = None
+        icon_color: Optional[int] = None,
+        icon_emoji_id: Optional[int] = None
     ) -> "types.ForumTopicCreated":
         """Create a new forum topic.
 

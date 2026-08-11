@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, List
+from typing import Union, List, Optional
 
 import pyrogram
 from pyrogram import raw
@@ -28,7 +28,7 @@ class GetGameHighScores:
         self: "pyrogram.Client",
         user_id: Union[int, str],
         chat_id: Union[int, str],
-        message_id: int = None
+        message_id: Optional[int] = None
     ) -> List["types.GameHighScore"]:
         """Get data for high score tables.
 

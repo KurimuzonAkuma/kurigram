@@ -27,8 +27,8 @@ class UpgradeGift:
         self: "pyrogram.Client",
         owned_gift_id: str,
         keep_original_details: Optional[bool] = None,
-        star_count: int = None,
-        business_connection_id: str = None
+        star_count: Optional[int] = None,
+        business_connection_id: Optional[str] = None
     ) -> Optional["types.Message"]:
         """Upgrade a given regular gift to a unique gift.
 

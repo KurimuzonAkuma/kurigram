@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, enums
@@ -28,7 +28,7 @@ class GetMainWebApp:
         chat_id: Union[int, str],
         bot_user_id: Union[int, str],
         start_parameter: str = "",
-        platform: "enums.ClientPlatform" = None
+        platform: Optional["enums.ClientPlatform"] = None
     ) -> str:
         """Returns information needed to open the main Web App of a bot.
 

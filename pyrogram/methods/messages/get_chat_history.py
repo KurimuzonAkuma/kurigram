@@ -18,7 +18,7 @@
 
 import logging
 from datetime import datetime
-from typing import AsyncIterator, Union, List
+from typing import AsyncIterator, Union, List, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -76,7 +76,7 @@ class GetChatHistory:
         chat_id: Union[int, str],
         limit: int = 0,
         offset: int = 0,
-        offset_id: int = None,
+        offset_id: Optional[int] = None,
         offset_date: datetime = utils.zero_datetime(),
         min_id: int = 0,
         max_id: int = 0,

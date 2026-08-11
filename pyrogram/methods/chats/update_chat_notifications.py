@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, utils
@@ -27,11 +27,11 @@ class UpdateChatNotifications:
     async def update_chat_notifications(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        mute: bool = None,
-        mute_until: datetime = None,
-        stories_muted: bool = None,
-        stories_hide_sender: bool = None,
-        show_previews: bool = None
+        mute: Optional[bool] = None,
+        mute_until: Optional[datetime] = None,
+        stories_muted: Optional[bool] = None,
+        stories_hide_sender: Optional[bool] = None,
+        show_previews: Optional[bool] = None
     ) -> bool:
         """Update the notification settings for the selected chat
 

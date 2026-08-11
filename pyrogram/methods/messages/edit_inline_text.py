@@ -31,10 +31,10 @@ class EditInlineText:
         inline_message_id: str,
         text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
-        link_preview_options: "types.LinkPreviewOptions" = None,
+        link_preview_options: Optional["types.LinkPreviewOptions"] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
         rich_message: Optional["types.InputRichMessage"] = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
         disable_web_page_preview: Optional[bool] = None,
     ) -> bool:
         """Edit the text of inline messages.

@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import List, Union, BinaryIO, Callable
+from typing import List, Union, BinaryIO, Callable, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils, StopTransmission
@@ -28,15 +28,15 @@ class EditStoryMedia:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         story_id: int,
-        media: Union[str, BinaryIO] = None,
-        media_areas: List["types.MediaArea"] = None,
+        media: Optional[Union[str, BinaryIO]] = None,
+        media_areas: Optional[List["types.MediaArea"]] = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
-        thumb: Union[str, BinaryIO] = None,
+        thumb: Optional[Union[str, BinaryIO]] = None,
         supports_streaming: bool = True,
-        file_name: str = None,
-        progress: Callable = None,
+        file_name: Optional[str] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> "types.Story":
         """Edit story media.

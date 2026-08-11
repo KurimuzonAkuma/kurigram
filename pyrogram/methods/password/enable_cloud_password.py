@@ -18,6 +18,8 @@
 
 import os
 
+from typing import Optional
+
 import pyrogram
 from pyrogram import raw
 from pyrogram.utils import compute_password_hash, btoi, itob
@@ -28,7 +30,7 @@ class EnableCloudPassword:
         self: "pyrogram.Client",
         password: str,
         hint: str = "",
-        email: str = None
+        email: Optional[str] = None
     ) -> bool:
         """Enable the Two-Step Verification security feature (Cloud Password) on your account.
 

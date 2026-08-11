@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 import pyrogram
 from pyrogram import raw
 
@@ -25,7 +25,7 @@ class DeclineSuggestedPost():
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         message_id: int,
-        comment: str = None
+        comment: Optional[str] = None
     ) -> bool:
         """Use this method to decline a suggested post in a direct messages chat.
 

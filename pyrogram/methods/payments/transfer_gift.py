@@ -28,7 +28,7 @@ class TransferGift:
         owned_gift_id: str,
         new_owner_chat_id: Union[int, str],
         # stars_count: int = None,
-        business_connection_id: str = None
+        business_connection_id: Optional[str] = None
     ) -> Optional["types.Message"]:
         """Transfers an owned unique gift to another user.
 

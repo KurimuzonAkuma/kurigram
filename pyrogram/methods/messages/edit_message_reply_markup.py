@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -30,8 +30,8 @@ class EditMessageReplyMarkup:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         message_id: int,
-        schedule_date: datetime = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
+        schedule_date: Optional[datetime] = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
     ) -> "types.Message":
         """Edit only the reply markup of messages sent by the bot.
 

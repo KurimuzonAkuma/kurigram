@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -26,7 +26,7 @@ class GetBotInfoShortDescription:
     async def get_bot_info_short_description(
         self: "pyrogram.Client",
         language_code: str = "",
-        for_my_bot: Union[int, str] = None,
+        for_my_bot: Optional[Union[int, str]] = None,
     ) -> str:
         """Use this method to get the current / owned bot short description for the given user language.
 

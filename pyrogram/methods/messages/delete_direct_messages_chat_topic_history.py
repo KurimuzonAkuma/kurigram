@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, utils
@@ -27,10 +27,10 @@ class DeleteDirectMessagesChatTopicHistory:
     async def delete_direct_messages_chat_topic_history(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        topic_id: int = None,
+        topic_id: Optional[int] = None,
         max_id: int = 0,
-        min_date: datetime = None,
-        max_date: datetime = None,
+        min_date: Optional[datetime] = None,
+        max_date: Optional[datetime] = None,
     ) -> int:
         """Delete messages in the topic in a channel direct messages chat administered by the current user.
 

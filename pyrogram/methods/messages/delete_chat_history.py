@@ -18,7 +18,7 @@
 
 from datetime import datetime
 import logging
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -32,10 +32,10 @@ class DeleteChatHistory:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         max_id: int = 0,
-        revoke: bool = None,
+        revoke: Optional[bool] = None,
         just_clear = None,
-        min_date: datetime = None,
-        max_date: datetime = None,
+        min_date: Optional[datetime] = None,
+        max_date: Optional[datetime] = None,
     ) -> int:
         """Delete the history of a chat.
 

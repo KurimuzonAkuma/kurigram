@@ -32,7 +32,7 @@ class EditEphemeralMessageCaption:
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         caption_entities: Optional[List["types.MessageEntity"]] = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
     ) -> "types.Message":
         """Use this method to edit the caption of an ephemeral message.
         Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline.

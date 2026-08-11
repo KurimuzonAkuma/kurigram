@@ -31,8 +31,8 @@ class EditEphemeralMessageText:
         text: str,
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
-        link_preview_options: "types.LinkPreviewOptions" = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
+        link_preview_options: Optional["types.LinkPreviewOptions"] = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
     ) -> "types.Message":
         """Use this method to edit an ephemeral text message.
         Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline.

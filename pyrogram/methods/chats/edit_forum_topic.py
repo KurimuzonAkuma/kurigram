@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -27,10 +27,10 @@ class EditForumTopic:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         topic_id: int,
-        title: str = None,
-        icon_emoji_id: int = None,
-        closed: bool = None,
-        hidden: bool = None
+        title: Optional[str] = None,
+        icon_emoji_id: Optional[int] = None,
+        closed: Optional[bool] = None,
+        hidden: Optional[bool] = None
     ) -> bool:
         """Edit a forum topic.
 

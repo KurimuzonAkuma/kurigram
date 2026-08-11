@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 import pyrogram
 from pyrogram import raw, types
 
@@ -25,7 +27,7 @@ class SendPaymentForm:
         self: "pyrogram.Client",
         payment_form_id: int,
         input_invoice: "types.InputInvoice",
-        credentials: "types.InputCredentials" = None
+        credentials: Optional["types.InputCredentials"] = None
     ) -> "types.PaymentResult":
         """Send a filled-out payment form to the bot for final verification.
 

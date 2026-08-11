@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union
+from typing import Optional, Union
 import pyrogram
 from pyrogram import raw
 from pyrogram import utils
@@ -27,7 +27,7 @@ class ApproveSuggestedPost():
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         message_id: int,
-        send_date: datetime = None
+        send_date: Optional[datetime] = None
     ) -> bool:
         """Use this method to approve a suggested post in a direct messages chat.
 

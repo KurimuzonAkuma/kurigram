@@ -28,7 +28,7 @@ class SendPaidReaction:
         chat_id: Union[int, str],
         message_id: int,
         amount: int,
-        privacy: "enums.PaidReactionPrivacy" = None,
+        privacy: Optional["enums.PaidReactionPrivacy"] = None,
         send_as: Optional[Union[int, str]] = None,
     ) -> bool:
         """Send a paid reaction to a message.

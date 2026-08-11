@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -28,10 +28,10 @@ class SetGameScore:
         self: "pyrogram.Client",
         user_id: Union[int, str],
         score: int,
-        force: bool = None,
-        disable_edit_message: bool = None,
-        chat_id: Union[int, str] = None,
-        message_id: int = None
+        force: Optional[bool] = None,
+        disable_edit_message: Optional[bool] = None,
+        chat_id: Optional[Union[int, str]] = None,
+        message_id: Optional[int] = None
     ) -> Union["types.Message", bool]:
         # inline_message_id: str = None):  TODO Add inline_message_id
         """Set the score of the specified user in a game.

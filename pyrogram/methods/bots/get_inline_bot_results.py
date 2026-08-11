@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -29,8 +29,8 @@ class GetInlineBotResults:
         bot: Union[int, str],
         query: str = "",
         offset: str = "",
-        latitude: float = None,
-        longitude: float = None
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None
     ):
         """Get bot results via inline queries.
         You can then send a result using :meth:`~pyrogram.Client.send_inline_bot_result`

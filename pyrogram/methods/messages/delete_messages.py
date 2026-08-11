@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -28,7 +28,7 @@ class DeleteMessages:
         chat_id: Union[int, str],
         message_ids: Union[int, Iterable[int]],
         revoke: bool = True,
-        is_scheduled: bool = None
+        is_scheduled: Optional[bool] = None
     ) -> int:
         """Delete messages, including service messages.
 

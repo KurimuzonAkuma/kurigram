@@ -28,10 +28,10 @@ class GiftPremiumWithStars:
         self: "pyrogram.Client",
         user_id: Union[int, str],
         month_count: int,
-        text: str = None,
+        text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
-        entities: List["types.MessageEntity"] = None,
-        star_count: int = None,
+        entities: Optional[List["types.MessageEntity"]] = None,
+        star_count: Optional[int] = None,
     ) -> Optional["types.Message"]:
         """Allows to buy a Telegram Premium subscription for another user with payment in Telegram Stars.
 

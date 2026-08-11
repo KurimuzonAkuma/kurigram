@@ -30,8 +30,8 @@ class GetChatEventLog:
         query: str = "",
         offset_id: int = 0,
         limit: int = 0,
-        filters: "types.ChatEventFilter" = None,
-        user_ids: List[Union[int, str]] = None
+        filters: Optional["types.ChatEventFilter"] = None,
+        user_ids: Optional[List[Union[int, str]]] = None
     ) -> AsyncGenerator["types.ChatEvent", None]:
         """Get the actions taken by chat members and administrators in the last 48h.
 
