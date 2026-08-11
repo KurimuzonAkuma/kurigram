@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable
+from typing import Callable, Optional, Union
 
 import pyrogram
 from pyrogram.filters import Filter
@@ -24,8 +24,8 @@ from pyrogram.filters import Filter
 
 class OnPurchasedPaidMedia:
     def on_purchased_paid_media(
-        self=None,
-        filters=None,
+        self: Union["OnPurchasedPaidMedia", Filter, None] = None,
+        filters: Optional[Filter] = None,
         group: int = 0
     ) -> Callable:
         """Decorator for handling purchased paid media.
