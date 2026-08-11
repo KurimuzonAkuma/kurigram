@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pyrogram import raw
 from ..object import Object
 
@@ -43,11 +45,11 @@ class ForumTopicEdited(Object):
 
     def __init__(
         self, *,
-        title: str = None,
-        icon_color: int = None,
-        custom_emoji_id: str = None,
-        is_closed: bool = None,
-        is_hidden: bool = None
+        title: Optional[str] = None,
+        icon_color: Optional[int] = None,
+        custom_emoji_id: Optional[str] = None,
+        is_closed: Optional[bool] = None,
+        is_hidden: Optional[bool] = None
     ):
         super().__init__()
 

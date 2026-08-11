@@ -54,7 +54,7 @@ class Link(str):
     def __new__(cls, url, text, style):
         return str.__new__(cls, Link.format(url, text, style))
 
-    def __call__(self, other: str = None, *, style: str = None):
+    def __call__(self, other: Optional[str] = None, *, style: Optional[str] = None):
         return Link.format(self.url, other or self.text, style or self.style)
 
     def __str__(self):
@@ -430,7 +430,7 @@ class User(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: int,
         is_self: Optional[bool] = None,
         is_contact: Optional[bool] = None,

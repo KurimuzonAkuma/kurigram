@@ -74,7 +74,7 @@ class SuccessfulPayment(Object):
         is_recurring: Optional[bool] = None,
         is_first_recurring: Optional[bool] = None,
         invoice_slug: Optional[str] = None,
-        subscription_expiration_date: datetime = None,
+        subscription_expiration_date: Optional[datetime] = None,
     ):
         super().__init__()
 

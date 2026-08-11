@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Match
+from typing import List, Match, Optional
 
 import pyrogram
 from pyrogram import raw
@@ -57,14 +57,14 @@ class InlineQuery(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: str,
         from_user: "types.User",
         query: str,
         offset: str,
         chat_type: "enums.ChatType",
-        location: "types.Location" = None,
-        matches: List[Match] = None
+        location: Optional["types.Location"] = None,
+        matches: Optional[List[Match]] = None
     ):
         super().__init__(client)
 

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, List
+from typing import List, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils, enums
@@ -78,14 +78,14 @@ class InlineQueryResultDocument(InlineQueryResult):
         document_url: str,
         title: str,
         mime_type: str = "application/zip",
-        id: str = None,
+        id: Optional[str] = None,
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
         description: str = "",
-        reply_markup: "types.InlineKeyboardMarkup" = None,
-        input_message_content: "types.InputMessageContent" = None,
-        thumb_url: str = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
+        input_message_content: Optional["types.InputMessageContent"] = None,
+        thumb_url: Optional[str] = None,
         thumb_width: int = 0,
         thumb_height: int = 0
     ):

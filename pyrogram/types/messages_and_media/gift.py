@@ -282,7 +282,7 @@ class Gift(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: int,
         type: "enums.GiftType",
         origin: Optional["enums.UpgradedGiftOrigin"] = None,

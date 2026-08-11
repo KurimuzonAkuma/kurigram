@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
@@ -60,11 +62,11 @@ class InlineQueryResultArticle(InlineQueryResult):
         self,
         title: str,
         input_message_content: "types.InputMessageContent",
-        id: str = None,
-        url: str = None,
-        description: str = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
-        thumb_url: str = None,
+        id: Optional[str] = None,
+        url: Optional[str] = None,
+        description: Optional[str] = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
+        thumb_url: Optional[str] = None,
         thumb_width: int = 0,
         thumb_height: int = 0
     ):

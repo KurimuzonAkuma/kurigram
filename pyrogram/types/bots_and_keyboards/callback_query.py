@@ -68,7 +68,7 @@ class CallbackQuery(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: str,
         from_user: "types.User",
         chat_instance: Optional[str] = None,
@@ -159,7 +159,7 @@ class CallbackQuery(Object, Update):
             client=client
         )
 
-    async def answer(self, text: str = None, show_alert: bool = None, url: str = None, cache_time: int = 0):
+    async def answer(self, text: Optional[str] = None, show_alert: Optional[bool] = None, url: Optional[str] = None, cache_time: int = 0):
         """Bound method *answer* of :obj:`~pyrogram.types.CallbackQuery`.
 
         Use this method as a shortcut for:
@@ -207,10 +207,10 @@ class CallbackQuery(Object, Update):
         self,
         text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
-        link_preview_options: "types.LinkPreviewOptions" = None,
+        link_preview_options: Optional["types.LinkPreviewOptions"] = None,
         rich_message: Optional["types.InputRichMessage"] = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
-        disable_web_page_preview: bool = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
+        disable_web_page_preview: Optional[bool] = None,
     ) -> Union["types.Message", bool]:
         """Edit the text of messages attached to callback queries.
 
@@ -272,7 +272,7 @@ class CallbackQuery(Object, Update):
         self,
         caption: str,
         parse_mode: Optional["enums.ParseMode"] = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None
     ) -> Union["types.Message", bool]:
         """Edit the caption of media messages attached to callback queries.
 
@@ -301,7 +301,7 @@ class CallbackQuery(Object, Update):
     async def edit_message_media(
         self,
         media: "types.InputMedia",
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None
     ) -> Union["types.Message", bool]:
         """Edit animation, audio, document, photo or video messages attached to callback queries.
 
@@ -337,7 +337,7 @@ class CallbackQuery(Object, Update):
 
     async def edit_message_reply_markup(
         self,
-        reply_markup: "types.InlineKeyboardMarkup" = None
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None
     ) -> Union["types.Message", bool]:
         """Edit only the reply markup of messages attached to callback queries.
 

@@ -37,7 +37,7 @@ class GiveawayCreated(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         prize_star_count: Optional[int] = None
     ):
         super().__init__(client)

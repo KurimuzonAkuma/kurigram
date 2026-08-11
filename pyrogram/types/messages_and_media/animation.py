@@ -65,17 +65,17 @@ class Animation(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         file_id: str,
         file_unique_id: str,
         width: int,
         height: int,
         duration: int,
-        file_name: str = None,
-        mime_type: str = None,
-        file_size: int = None,
-        date: datetime = None,
-        thumbs: List["types.Thumbnail"] = None
+        file_name: Optional[str] = None,
+        mime_type: Optional[str] = None,
+        file_size: Optional[int] = None,
+        date: Optional[datetime] = None,
+        thumbs: Optional[List["types.Thumbnail"]] = None
     ):
         super().__init__(client)
 

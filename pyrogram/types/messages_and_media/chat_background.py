@@ -130,8 +130,8 @@ class ChatBackground(Object):
     def _parse(
         client: "pyrogram.Client",
         background: "raw.base.WallPaper",
-        is_same: bool = None,
-        only_for_self: bool = None
+        is_same: Optional[bool] = None,
+        only_for_self: Optional[bool] = None
     ) -> Optional["ChatBackground"]:
         if not background:
             return None

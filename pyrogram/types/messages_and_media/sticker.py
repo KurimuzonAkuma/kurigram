@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -101,18 +101,18 @@ class Sticker(Object):
         height: int,
         is_animated: bool,
         is_video: bool,
-        file_name: str = None,
-        mime_type: str = None,
-        file_size: int = None,
-        date: datetime = None,
-        emoji: str = None,
-        set_name: str = None,
-        premium_animation: "types.Animation" = None,
-        mask_position: "types.MaskPosition" = None,
-        custom_emoji_id: str = None,
-        needs_repainting: bool = None,
-        thumbs: List["types.Thumbnail"] = None,
-        raw: "raw.types.Document" = None
+        file_name: Optional[str] = None,
+        mime_type: Optional[str] = None,
+        file_size: Optional[int] = None,
+        date: Optional[datetime] = None,
+        emoji: Optional[str] = None,
+        set_name: Optional[str] = None,
+        premium_animation: Optional["types.Animation"] = None,
+        mask_position: Optional["types.MaskPosition"] = None,
+        custom_emoji_id: Optional[str] = None,
+        needs_repainting: Optional[bool] = None,
+        thumbs: Optional[List["types.Thumbnail"]] = None,
+        raw: Optional["raw.types.Document"] = None
     ):
         super().__init__()
 

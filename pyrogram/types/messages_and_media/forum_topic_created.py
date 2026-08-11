@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pyrogram import raw
 from ..object import Object
 
@@ -43,7 +45,7 @@ class ForumTopicCreated(Object):
         id: int,
         title: str,
         icon_color: int,
-        custom_emoji_id: str = None
+        custom_emoji_id: Optional[str] = None
     ):
         super().__init__()
 

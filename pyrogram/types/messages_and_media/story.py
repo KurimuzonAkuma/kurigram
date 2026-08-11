@@ -143,7 +143,7 @@ class Story(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: int,
         from_user: Optional["types.User"] = None,
         sender_chat: Optional["types.Chat"] = None,
@@ -443,21 +443,21 @@ class Story(Object, Update):
         self,
         text: str,
         parse_mode: Optional["enums.ParseMode"] = None,
-        entities: List["types.MessageEntity"] = None,
-        link_preview_options: "types.LinkPreviewOptions" = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        protect_content: bool = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        entities: Optional[List["types.MessageEntity"]] = None,
+        link_preview_options: Optional["types.LinkPreviewOptions"] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        protect_content: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
+        ]] = None,
 
-        disable_web_page_preview: bool = None,
+        disable_web_page_preview: Optional[bool] = None,
     ) -> "types.Message":
         """Bound method *reply_text* of :obj:`~pyrogram.types.Story`.
 
@@ -545,24 +545,24 @@ class Story(Object, Update):
         animation: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
-        has_spoiler: bool = None,
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
+        has_spoiler: Optional[bool] = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
-        thumb: Union[str, BinaryIO] = None,
-        file_name: str = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        thumb: Optional[Union[str, BinaryIO]] = None,
+        file_name: Optional[str] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_animation* :obj:`~pyrogram.types.Story`.
@@ -701,23 +701,23 @@ class Story(Object, Update):
         audio: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
         duration: int = 0,
-        performer: str = None,
-        title: str = None,
-        thumb: Union[str, BinaryIO] = None,
-        file_name: str = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        performer: Optional[str] = None,
+        title: Optional[str] = None,
+        thumb: Optional[Union[str, BinaryIO]] = None,
+        file_name: Optional[str] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_audio* of :obj:`~pyrogram.types.Story`.
@@ -852,15 +852,15 @@ class Story(Object, Update):
         file_id: str,
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
-        disable_notification: bool = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
+        disable_notification: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None
+        ]] = None
     ) -> Optional["types.Message"]:
         """Bound method *reply_cached_media* of :obj:`~pyrogram.types.Story`.
 
@@ -937,8 +937,8 @@ class Story(Object, Update):
             "types.InputMediaAudio",
             "types.InputMediaDocument"
         ]],
-        paid_message_star_count: int = None,
-        disable_notification: bool = None,
+        paid_message_star_count: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
     ) -> List["types.Message"]:
         """Bound method *reply_media_group* of :obj:`~pyrogram.types.Story`.
 
@@ -996,21 +996,21 @@ class Story(Object, Update):
         photo: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
-        has_spoiler: bool = None,
-        ttl_seconds: int = None,
-        view_once: bool = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
+        has_spoiler: Optional[bool] = None,
+        ttl_seconds: Optional[int] = None,
+        view_once: Optional[bool] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_photo* of :obj:`~pyrogram.types.Story`.
@@ -1134,17 +1134,17 @@ class Story(Object, Update):
     async def reply_sticker(
         self,
         sticker: Union[str, BinaryIO],
-        disable_notification: bool = None,
-        paid_message_star_count: int = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        reply_markup: Union[
+        disable_notification: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_sticker* of :obj:`~pyrogram.types.Story`.
@@ -1242,30 +1242,30 @@ class Story(Object, Update):
         video: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
-        has_spoiler: bool = None,
-        ttl_seconds: int = None,
-        view_once: bool = None,
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
+        has_spoiler: Optional[bool] = None,
+        ttl_seconds: Optional[int] = None,
+        view_once: Optional[bool] = None,
         duration: int = 0,
         width: int = 0,
         height: int = 0,
-        video_start_timestamp: int = None,
-        video_cover: Union[str, BinaryIO] = None,
-        thumb: Union[str, BinaryIO] = None,
-        file_name: str = None,
+        video_start_timestamp: Optional[int] = None,
+        video_cover: Optional[Union[str, BinaryIO]] = None,
+        thumb: Optional[Union[str, BinaryIO]] = None,
+        file_name: Optional[str] = None,
         supports_streaming: bool = True,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        no_sound: bool = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        no_sound: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_video* of :obj:`~pyrogram.types.Story`.
@@ -1436,19 +1436,19 @@ class Story(Object, Update):
         video_note: Union[str, BinaryIO],
         duration: int = 0,
         length: int = 1,
-        thumb: Union[str, BinaryIO] = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        view_once: bool = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        thumb: Optional[Union[str, BinaryIO]] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        view_once: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_video_note* of :obj:`~pyrogram.types.Story`.
@@ -1566,20 +1566,20 @@ class Story(Object, Update):
         voice: Union[str, BinaryIO],
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None,
+        caption_entities: Optional[List["types.MessageEntity"]] = None,
         duration: int = 0,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        view_once: bool = None,
-        paid_message_star_count: int = None,
-        reply_markup: Union[
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        view_once: Optional[bool] = None,
+        paid_message_star_count: Optional[int] = None,
+        reply_markup: Optional[Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
             "types.ReplyKeyboardRemove",
             "types.ForceReply"
-        ] = None,
-        progress: Callable = None,
+        ]] = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional["types.Message"]:
         """Bound method *reply_voice* of :obj:`~pyrogram.types.Story`.
@@ -1819,7 +1819,7 @@ class Story(Object, Update):
 
     async def edit_media(
         self,
-        media: Union[str, BinaryIO] = None,
+        media: Optional[Union[str, BinaryIO]] = None,
     ) -> "types.Story":
         """Bound method *edit_media* of :obj:`~pyrogram.types.Story`.
 
@@ -1862,7 +1862,7 @@ class Story(Object, Update):
         self,
         caption: str,
         parse_mode: Optional["enums.ParseMode"] = None,
-        caption_entities: List["types.MessageEntity"] = None
+        caption_entities: Optional[List["types.MessageEntity"]] = None
     ) -> "types.Story":
         """Bound method *edit_caption* of :obj:`~pyrogram.types.Story`.
 
@@ -1908,8 +1908,8 @@ class Story(Object, Update):
     async def edit_privacy(
         self,
         privacy: "enums.StoriesPrivacyRules" = enums.StoriesPrivacyRules.PUBLIC,
-        allowed_users: List[Union[int, str]] = None,
-        disallowed_users: List[Union[int, str]] = None,
+        allowed_users: Optional[List[Union[int, str]]] = None,
+        disallowed_users: Optional[List[Union[int, str]]] = None,
     ) -> "types.Story":
         """Bound method *edit_privacy* of :obj:`~pyrogram.types.Story`.
 
@@ -1956,7 +1956,7 @@ class Story(Object, Update):
             disallowed_users=disallowed_users,
         )
 
-    async def react(self, emoji: Union[int, str] = None) -> bool:
+    async def react(self, emoji: Optional[Union[int, str]] = None) -> bool:
         """Bound method *react* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1994,11 +1994,11 @@ class Story(Object, Update):
     async def forward(
         self,
         chat_id: Union[int, str],
-        message_thread_id: int = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        paid_message_star_count: int = None,
+        message_thread_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        paid_message_star_count: Optional[int] = None,
     ) -> Optional["types.Message"]:
         """Bound method *forward* of :obj:`~pyrogram.types.Story`.
 
@@ -2062,7 +2062,7 @@ class Story(Object, Update):
         file_name: str = "",
         in_memory: bool = False,
         block: bool = True,
-        progress: Callable = None,
+        progress: Optional[Callable] = None,
         progress_args: tuple = ()
     ) -> Optional[Union[str, BinaryIO]]:
         """Bound method *download* of :obj:`~pyrogram.types.Story`.

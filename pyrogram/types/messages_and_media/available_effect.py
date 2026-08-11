@@ -70,7 +70,7 @@ class AvailableEffect(Object):
         self.effect_animation_id = effect_animation_id
 
     @staticmethod
-    async def _parse(client, effect: "raw.types.AvailableEffect", document: "raw.types.Document" = None) -> "AvailableEffect":
+    async def _parse(client, effect: "raw.types.AvailableEffect", document: Optional["raw.types.Document"] = None) -> "AvailableEffect":
         sticker = None
 
         if document:

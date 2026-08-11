@@ -82,7 +82,7 @@ class Video(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         file_id: str,
         file_unique_id: str,
         width: int,
@@ -124,10 +124,10 @@ class Video(Object):
         client,
         video: "raw.types.Document",
         video_attributes: "raw.types.DocumentAttributeVideo",
-        file_name: str = None,
-        ttl_seconds: int = None,
+        file_name: Optional[str] = None,
+        ttl_seconds: Optional[int] = None,
         video_cover = None,
-        video_start_timestamp: int = None,
+        video_start_timestamp: Optional[int] = None,
         alternative_videos: List["raw.types.Document"] = []
     ) -> "Video":
         _alt_videos = types.List()

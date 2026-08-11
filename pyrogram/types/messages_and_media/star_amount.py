@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pyrogram import raw
 
 from ..object import Object
@@ -35,8 +37,8 @@ class StarAmount(Object):
 
     def __init__(
         self, *,
-        star_count: int = None,
-        nanostar_count: int = None
+        star_count: Optional[int] = None,
+        nanostar_count: Optional[int] = None
     ):
         super().__init__()
 

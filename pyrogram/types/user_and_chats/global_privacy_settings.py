@@ -86,7 +86,7 @@ class GlobalPrivacySettings(Object):
 
     @staticmethod
     def _parse(
-        settings: "raw.types.GlobalPrivacySettings" = None
+        settings: Optional["raw.types.GlobalPrivacySettings"] = None
     ) -> Optional["GlobalPrivacySettings"]:
         if not settings:
             return

@@ -46,7 +46,7 @@ class MessageReactions(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         reactions: List["types.Reaction"],
         are_tags: Optional[bool] = None,
         paid_reactors: Optional[List["types.PaidReactor"]] = None,

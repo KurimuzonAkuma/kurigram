@@ -85,7 +85,7 @@ class GiftAttribute(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         type: "enums.GiftAttributeType",
         name: Optional[str] = None,
         backdrop_id: Optional[int] = None,

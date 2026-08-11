@@ -47,7 +47,7 @@ class Reaction(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         emoji: Optional[str] = None,
         custom_emoji_id: Optional[str] = None,
         count: Optional[int] = None,

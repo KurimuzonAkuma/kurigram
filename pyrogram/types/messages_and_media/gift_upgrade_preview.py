@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
 
 import pyrogram
 from pyrogram import raw, types
@@ -47,11 +47,11 @@ class GiftUpgradePreview(Object):
     def __init__(
         self,
         *,
-        models: List["types.GiftAttribute"] = None,
-        symbols: List["types.GiftAttribute"] = None,
-        backdrops: List["types.GiftAttribute"] = None,
-        prices: List["types.GiftUpgradePrice"] = None,
-        next_prices: List["types.GiftUpgradePrice"] = None
+        models: Optional[List["types.GiftAttribute"]] = None,
+        symbols: Optional[List["types.GiftAttribute"]] = None,
+        backdrops: Optional[List["types.GiftAttribute"]] = None,
+        prices: Optional[List["types.GiftUpgradePrice"]] = None,
+        next_prices: Optional[List["types.GiftUpgradePrice"]] = None
     ):
         super().__init__()
 

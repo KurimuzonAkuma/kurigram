@@ -93,7 +93,7 @@ class Folder(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: Optional[int] = None,
         name: Optional[str] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
@@ -480,7 +480,7 @@ class Folder(Object):
             color=color
         )
 
-    async def create_invite_link(self, name: str = None, chat_ids: List[Union[int, str]] = None) -> "types.FolderInviteLink":
+    async def create_invite_link(self, name: Optional[str] = None, chat_ids: Optional[List[Union[int, str]]] = None) -> "types.FolderInviteLink":
         """Bound method *create_invite_link* of :obj:`~pyrogram.types.Folder`.
 
         Use as a shortcut for:

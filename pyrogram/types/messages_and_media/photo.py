@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -59,15 +59,15 @@ class Photo(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         file_id: str,
         file_unique_id: str,
         width: int,
         height: int,
         file_size: int,
         date: datetime,
-        ttl_seconds: int = None,
-        thumbs: List["types.Thumbnail"] = None
+        ttl_seconds: Optional[int] = None,
+        thumbs: Optional[List["types.Thumbnail"]] = None
     ):
         super().__init__(client)
 
@@ -81,7 +81,7 @@ class Photo(Object):
         self.thumbs = thumbs
 
     @staticmethod
-    def _parse(client, photo: "raw.types.Photo", ttl_seconds: int = None) -> "Photo":
+    def _parse(client, photo: "raw.types.Photo", ttl_seconds: Optional[int] = None) -> "Photo":
         if isinstance(photo, raw.types.Photo):
             photos: List[raw.types.PhotoSize] = []
 

@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pyrogram import raw
 
 from ..object import Object
@@ -72,20 +74,20 @@ class BusinessBotRights(Object):
     def __init__(
         self,
         *,
-        can_reply: bool = None,
-        can_read_messages: bool = None,
-        can_delete_sent_messages: bool = None,
-        can_delete_all_messages: bool = None,
-        can_edit_name: bool = None,
-        can_edit_bio: bool = None,
-        can_edit_profile_photo: bool = None,
-        can_edit_username: bool = None,
-        can_view_gifts: bool = None,
-        can_sell_gifts: bool = None,
-        can_change_gift_settings: bool = None,
-        can_transfer_and_upgrade_gifts: bool = None,
-        can_transfer_stars: bool = None,
-        can_manage_stories: bool = None
+        can_reply: Optional[bool] = None,
+        can_read_messages: Optional[bool] = None,
+        can_delete_sent_messages: Optional[bool] = None,
+        can_delete_all_messages: Optional[bool] = None,
+        can_edit_name: Optional[bool] = None,
+        can_edit_bio: Optional[bool] = None,
+        can_edit_profile_photo: Optional[bool] = None,
+        can_edit_username: Optional[bool] = None,
+        can_view_gifts: Optional[bool] = None,
+        can_sell_gifts: Optional[bool] = None,
+        can_change_gift_settings: Optional[bool] = None,
+        can_transfer_and_upgrade_gifts: Optional[bool] = None,
+        can_transfer_stars: Optional[bool] = None,
+        can_manage_stories: Optional[bool] = None
     ):
         super().__init__(None)
 

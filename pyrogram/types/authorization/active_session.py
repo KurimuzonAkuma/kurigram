@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+from typing import Optional
 
 from pyrogram import raw, utils
 
@@ -89,25 +90,25 @@ class ActiveSession(Object):
     def __init__(
         self,
         *,
-        id: int = None,
-        device_model: str = None,
-        platform: str = None,
-        system_version: str = None,
-        api_id: int = None,
-        application_name: str = None,
-        application_version: str = None,
-        log_in_date: datetime = None,
-        last_active_date: datetime = None,
-        ip_address: str = None,
-        location: str = None,
-        country: str = None,
-        region: str = None,
-        can_accept_secret_chats: bool = None,
-        can_accept_calls: bool = None,
-        is_current: bool = None,
-        is_password_pending: bool = None,
-        is_unconfirmed: bool = None,
-        is_official_application: bool = None
+        id: Optional[int] = None,
+        device_model: Optional[str] = None,
+        platform: Optional[str] = None,
+        system_version: Optional[str] = None,
+        api_id: Optional[int] = None,
+        application_name: Optional[str] = None,
+        application_version: Optional[str] = None,
+        log_in_date: Optional[datetime] = None,
+        last_active_date: Optional[datetime] = None,
+        ip_address: Optional[str] = None,
+        location: Optional[str] = None,
+        country: Optional[str] = None,
+        region: Optional[str] = None,
+        can_accept_secret_chats: Optional[bool] = None,
+        can_accept_calls: Optional[bool] = None,
+        is_current: Optional[bool] = None,
+        is_password_pending: Optional[bool] = None,
+        is_unconfirmed: Optional[bool] = None,
+        is_official_application: Optional[bool] = None
     ):
         super().__init__()
 

@@ -132,7 +132,7 @@ class WebPage(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: str,
         url: str,
         display_url: Optional[str] = None,

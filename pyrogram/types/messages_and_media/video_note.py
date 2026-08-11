@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import pyrogram
 from pyrogram import raw, utils
@@ -62,16 +62,16 @@ class VideoNote(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         file_id: str,
         file_unique_id: str,
         length: int,
         duration: int,
-        thumbs: List["types.Thumbnail"] = None,
-        mime_type: str = None,
-        file_size: int = None,
-        date: datetime = None,
-        ttl_seconds: int = None
+        thumbs: Optional[List["types.Thumbnail"]] = None,
+        mime_type: Optional[str] = None,
+        file_size: Optional[int] = None,
+        date: Optional[datetime] = None,
+        ttl_seconds: Optional[int] = None
     ):
         super().__init__(client)
 
@@ -90,7 +90,7 @@ class VideoNote(Object):
         client,
         video_note: "raw.types.Document",
         video_attributes: "raw.types.DocumentAttributeVideo",
-        ttl_seconds: int = None
+        ttl_seconds: Optional[int] = None
     ) -> "VideoNote":
         return VideoNote(
             file_id=FileId(

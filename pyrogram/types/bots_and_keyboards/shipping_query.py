@@ -44,7 +44,7 @@ class ShippingQuery(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: str,
         from_user: "types.User",
         invoice_payload: str,
@@ -81,8 +81,8 @@ class ShippingQuery(Object, Update):
     async def answer(
         self,
         ok: bool,
-        shipping_options: "types.ShippingOptions" = None,
-        error_message: str = None
+        shipping_options: Optional["types.ShippingOptions"] = None,
+        error_message: Optional[str] = None
     ):
         """Bound method *answer* of :obj:`~pyrogram.types.ShippingQuery`.
 

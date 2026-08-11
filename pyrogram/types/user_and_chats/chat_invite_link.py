@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 from typing import Optional
 
 import pyrogram
@@ -73,16 +73,16 @@ class ChatInviteLink(Object):
         self, *,
         invite_link: str,
         date: datetime,
-        is_primary: bool = None,
-        is_revoked: bool = None,
-        creator: "types.User" = None,
-        name: str = None,
-        creates_join_request: bool = None,
-        start_date: datetime = None,
-        expire_date: datetime = None,
-        member_limit: int = None,
-        member_count: int = None,
-        pending_join_request_count: int = None
+        is_primary: Optional[bool] = None,
+        is_revoked: Optional[bool] = None,
+        creator: Optional["types.User"] = None,
+        name: Optional[str] = None,
+        creates_join_request: Optional[bool] = None,
+        start_date: Optional[datetime] = None,
+        expire_date: Optional[datetime] = None,
+        member_limit: Optional[int] = None,
+        member_count: Optional[int] = None,
+        pending_join_request_count: Optional[int] = None
     ):
         super().__init__()
 
@@ -103,7 +103,7 @@ class ChatInviteLink(Object):
     def _parse(
         client: "pyrogram.Client",
         invite: "raw.base.ExportedChatInvite",
-        users: Dict[int, "raw.types.User"] = None
+        users: Optional[Dict[int, "raw.types.User"]] = None
     ) -> Optional["ChatInviteLink"]:
         if not isinstance(invite, raw.types.ChatInviteExported):
             return None

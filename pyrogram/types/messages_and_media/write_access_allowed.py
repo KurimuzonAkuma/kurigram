@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pyrogram import raw
 from ..object import Object
 
@@ -38,9 +40,9 @@ class WriteAccessAllowed(Object):
     def __init__(
         self,
         *,
-        from_request: bool = None,
-        web_app_name: str = None,
-        from_attachment_menu: bool = None,
+        from_request: Optional[bool] = None,
+        web_app_name: Optional[str] = None,
+        from_attachment_menu: Optional[bool] = None,
     ):
         super().__init__()
 

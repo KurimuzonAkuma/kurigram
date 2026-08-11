@@ -67,7 +67,7 @@ class PollOption(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         persistent_id: str,
         text: Optional["types.FormattedText"] = None,
         media: Optional["types.MessageContent"] = None,

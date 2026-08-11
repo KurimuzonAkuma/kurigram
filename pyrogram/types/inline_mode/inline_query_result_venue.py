@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 import pyrogram
 from pyrogram import raw, types
 from .inline_query_result import InlineQueryResult
@@ -78,14 +80,14 @@ class InlineQueryResultVenue(InlineQueryResult):
         address: str,
         latitude: float,
         longitude: float,
-        id: str = None,
-        foursquare_id: str = None,
-        foursquare_type: str = None,
-        google_place_id: str = None,
-        google_place_type: str = None,
-        reply_markup: "types.InlineKeyboardMarkup" = None,
-        input_message_content: "types.InputMessageContent" = None,
-        thumb_url: str = None,
+        id: Optional[str] = None,
+        foursquare_id: Optional[str] = None,
+        foursquare_type: Optional[str] = None,
+        google_place_id: Optional[str] = None,
+        google_place_type: Optional[str] = None,
+        reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
+        input_message_content: Optional["types.InputMessageContent"] = None,
+        thumb_url: Optional[str] = None,
         thumb_width: int = 0,
         thumb_height: int = 0
     ):

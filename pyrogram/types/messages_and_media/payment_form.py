@@ -83,7 +83,7 @@ class PaymentForm(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: int,
         type: "enums.PaymentFormType",
         title: Optional[str] = None,
@@ -100,7 +100,7 @@ class PaymentForm(Object):
         can_save_credentials: Optional[bool] = None,
         need_password: Optional[bool] = None,
         native_provider: Optional[str] = None,
-        raw: "raw.base.payments.PaymentForm" = None,
+        raw: Optional["raw.base.payments.PaymentForm"] = None,
     ):
         super().__init__(client)
 

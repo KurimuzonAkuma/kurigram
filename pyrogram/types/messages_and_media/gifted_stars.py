@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+from typing import Optional
 
 from pyrogram import raw, types
 
@@ -59,15 +60,15 @@ class GiftedStars(Object):
     def __init__(
         self,
         *,
-        gifter: "types.User" = None,
+        gifter: Optional["types.User"] = None,
         receiver: "types.User",
-        currency: str = None,
-        amount: int = None,
-        cryptocurrency: str = None,
-        cryptocurrency_amount: int = None,
-        star_count: int = None,
-        transaction_id: str = None,
-        sticker: "types.Sticker" = None,
+        currency: Optional[str] = None,
+        amount: Optional[int] = None,
+        cryptocurrency: Optional[str] = None,
+        cryptocurrency_amount: Optional[int] = None,
+        star_count: Optional[int] = None,
+        transaction_id: Optional[str] = None,
+        sticker: Optional["types.Sticker"] = None,
     ):
         super().__init__()
 
@@ -85,8 +86,8 @@ class GiftedStars(Object):
     async def _parse(
         client,
         action: "raw.types.MessageActionGiftStars",
-        gifter: "raw.base.User" = None,
-        receiver: "raw.base.User" = None,
+        gifter: Optional["raw.base.User"] = None,
+        receiver: Optional["raw.base.User"] = None,
     ) -> "GiftedStars":
         raw_stickers = await client.invoke(
             raw.functions.messages.GetStickerSet(

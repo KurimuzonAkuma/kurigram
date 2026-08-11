@@ -49,7 +49,7 @@ class Venue(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         location: "types.Location",
         title: str,
         address: str,

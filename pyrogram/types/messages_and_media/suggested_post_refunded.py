@@ -40,9 +40,9 @@ class SuggestedPostRefunded(Object):
     """
     def __init__(
         self, *,
-        suggested_post_message_id: int = None,
+        suggested_post_message_id: Optional[int] = None,
         suggested_post_message: Optional["types.Message"] = None,
-        reason: "enums.SuggestedPostRefundReason" = None
+        reason: Optional["enums.SuggestedPostRefundReason"] = None
     ):
         super().__init__()
 

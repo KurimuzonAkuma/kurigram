@@ -102,14 +102,14 @@ class MediaArea(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         x: float,
         y: float,
         width: float,
         height: float,
         rotation: float,
         type: "enums.MediaAreaType",
-        radius: float = None,
+        radius: Optional[float] = None,
         sender_chat: Optional["types.Chat"] = None,
         message_id: Optional[int] = None,
         message: Optional["types.Message"] = None,
@@ -151,7 +151,7 @@ class MediaArea(Object):
     async def _parse(
         client: "pyrogram.Client",
         area: "raw.base.MediaArea",
-        chats: dict = None
+        chats: Optional[dict] = None
     ) -> "MediaArea":
         sender_chat = None
         message_id = None

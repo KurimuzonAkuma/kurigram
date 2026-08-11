@@ -63,7 +63,7 @@ class EmojiStatus(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         custom_emoji_id: Optional[str] = None,
         gift_id: Optional[int] = None,
         until_date: Optional[datetime] = None,

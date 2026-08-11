@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pyrogram import types
 
 from ..object import Object
@@ -70,15 +72,15 @@ class KeyboardButtonRequestChat(Object):
         self, *,
         button_id: int,
         chat_is_channel: bool,
-        chat_is_forum: bool = None,
-        chat_has_username: bool = None,
-        chat_is_created: bool = None,
-        bot_is_member: bool = None,
-        user_administrator_rights: "types.ChatAdministratorRights" = None,
-        bot_administrator_rights: "types.ChatAdministratorRights" = None,
-        request_title: bool = None,
-        request_username: bool = None,
-        request_photo: bool = None,
+        chat_is_forum: Optional[bool] = None,
+        chat_has_username: Optional[bool] = None,
+        chat_is_created: Optional[bool] = None,
+        bot_is_member: Optional[bool] = None,
+        user_administrator_rights: Optional["types.ChatAdministratorRights"] = None,
+        bot_administrator_rights: Optional["types.ChatAdministratorRights"] = None,
+        request_title: Optional[bool] = None,
+        request_username: Optional[bool] = None,
+        request_photo: Optional[bool] = None,
         max_quantity: int = 1,  # Telegram ignores this field for chats
     ):
         super().__init__()

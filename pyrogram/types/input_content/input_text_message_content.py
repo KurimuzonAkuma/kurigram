@@ -48,10 +48,10 @@ class InputTextMessageContent(InputMessageContent):
         self,
         message_text: str,
         parse_mode: Optional["enums.ParseMode"] = None,
-        entities: List["types.MessageEntity"] = None,
-        link_preview_options: "types.LinkPreviewOptions" = None,
+        entities: Optional[List["types.MessageEntity"]] = None,
+        link_preview_options: Optional["types.LinkPreviewOptions"] = None,
 
-        disable_web_page_preview: bool = None
+        disable_web_page_preview: Optional[bool] = None
     ):
         super().__init__()
 

@@ -553,7 +553,7 @@ class Chat(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: Optional[int] = None,
         type: Optional["enums.ChatType"] = None,
         is_forum: Optional[bool] = None,
@@ -1579,9 +1579,9 @@ class Chat(Object):
     async def set_photo(
         self,
         *,
-        photo: Union[str, BinaryIO] = None,
-        video: Union[str, BinaryIO] = None,
-        video_start_ts: float = None,
+        photo: Optional[Union[str, BinaryIO]] = None,
+        video: Optional[Union[str, BinaryIO]] = None,
+        video_start_ts: Optional[float] = None,
     ) -> "types.Message":
         """Bound method *set_photo* of :obj:`~pyrogram.types.Chat`.
 
@@ -1791,7 +1791,7 @@ class Chat(Object):
     # Set None as privileges default due to issues with partially initialized module, because at the time Chat
     # is being initialized, ChatAdministratorRights would be required here, but was not initialized yet.
     async def promote_member(
-        self, user_id: Union[int, str], privileges: "types.ChatAdministratorRights" = None
+        self, user_id: Union[int, str], privileges: Optional["types.ChatAdministratorRights"] = None
     ) -> bool:
         """Bound method *promote_member* of :obj:`~pyrogram.types.Chat`.
 
@@ -2047,7 +2047,7 @@ class Chat(Object):
         """
         return await self._client.unpin_all_chat_messages(self.id)
 
-    async def mute(self, mute_until: datetime = None) -> bool:
+    async def mute(self, mute_until: Optional[datetime] = None) -> bool:
         """Bound method *mute* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:

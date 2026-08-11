@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -49,10 +49,10 @@ class ChatJoiner(Object):
         *,
         client: "pyrogram.Client",
         user: "types.User",
-        date: datetime = None,
-        bio: str = None,
-        pending: bool = None,
-        approved_by: "types.User" = None,
+        date: Optional[datetime] = None,
+        bio: Optional[str] = None,
+        pending: Optional[bool] = None,
+        approved_by: Optional["types.User"] = None,
     ):
         super().__init__(client)
 

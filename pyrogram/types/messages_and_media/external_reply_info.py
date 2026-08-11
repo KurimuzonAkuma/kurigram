@@ -115,9 +115,9 @@ class ExternalReplyInfo(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
-        origin: "types.MessageOrigin" = None,
-        chat: "types.Chat" = None,
+        client: Optional["pyrogram.Client"] = None,
+        origin: Optional["types.MessageOrigin"] = None,
+        chat: Optional["types.Chat"] = None,
         message_id: int,
         link_preview_options: Optional["types.LinkPreviewOptions"] = None,
         media: Optional["enums.MessageMediaType"] = None,

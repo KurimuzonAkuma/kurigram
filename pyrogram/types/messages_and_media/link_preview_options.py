@@ -50,11 +50,11 @@ class LinkPreviewOptions(Object):
     def __init__(
         self,
         *,
-        is_disabled: bool = None,
-        url: str = None,
-        prefer_small_media: bool = None,
-        prefer_large_media: bool = None,
-        show_above_text: bool = None
+        is_disabled: Optional[bool] = None,
+        url: Optional[str] = None,
+        prefer_small_media: Optional[bool] = None,
+        prefer_large_media: Optional[bool] = None,
+        show_above_text: Optional[bool] = None
     ):
         super().__init__()
 
@@ -67,8 +67,8 @@ class LinkPreviewOptions(Object):
     @staticmethod
     def _parse(
         media: "raw.types.MessageMediaWebPage",
-        url: str = None,
-        invert_media: bool = None
+        url: Optional[str] = None,
+        invert_media: Optional[bool] = None
     ) -> Optional["LinkPreviewOptions"]:
         if isinstance(media, raw.types.MessageMediaWebPage) and not isinstance(media.webpage, raw.types.WebPageNotModified):
             return LinkPreviewOptions(

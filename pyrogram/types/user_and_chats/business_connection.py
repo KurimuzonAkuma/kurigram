@@ -53,8 +53,8 @@ class BusinessConnection(Object):
         user: "types.User",
         dc_id: int,
         date: datetime,
-        is_enabled: bool = None,
-        rights: "types.BusinessBotRights" = None
+        is_enabled: Optional[bool] = None,
+        rights: Optional["types.BusinessBotRights"] = None
     ):
         self.id = id
         self.user = user
@@ -66,7 +66,7 @@ class BusinessConnection(Object):
     @staticmethod
     def _parse(
         client,
-        connection: Union["raw.types.BotBusinessConnection", "raw.types.UpdateBotBusinessConnect"] = None,
+        connection: Optional[Union["raw.types.BotBusinessConnection", "raw.types.UpdateBotBusinessConnect"]] = None,
         users = {}
     ) -> Optional["BusinessConnection"]:
         if not connection:

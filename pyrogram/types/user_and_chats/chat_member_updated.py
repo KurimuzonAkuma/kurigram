@@ -55,7 +55,7 @@ class ChatMemberUpdated(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         chat: "types.Chat",
         from_user: "types.User",
         date: datetime,

@@ -100,7 +100,7 @@ class Poll(Object, Update):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: str,
         question: Optional["types.FormattedText"] = None,
         options: List["types.PollOption"],

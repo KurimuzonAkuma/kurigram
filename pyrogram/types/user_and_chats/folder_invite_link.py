@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
 
 from pyrogram import raw, types, utils
 from ..object import Object
@@ -39,8 +39,8 @@ class FolderInviteLink(Object):
         self,
         *,
         invite_link: str,
-        name: str = None,
-        chat_ids: List[int] = None
+        name: Optional[str] = None,
+        chat_ids: Optional[List[int]] = None
     ):
         super().__init__()
 

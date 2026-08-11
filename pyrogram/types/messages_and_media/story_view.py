@@ -48,7 +48,7 @@ class StoryView(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         from_user: "types.User",
         date: datetime,
         is_blocked: Optional[bool] = None,

@@ -59,7 +59,7 @@ class Community(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         id: Optional[int] = None,
         have_access: Optional[bool] = None,
         name: Optional[str] = None,

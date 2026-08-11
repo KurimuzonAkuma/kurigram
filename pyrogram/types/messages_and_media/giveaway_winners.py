@@ -77,7 +77,7 @@ class GiveawayWinners(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         chat: "types.Chat",
         giveaway_message_id: int,
         winners_selection_date: datetime,

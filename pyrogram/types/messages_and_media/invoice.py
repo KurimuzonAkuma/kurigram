@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, List, Union
+from typing import List, Union, Optional
 
 import pyrogram
 from pyrogram import raw, types
@@ -92,7 +92,7 @@ class Invoice(Object):
     def __init__(
         self,
         *,
-        client: "pyrogram.Client" = None,
+        client: Optional["pyrogram.Client"] = None,
         currency: str,
         is_test: bool,
         title: Optional[str] = None,
@@ -111,7 +111,7 @@ class Invoice(Object):
         max_tip_amount: Optional[int] = None,
         suggested_tip_amounts: Optional[List[int]] = None,
         terms_url: Optional[str] = None,
-        raw: Union["raw.types.MessageMediaInvoice", "raw.types.Invoice"] = None
+        raw: Optional[Union["raw.types.MessageMediaInvoice", "raw.types.Invoice"]] = None
     ):
         super().__init__(client)
 
