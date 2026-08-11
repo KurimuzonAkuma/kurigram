@@ -17,13 +17,27 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, overload
 
 import pyrogram
 from pyrogram import raw, types
 
 
 class GetStories:
+    @overload
+    async def get_stories(
+        self: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        story_ids: Optional[Union[int, str]] = None,
+    ) -> Optional["types.Story"]: ...
+
+    @overload
+    async def get_stories(
+        self: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]],
+        story_ids: Iterable[int],
+    ) -> List["types.Story"]: ...
+
     async def get_stories(
         self: "pyrogram.Client",
         chat_id: Optional[Union[int, str]] = None,

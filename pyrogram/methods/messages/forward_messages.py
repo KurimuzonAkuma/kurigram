@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Iterable, List, Union
+from typing import Iterable, List, Optional, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -29,17 +29,17 @@ class ForwardMessages:
         chat_id: Union[int, str],
         from_chat_id: Union[int, str],
         message_ids: Union[int, Iterable[int]],
-        message_thread_id: int = None,
-        disable_notification: bool = None,
-        schedule_date: datetime = None,
-        repeat_period: int = None,
-        hide_sender_name: bool = None,
-        hide_captions: bool = None,
-        protect_content: bool = None,
-        allow_paid_broadcast: bool = None,
-        video_start_timestamp: int = None,
-        reply_parameters: "types.ReplyParameters" = None,
-        paid_message_star_count: int = None
+        message_thread_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        repeat_period: Optional[int] = None,
+        hide_sender_name: Optional[bool] = None,
+        hide_captions: Optional[bool] = None,
+        protect_content: Optional[bool] = None,
+        allow_paid_broadcast: Optional[bool] = None,
+        video_start_timestamp: Optional[int] = None,
+        reply_parameters: Optional["types.ReplyParameters"] = None,
+        paid_message_star_count: Optional[int] = None
     ) -> Union["types.Message", List["types.Message"]]:
         """Forward messages of any kind.
 

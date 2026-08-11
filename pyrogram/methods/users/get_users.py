@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-from typing import Union, List, Iterable
+from typing import Union, List, Iterable, overload
 
 import pyrogram
 from pyrogram import raw
@@ -25,6 +25,21 @@ from pyrogram import types
 
 
 class GetUsers:
+    # NOTE: `str` is itself an iterable of `str`, so a username matches both overloads.
+    #       The single-user one comes first, which resolves it the way the body does,
+    #       but the two still read as overlapping to a type checker.
+    @overload
+    async def get_users(  # type: ignore[overload-overlap]
+        self: "pyrogram.Client",
+        user_ids: Union[int, str]
+    ) -> "types.User": ...
+
+    @overload
+    async def get_users(
+        self: "pyrogram.Client",
+        user_ids: Iterable[Union[int, str]]
+    ) -> List["types.User"]: ...
+
     async def get_users(
         self: "pyrogram.Client",
         user_ids: Union[int, str, Iterable[Union[int, str]]]

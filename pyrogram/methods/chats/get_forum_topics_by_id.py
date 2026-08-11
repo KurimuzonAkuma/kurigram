@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Iterable, List, Union
+from typing import Iterable, List, Optional, Union, overload
 
 import pyrogram
 from pyrogram import raw, types
@@ -26,11 +26,25 @@ log = logging.getLogger(__name__)
 
 
 class GetForumTopicsByID:
+    @overload
+    async def get_forum_topics_by_id(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        topic_ids: int
+    ) -> Optional["types.ForumTopic"]: ...
+
+    @overload
+    async def get_forum_topics_by_id(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        topic_ids: Iterable[int]
+    ) -> List["types.ForumTopic"]: ...
+
     async def get_forum_topics_by_id(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         topic_ids: Union[int, Iterable[int]]
-    ) -> Union["types.ForumTopic", List["types.ForumTopic"]]:
+    ) -> Optional[Union["types.ForumTopic", List["types.ForumTopic"]]]:
         """Get one or more topic from a chat by using topic identifiers.
 
         .. include:: /_includes/usable-by/users.rst
@@ -44,8 +58,9 @@ class GetForumTopicsByID:
                 topic themselves.
 
         Returns:
-            :obj:`~pyrogram.types.ForumTopic` | List of :obj:`~pyrogram.types.ForumTopic`: In case *topic_ids* was not
-            a list, a single topic is returned, otherwise a list of topics is returned.
+            :obj:`~pyrogram.types.ForumTopic` | List of :obj:`~pyrogram.types.ForumTopic` | ``None``: In case
+            *topic_ids* was not a list, a single topic is returned, or None if it was not found, otherwise a list of
+            topics is returned.
 
         Example:
             .. code-block:: python
