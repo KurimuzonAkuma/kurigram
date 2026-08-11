@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Optional, Union
+from typing import Union
 
 import pyrogram
 from pyrogram import raw
@@ -27,7 +27,7 @@ class SetDirectMessagesChatTopicIsMarkedAsUnread:
     async def set_direct_messages_chat_topic_is_marked_as_unread(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        topic_id: Optional[int] = None,
+        topic_id: int,
         is_marked_as_unread: bool = True
     ) -> int:
         """Change the marked as unread state of the topic in a channel direct messages chat administered by the current user.
