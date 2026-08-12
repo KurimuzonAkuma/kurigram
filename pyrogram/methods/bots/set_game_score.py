@@ -26,13 +26,12 @@ from pyrogram import types
 class SetGameScore:
     async def set_game_score(
         self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        message_id: int,
         user_id: Union[int, str],
         score: int,
         force: Optional[bool] = None,
-        disable_edit_message: Optional[bool] = None,
-        *,
-        chat_id: Union[int, str],
-        message_id: int
+        disable_edit_message: Optional[bool] = None
     ) -> Union["types.Message", bool]:
         # inline_message_id: str = None):  TODO Add inline_message_id
         """Set the score of the specified user in a game.
@@ -40,6 +39,14 @@ class SetGameScore:
         .. include:: /_includes/usable-by/bots.rst
 
         Parameters:
+            chat_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
+
+            message_id (``int``):
+                Identifier of the sent message.
+
             user_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
@@ -55,14 +62,6 @@ class SetGameScore:
             disable_edit_message (``bool``, *optional*):
                 Pass True, if the game message should not be automatically edited to include the current scoreboard.
 
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
-                For your personal cloud (Saved Messages) you can simply use "me" or "self".
-                For a contact that exists in your Telegram address book you can use his phone number (str).
-
-            message_id (``int``):
-                Identifier of the sent message.
-
         Returns:
             :obj:`~pyrogram.types.Message` | ``bool``: On success, if the message was sent by the bot, the edited
             message is returned, True otherwise.
@@ -71,10 +70,10 @@ class SetGameScore:
             .. code-block:: python
 
                 # Set new score
-                await app.set_game_score(user_id, 1000, chat_id=chat_id, message_id=message_id)
+                await app.set_game_score(chat_id, message_id, user_id, 1000)
 
                 # Force set new score
-                await app.set_game_score(user_id, 25, force=True, chat_id=chat_id, message_id=message_id)
+                await app.set_game_score(chat_id, message_id, user_id, 25, force=True)
         """
         r = await self.invoke(
             raw.functions.messages.SetGameScore(
