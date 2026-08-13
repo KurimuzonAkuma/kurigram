@@ -137,8 +137,8 @@ class ForwardMessages:
 
         Returns:
             :obj:`~pyrogram.types.Message` | List of :obj:`~pyrogram.types.Message` | ``None``: In case *message_ids*
-            was not a list, a single message is returned, or None if nothing was forwarded, otherwise a list of
-            messages is returned.
+            was not a list, a single message is returned, otherwise a list of messages is returned. In case
+            *message_ids* was not a list and the answer carried no message, None is returned.
 
         Example:
             .. code-block:: python
@@ -178,4 +178,11 @@ class ForwardMessages:
 
         messages = await utils.parse_messages(client=self, messages=r)
 
+        # NOTE: `parse_messages()` reads `r.updates` and keeps only the new and edited message
+        #       updates out of it, so an answer carrying none of those parses to an empty list.
+        #       `messages.forwardMessages` is declared to return `Updates`, and five of that type's
+        #       seven constructors have no `updates` vector at all: `updatesTooLong`, `updateShort`,
+        #       `updateShortMessage`, `updateShortChatMessage` and `updateShortSentMessage`. None of
+        #       them is an error, and all of them parse to nothing, so `messages` can be empty on a
+        #       request that succeeded.
         return messages if is_iterable else messages[0] if messages else None
