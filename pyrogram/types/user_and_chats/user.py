@@ -423,8 +423,9 @@ class User(Object, Update):
             ``user.mention("another name")`` for a custom name. To choose a different style
             ("html" or "md"/"markdown") use ``user.mention(style="md")``.
 
-        full_name (``str``, *property*):
+        full_name (``str``, *optional*, *property*):
             Full name of the other party in a private chat, for private chats and bots.
+            None for a user that has neither a first nor a last name, such as a deleted account.
     """
 
     def __init__(
@@ -634,7 +635,7 @@ class User(Object, Update):
         self.raw = raw
 
     @property
-    def full_name(self) -> str:
+    def full_name(self) -> Optional[str]:
         return " ".join(filter(None, [self.first_name, self.last_name])) or None
 
     @property

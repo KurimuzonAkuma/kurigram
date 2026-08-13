@@ -546,8 +546,9 @@ class Chat(Object):
         raw (:obj:`~pyrogram.raw.types.UserFull` | :obj:`~pyrogram.raw.types.ChatFull` | :obj:`~pyrogram.raw.types.ChannelFull`, *optional*):
             The raw chat or user object, as received from the Telegram API.
 
-        full_name (``str``, *property*):
+        full_name (``str``, *optional*, *property*):
             Full name of the other party in a private chat, for private chats and bots.
+            None for a chat that has neither a name nor a title.
     """
 
     def __init__(
@@ -1469,7 +1470,7 @@ class Chat(Object):
         )
 
     @property
-    def full_name(self) -> str:
+    def full_name(self) -> Optional[str]:
         return " ".join(filter(None, [self.first_name, self.last_name])) or self.title or None
 
     async def archive(self):
