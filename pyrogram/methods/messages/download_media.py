@@ -28,30 +28,6 @@ DEFAULT_DOWNLOAD_DIR = "downloads/"
 
 
 class DownloadMedia:
-    # NOTE: The overloads mirror the implementation signature, keywords and defaults
-    #       included, so that every call the implementation accepts also resolves for a
-    #       type checker. They are ordered from the most specific call to the least: a
-    #       call that passes neither `in_memory` nor `block` matches the first one.
-    #
-    #       The last one is the catch-all for arguments a checker cannot pin to a
-    #       literal, and it has to be last. Without it, a call that passes a plain
-    #       `bool` variable lands on the `block=False` overload — an omitted argument is
-    #       not checked against its default — and is told it returns `None` while at
-    #       runtime it blocks and returns a path:
-    #
-    #           flag: bool = ...
-    #           reveal_type(await app.download_media(message, in_memory=flag))
-    #           # -> Revealed type is "None"
-    #
-    #       The two blocking overloads admit `None` because a stopped transfer resolves
-    #       to it: `handle_download()` returns `None` on `StopTransmission` instead of
-    #       re-raising, and this method hands that result straight back.
-    #
-    #           def progress(current, total, client):
-    #               client.stop_transmission()
-    #
-    #           await app.download_media(message, progress=progress, progress_args=(app,))
-    #           # -> None
     @overload
     async def download_media(
         self: "pyrogram.Client",

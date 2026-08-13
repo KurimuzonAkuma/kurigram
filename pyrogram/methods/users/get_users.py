@@ -26,8 +26,7 @@ from pyrogram import types
 
 class GetUsers:
     # NOTE: `str` is itself an iterable of `str`, so a username matches both overloads.
-    #       The single-user one comes first, which resolves it the way the body does,
-    #       but the two still read as overlapping to a type checker.
+    #       The single-user one comes first, resolving it the way the body does.
     @overload
     async def get_users(  # type: ignore[overload-overlap]
         self: "pyrogram.Client",
