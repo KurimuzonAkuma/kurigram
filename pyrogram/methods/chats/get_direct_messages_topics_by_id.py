@@ -59,8 +59,8 @@ class GetDirectMessagesTopicsByID:
 
         Returns:
             :obj:`~pyrogram.types.DirectMessagesTopic` | List of :obj:`~pyrogram.types.DirectMessagesTopic` | ``None``:
-            In case *topic_ids* was not a list, a single topic is returned, or None if it was not found, otherwise a
-            list of topics is returned.
+            In case *topic_ids* was not a list, a single topic is returned, otherwise a list of topics is returned. In
+            case *topic_ids* was not a list and the chat has no topic with that identifier, None is returned.
 
         Example:
             .. code-block:: python
@@ -89,4 +89,11 @@ class GetDirectMessagesTopicsByID:
         for i in r.dialogs:
             topics.append(types.DirectMessagesTopic._parse(client=self, topic=i, users=users, chats=chats))
 
+        # NOTE: A direct messages topic exists only once its peer has written to the chat, and the
+        #       server answers with the ones that do exist rather than with a placeholder for the
+        #       ones that do not. Asking for a peer without a topic is not an error, it is an empty
+        #       `dialogs` vector, so `topics` really can be empty here.
+        #
+        #       await app.get_direct_messages_topics_by_id(direct_messages_chat_id, user_id)   # -> None
+        #       await app.get_direct_messages_topics_by_id(direct_messages_chat_id, [user_id]) # -> []
         return topics if is_iterable else topics[0] if topics else None
