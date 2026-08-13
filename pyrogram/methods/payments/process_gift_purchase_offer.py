@@ -41,8 +41,8 @@ class ProcessGiftPurchaseOffer:
                 Pass False to reject it.
 
         Returns:
-            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent Message is returned,
-            otherwise, in case the server answered with no message, None is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         r = await self.invoke(
             raw.functions.payments.ResolveStarGiftOffer(

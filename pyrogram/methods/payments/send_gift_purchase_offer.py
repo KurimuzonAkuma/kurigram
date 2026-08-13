@@ -55,8 +55,8 @@ class SendGiftPurchaseOffer:
                 Pass User.paid_message_star_count for users and None otherwise.
 
         Returns:
-            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent Message is returned,
-            otherwise, in case the server answered with no message, None is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         match = self.UPGRADED_GIFT_RE.match(gift_name)
 

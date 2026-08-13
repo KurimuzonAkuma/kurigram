@@ -836,7 +836,8 @@ class Gift(Object):
                 await gift.upgrade()
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         return await self._client.upgrade_gift(
             owned_gift_id=self.owned_gift_id,
@@ -866,7 +867,8 @@ class Gift(Object):
                 await gift.transfer(to_chat_id=123)
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         if not self.type == enums.GiftType.UPGRADED:
             raise ValueError("Only upgraded gifts can be transferred.")
@@ -922,7 +924,8 @@ class Gift(Object):
                 await gift.buy()
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         if new_owner_chat_id is None:
             new_owner_chat_id = "me"
@@ -970,7 +973,8 @@ class Gift(Object):
                 await gift.send("me")
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         return await self._client.send_gift(
             chat_id=chat_id,
@@ -1027,7 +1031,8 @@ class Gift(Object):
                 Pass User.paid_message_star_count for users and None otherwise.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent Message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
         """
         if not self.can_send_purchase_offer:
             raise ValueError("This gift cannot be purchased via offer.")

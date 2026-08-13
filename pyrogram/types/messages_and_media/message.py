@@ -4241,7 +4241,8 @@ class Message(Object, Update):
                 List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent invoice message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent invoice message is returned, otherwise, in
+            case the server answered with no message, None is returned.
         """
         if reply_parameters is None:
             reply_parameters = types.ReplyParameters(
@@ -4454,7 +4455,8 @@ class Message(Object, Update):
                 List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent invoice message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent invoice message is returned, otherwise, in
+            case the server answered with no message, None is returned.
         """
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
@@ -6210,7 +6212,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent dice message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent dice message is returned, otherwise, in case
+            the server answered with no message, None is returned.
         """
         if reply_parameters is None:
             reply_parameters = types.ReplyParameters(
@@ -6316,7 +6319,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent dice message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent dice message is returned, otherwise, in case
+            the server answered with no message, None is returned.
         """
         if message_thread_id is None:
             message_thread_id = self.message_thread_id
@@ -10357,7 +10361,8 @@ class Message(Object, Update):
                 Applicable to private chats only. Defaults to False.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the service message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the service message is returned, otherwise, in case
+            the server answered with no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
