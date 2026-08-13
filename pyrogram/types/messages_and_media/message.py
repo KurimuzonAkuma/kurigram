@@ -10267,7 +10267,7 @@ class Message(Object, Update):
         block: bool = True,
         progress: Optional[Callable] = None,
         progress_args: tuple = ()
-    ) -> str:
+    ) -> Optional[Union[str, BinaryIO, List[str], List[BinaryIO]]]:
         """Shortcut for method :obj:`~pyrogram.Client.download_media` will automatically fill method attributes:
 
         * message
@@ -10311,7 +10311,11 @@ class Message(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the absolute path of the downloaded file as string is returned, None otherwise.
+            ``str`` | ``BinaryIO`` | ``List[str]`` | ``List[BinaryIO]`` | ``None``: On success, the absolute path of the
+            downloaded file is returned. In case ``in_memory=True``, a binary file-like object with its attribute
+            ".name" set is returned. If the message contains multiple media (purchased paid media), a list of paths or
+            binary file-like objects is returned. In case the download failed or was deliberately stopped with
+            :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
