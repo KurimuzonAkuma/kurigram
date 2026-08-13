@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -28,7 +28,7 @@ class StartBot:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         param: str = ""
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Start bot
 
         .. include:: /_includes/usable-by/users.rst
@@ -43,7 +43,8 @@ class StartBot:
                 Defaults to "" (empty string).
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

@@ -458,7 +458,7 @@ class Story(Object, Update):
         ]] = None,
 
         disable_web_page_preview: Optional[bool] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *reply_text* of :obj:`~pyrogram.types.Story`.
 
         An alias exists as *reply*.
@@ -513,7 +513,8 @@ class Story(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent Message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
