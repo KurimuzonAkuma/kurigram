@@ -39,7 +39,7 @@ class CopyStory:
         allowed_users: Optional[List[Union[int, str]]] = None,
         disallowed_users: Optional[List[Union[int, str]]] = None,
         protect_content: Optional[bool] = None
-    ) -> "types.Story":
+    ) -> Optional["types.Story"]:
         """Copy story.
 
         .. include:: /_includes/usable-by/users.rst
@@ -92,7 +92,9 @@ class CopyStory:
                 List of special entities that appear in the new caption, which can be specified instead of *parse_mode*.
 
         Returns:
-            :obj:`~pyrogram.types.Story`: On success, the copied story is returned.
+            :obj:`~pyrogram.types.Story` | ``None``: On success, the copied story is returned, otherwise,
+            in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`,
+            None is returned.
 
         Example:
             .. code-block:: python

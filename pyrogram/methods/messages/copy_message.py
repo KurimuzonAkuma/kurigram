@@ -59,7 +59,7 @@ class CopyMessage:
         reply_to_message_id: Optional[int] = None,
         quote_text: Optional[str] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Copy messages of any kind.
 
         The method is analogous to the method :meth:`~Client.forward_messages`, but the copied message doesn't have a
@@ -132,7 +132,8 @@ class CopyMessage:
                 Pass None to remove the reply markup.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the copied message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the copied message is returned,
+            otherwise, in case no message was sent, None is returned.
 
         Example:
             .. code-block:: python

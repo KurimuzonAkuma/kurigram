@@ -1706,7 +1706,7 @@ class Story(Object, Update):
         allowed_users: Optional[List[int]] = None,
         disallowed_users: Optional[List[int]] = None,
         protect_content: Optional[bool] = None
-    ) -> "types.Story":
+    ) -> Optional["types.Story"]:
         """Bound method *copy* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1767,7 +1767,8 @@ class Story(Object, Update):
                 Protects the contents of the sent story from forwarding and saving.
 
         Returns:
-            :obj:`~pyrogram.types.Story`: On success, the copied story is returned.
+            :obj:`~pyrogram.types.Story` | ``None``: On success, the copied story is returned, otherwise, in case
+            the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1820,7 +1821,7 @@ class Story(Object, Update):
     async def edit_media(
         self,
         media: Optional[Union[str, BinaryIO]] = None,
-    ) -> "types.Story":
+    ) -> Optional["types.Story"]:
         """Bound method *edit_media* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1847,7 +1848,8 @@ class Story(Object, Update):
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
 
         Returns:
-            On success, the edited :obj:`~pyrogram.types.Story` is returned.
+            On success, the edited :obj:`~pyrogram.types.Story` is returned, otherwise, in case the upload is
+            deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.

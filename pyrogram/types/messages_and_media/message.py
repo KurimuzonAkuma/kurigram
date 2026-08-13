@@ -3259,7 +3259,7 @@ class Message(Object, Update):
         quote_text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_contact` will automatically fill method attributes:
 
         * chat_id
@@ -3324,7 +3324,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -3400,7 +3401,7 @@ class Message(Object, Update):
                 "types.ForceReply"
             ]
         ] = None
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_contact` will automatically fill method attributes:
 
         * chat_id
@@ -3464,7 +3465,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -3927,7 +3929,7 @@ class Message(Object, Update):
 
         quote: Optional[bool] = None,
         reply_to_message_id: Optional[int] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_game` will automatically fill method attributes:
 
         * chat_id
@@ -3969,7 +3971,8 @@ class Message(Object, Update):
                 If not empty, the first button must launch the game.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -4020,7 +4023,7 @@ class Message(Object, Update):
                 "types.ForceReply"
             ]
         ] = None
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_game` will automatically fill method attributes:
 
         * chat_id
@@ -4061,7 +4064,8 @@ class Message(Object, Update):
                 If not empty, the first button must launch the game.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -4532,7 +4536,7 @@ class Message(Object, Update):
         reply_to_message_id: Optional[int] = None,
         quote_text: Optional[str] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_location` will automatically fill method attributes:
 
         * chat_id
@@ -4607,7 +4611,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -4686,7 +4691,7 @@ class Message(Object, Update):
                 "types.ForceReply"
             ]
         ] = None
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_location` will automatically fill method attributes:
 
         * chat_id
@@ -4760,7 +4765,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -6736,7 +6742,7 @@ class Message(Object, Update):
         quote_text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_venue` will automatically fill method attributes:
 
         * chat_id
@@ -6808,7 +6814,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -6888,7 +6895,7 @@ class Message(Object, Update):
                 "types.ForceReply"
             ]
         ] = None
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_venue` will automatically fill method attributes:
 
         * chat_id
@@ -6959,7 +6966,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -8742,7 +8750,7 @@ class Message(Object, Update):
         quote_text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_inline_bot_result` will automatically fill method attributes:
 
         * chat_id
@@ -8776,7 +8784,8 @@ class Message(Object, Update):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -8826,7 +8835,7 @@ class Message(Object, Update):
         direct_messages_topic_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         paid_message_star_count: Optional[int] = None
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_inline_bot_result` will automatically fill method attributes:
 
         * chat_id
@@ -8859,7 +8868,8 @@ class Message(Object, Update):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            server answered with no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -8902,7 +8912,7 @@ class Message(Object, Update):
         ] = None,
 
         quote: Optional[bool] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_checklist` will automatically fill method attributes:
 
         * chat_id
@@ -8954,7 +8964,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -9010,7 +9021,7 @@ class Message(Object, Update):
                 "types.ForceReply"
             ]
         ] = None,
-    ) -> "Message":
+    ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_checklist` will automatically fill method attributes:
 
         * chat_id
@@ -9061,7 +9072,8 @@ class Message(Object, Update):
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+            On success, the sent :obj:`~pyrogram.types.Message` is returned, otherwise, in case the server answered with
+            no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -9633,7 +9645,7 @@ class Message(Object, Update):
         reply_to_message_id: Optional[int] = None,
         quote_text: Optional[str] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.copy_message` will automatically fill method attributes:
 
         * from_chat_id
@@ -9696,7 +9708,8 @@ class Message(Object, Update):
                 Pass None to remove the reply markup.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the copied message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the copied message is returned, otherwise, in case
+            no message was sent, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.

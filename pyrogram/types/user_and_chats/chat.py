@@ -1516,7 +1516,7 @@ class Chat(Object):
         """
         return await self._client.unarchive_chats(self.id)
 
-    async def set_title(self, title: str) -> "types.Message":
+    async def set_title(self, title: str) -> Optional["types.Message"]:
         """Bound method *set_title* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1538,7 +1538,8 @@ class Chat(Object):
                 New chat title, 1-255 characters.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent service message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent service message is returned, otherwise, in
+            case the server answered with no message, None is returned.
 
         Raises:
             RPCError: In case of Telegram RPC error.
@@ -1582,7 +1583,7 @@ class Chat(Object):
         photo: Optional[Union[str, BinaryIO]] = None,
         video: Optional[Union[str, BinaryIO]] = None,
         video_start_ts: Optional[float] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Bound method *set_photo* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1625,7 +1626,8 @@ class Chat(Object):
                 The timestamp in seconds of the video frame to use as photo profile preview.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent service message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent service message is returned, otherwise, in
+            case the server answered with no message, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1635,7 +1637,7 @@ class Chat(Object):
             chat_id=self.id, photo=photo, video=video, video_start_ts=video_start_ts
         )
 
-    async def set_ttl(self, ttl_seconds: int) -> "types.Message":
+    async def set_ttl(self, ttl_seconds: int) -> Optional["types.Message"]:
         """Bound method *set_ttl* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1653,7 +1655,8 @@ class Chat(Object):
                 await chat.set_ttl(86400)
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the generated service message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the generated service message is returned, otherwise,
+            in case the server answered with no message, None is returned.
         """
         return await self._client.set_chat_ttl(chat_id=self.id, ttl_seconds=ttl_seconds)
 
