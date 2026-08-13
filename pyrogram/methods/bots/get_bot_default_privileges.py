@@ -38,7 +38,8 @@ class GetBotDefaultPrivileges:
                 for groups and supergroups will be returned.
 
         Returns:
-            ``bool``: On success, True is returned.
+            :obj:`~pyrogram.types.ChatAdministratorRights` | ``None``: On success, the default privileges of
+            the bot are returned, otherwise, in case the bot has no default privileges set, None is returned.
 
         Example:
             .. code-block:: python
