@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Iterable, List, Optional, Union, overload
+from typing import Iterable, List, Union, overload
 
 import pyrogram
 from pyrogram import raw, types
@@ -31,7 +31,7 @@ class GetForumTopicsByID:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         topic_ids: int
-    ) -> Optional["types.ForumTopic"]: ...
+    ) -> "types.ForumTopic": ...
 
     @overload
     async def get_forum_topics_by_id(
@@ -44,7 +44,7 @@ class GetForumTopicsByID:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         topic_ids: Union[int, Iterable[int]]
-    ) -> Optional[Union["types.ForumTopic", List["types.ForumTopic"]]]:
+    ) -> Union["types.ForumTopic", List["types.ForumTopic"]]:
         """Get one or more topic from a chat by using topic identifiers.
 
         .. include:: /_includes/usable-by/users.rst
@@ -58,9 +58,8 @@ class GetForumTopicsByID:
                 topic themselves.
 
         Returns:
-            :obj:`~pyrogram.types.ForumTopic` | List of :obj:`~pyrogram.types.ForumTopic` | ``None``: In case
-            *topic_ids* was not a list, a single topic is returned, or None if it was not found, otherwise a list of
-            topics is returned.
+            :obj:`~pyrogram.types.ForumTopic` | List of :obj:`~pyrogram.types.ForumTopic`: In case *topic_ids* was not
+            a list, a single topic is returned, otherwise a list of topics is returned.
 
         Example:
             .. code-block:: python
@@ -92,4 +91,11 @@ class GetForumTopicsByID:
         for i in r.topics:
             topics.append(types.ForumTopic._parse(self, i, users=users, chats=chats))
 
-        return topics if is_iterable else topics[0] if topics else None
+        # NOTE: The server answers with one entry per requested id, never with fewer: a topic that
+        #       does not exist comes back as `forumTopicDeleted`, which `ForumTopic._parse()` turns
+        #       into a topic carrying `is_deleted`, and an id below 1 is refused with `TOPICS_EMPTY`
+        #       rather than skipped. So `topics` is never empty here.
+        #
+        #       await app.invoke(raw.functions.messages.GetForumTopicsByID(peer=peer, topics=[999999]))
+        #       # -> messages.ForumTopics(topics=[raw.types.ForumTopicDeleted(id=999999)], ...)
+        return topics if is_iterable else topics[0]
