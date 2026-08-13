@@ -42,6 +42,16 @@ class DownloadMedia:
     #           flag: bool = ...
     #           reveal_type(await app.download_media(message, in_memory=flag))
     #           # -> Revealed type is "None"
+    #
+    #       The two blocking overloads admit `None` because a stopped transfer resolves
+    #       to it: `handle_download()` returns `None` on `StopTransmission` instead of
+    #       re-raising, and this method hands that result straight back.
+    #
+    #           def progress(current, total, client):
+    #               client.stop_transmission()
+    #
+    #           await app.download_media(message, progress=progress, progress_args=(app,))
+    #           # -> None
     @overload
     async def download_media(
         self: "pyrogram.Client",
@@ -67,7 +77,7 @@ class DownloadMedia:
         block: Literal[True] = True,
         progress: Optional[Callable] = None,
         progress_args: tuple = (),
-    ) -> Union[str, List[str]]: ...
+    ) -> Union[str, List[str], None]: ...
 
     @overload
     async def download_media(
@@ -94,7 +104,7 @@ class DownloadMedia:
         block: Literal[True] = True,
         progress: Optional[Callable] = None,
         progress_args: tuple = (),
-    ) -> Union[BinaryIO, List[BinaryIO]]: ...
+    ) -> Union[BinaryIO, List[BinaryIO], None]: ...
 
     @overload
     async def download_media(
