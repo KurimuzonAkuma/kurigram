@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Union, Optional, AsyncGenerator
+from typing import Union, Optional, AsyncIterator
 
 import pyrogram
 from pyrogram import raw, types, enums
@@ -64,7 +64,7 @@ class GetChatMembers:
         query: str = "",
         limit: int = 0,
         filter: "enums.ChatMembersFilter" = enums.ChatMembersFilter.SEARCH
-    ) -> AsyncGenerator["types.ChatMember", None]:
+    ) -> AsyncIterator["types.ChatMember"]:
         """Get the members list of a chat.
 
         A chat can be either a basic group, a supergroup or a channel.

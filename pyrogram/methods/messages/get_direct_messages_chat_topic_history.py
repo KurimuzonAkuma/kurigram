@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import AsyncGenerator, Union
+from typing import AsyncIterator, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -71,7 +71,7 @@ class GetDirectMessagesChatTopicHistory:
         min_id: int = 0,
         max_id: int = 0,
         reverse: bool = False
-    ) -> AsyncGenerator["types.Message", None]:
+    ) -> AsyncIterator["types.Message"]:
         """Return messages in the topic in a channel direct messages chat administered by the current user.
 
         The messages are returned in reverse chronological order.

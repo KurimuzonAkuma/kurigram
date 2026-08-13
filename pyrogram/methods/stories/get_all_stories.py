@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncGenerator, Optional
+from typing import AsyncIterator, Optional
 
 import pyrogram
 from pyrogram import raw
@@ -29,7 +29,7 @@ class GetAllStories:
         next: Optional[bool] = None,
         hidden: Optional[bool] = None,
         state: Optional[str] = None,
-    ) -> AsyncGenerator["types.Story", None]:
+    ) -> AsyncIterator["types.Story"]:
         """Get all active or hidden stories that displayed on the action bar on the homescreen.
 
         .. include:: /_includes/usable-by/users.rst

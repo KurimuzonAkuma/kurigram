@@ -33,7 +33,7 @@ from importlib import import_module
 from io import BytesIO, StringIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import AsyncGenerator, Callable, List, Optional, Type, Union
+from typing import AsyncIterator, Callable, List, Optional, Type, Union
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
@@ -1120,7 +1120,7 @@ class Client(Methods):
         offset: int = 0,
         progress: Optional[Callable] = None,
         progress_args: tuple = ()
-    ) -> AsyncGenerator[bytes, None]:
+    ) -> AsyncIterator[bytes]:
         async with self.get_file_semaphore:
             file_type = file_id.file_type
 

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncGenerator, Union
+from typing import AsyncIterator, Union
 
 import pyrogram
 from pyrogram import raw
@@ -30,7 +30,7 @@ class GetPinnedStories:
         chat_id: Union[int, str],
         offset_id: int = 0,
         limit: int = 0,
-    ) -> AsyncGenerator["types.Story", None]:
+    ) -> AsyncIterator["types.Story"]:
         """Get all pinned stories from a chat by using chat identifier.
 
         .. include:: /_includes/usable-by/users.rst

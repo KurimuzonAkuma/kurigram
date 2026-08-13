@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
-from typing import Union, AsyncGenerator, Optional
+from typing import Union, AsyncIterator
 
 import pyrogram
 from pyrogram import types, raw, utils
@@ -28,12 +28,7 @@ class GetChatPhotos:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         limit: int = 0,
-    ) -> Optional[
-        Union[
-            AsyncGenerator["types.Photo", None],
-            AsyncGenerator["types.Animation", None]
-        ]
-    ]:
+    ) -> AsyncIterator[Union["types.Photo", "types.Animation"]]:
         """Get a chat or a user profile photos sequentially.
 
         .. include:: /_includes/usable-by/users-bots.rst

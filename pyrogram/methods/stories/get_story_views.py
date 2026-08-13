@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncGenerator, Optional, Union
+from typing import AsyncIterator, Optional, Union
 
 import pyrogram
 from pyrogram import raw, types
@@ -33,7 +33,7 @@ class GetStoryViews:
         reactions_first: Optional[bool] = None,
         forwards_first: Optional[bool] = None,
         query: Optional[str] = None
-    ) -> AsyncGenerator["types.StoryView", None]:
+    ) -> AsyncIterator["types.StoryView"]:
         """Obtain the list of users that have viewed a specific story we posted.
 
         .. include:: /_includes/usable-by/users.rst

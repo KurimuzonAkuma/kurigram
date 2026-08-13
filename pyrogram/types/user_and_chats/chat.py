@@ -18,7 +18,7 @@
 
 import logging
 from datetime import datetime
-from typing import AsyncGenerator, BinaryIO, Dict, List, Optional, Union
+from typing import AsyncIterator, BinaryIO, Dict, List, Optional, Union
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -1929,7 +1929,7 @@ class Chat(Object):
         query: str = "",
         limit: int = 0,
         filter: "enums.ChatMembersFilter" = enums.ChatMembersFilter.SEARCH,
-    ) -> AsyncGenerator["types.ChatMember", None]:
+    ) -> AsyncIterator["types.ChatMember"]:
         """Bound method *get_members* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:

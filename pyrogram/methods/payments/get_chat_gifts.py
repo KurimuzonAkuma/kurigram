@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, Union, AsyncGenerator
+from typing import Optional, Union, AsyncIterator
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -38,7 +38,7 @@ class GetChatGifts:
         sort_by_price: Optional[bool] = None,
         limit: int = 0,
         offset: str = ""
-    ) -> AsyncGenerator["types.Gift", None]:
+    ) -> AsyncIterator["types.Gift"]:
         """Get all gifts owned by specified chat.
 
         .. include:: /_includes/usable-by/users-bots.rst

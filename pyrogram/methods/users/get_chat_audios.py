@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncGenerator, Optional, Union
+from typing import AsyncIterator, Union
 
 import pyrogram
 from pyrogram import raw, types
@@ -27,9 +27,7 @@ class GetChatAudios:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         limit: int = 0,
-    ) -> Optional[
-        AsyncGenerator["types.Audio", None]
-    ]:
+    ) -> AsyncIterator["types.Audio"]:
         """Get a user profile audios sequentially.
 
         .. include:: /_includes/usable-by/users.rst
