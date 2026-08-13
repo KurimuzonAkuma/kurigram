@@ -91,11 +91,9 @@ class GetForumTopicsByID:
         for i in r.topics:
             topics.append(types.ForumTopic._parse(self, i, users=users, chats=chats))
 
-        # NOTE: The server answers with one entry per requested id, never with fewer: a topic that
-        #       does not exist comes back as `forumTopicDeleted`, which `ForumTopic._parse()` turns
-        #       into a topic carrying `is_deleted`, and an id below 1 is refused with `TOPICS_EMPTY`
-        #       rather than skipped. So `topics` is never empty here.
+        # NOTE: One entry per requested id, never fewer: an id that does not exist comes back as
+        #       `forumTopicDeleted`, and one below 1 is refused with `TOPICS_EMPTY`:
         #
-        #       await app.invoke(raw.functions.messages.GetForumTopicsByID(peer=peer, topics=[999999]))
+        #       GetForumTopicsByID(peer=peer, topics=[999999])
         #       # -> messages.ForumTopics(topics=[raw.types.ForumTopicDeleted(id=999999)], ...)
         return topics if is_iterable else topics[0]

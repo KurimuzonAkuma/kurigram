@@ -89,11 +89,8 @@ class GetDirectMessagesTopicsByID:
         for i in r.dialogs:
             topics.append(types.DirectMessagesTopic._parse(client=self, topic=i, users=users, chats=chats))
 
-        # NOTE: A direct messages topic exists only once its peer has written to the chat, and the
-        #       server answers with the ones that do exist rather than with a placeholder for the
-        #       ones that do not. Asking for a peer without a topic is not an error, it is an empty
-        #       `dialogs` vector, so `topics` really can be empty here.
+        # NOTE: A topic exists only once its peer has written to the chat, and asking for a peer
+        #       without one answers with an empty `dialogs` vector rather than an error:
         #
-        #       await app.get_direct_messages_topics_by_id(direct_messages_chat_id, user_id)   # -> None
-        #       await app.get_direct_messages_topics_by_id(direct_messages_chat_id, [user_id]) # -> []
+        #       await app.get_direct_messages_topics_by_id(chat_id, user_id)  # -> None
         return topics if is_iterable else topics[0] if topics else None

@@ -226,7 +226,6 @@ class SaveFile:
                 if isinstance(path, (str, PurePath)):
                     fp.close()
 
-            # NOTE: The `except Exception` branch above logs the failure and swallows it, so the
-            #       upload can end without a file. Saying so explicitly keeps that outcome
-            #       visible instead of leaving it to fall off the end of the method.
+            # NOTE: The `except Exception` branch above swallows the failure, so the upload can end
+            #       without a file.
             return None

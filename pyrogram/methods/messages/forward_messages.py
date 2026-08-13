@@ -178,11 +178,6 @@ class ForwardMessages:
 
         messages = await utils.parse_messages(client=self, messages=r)
 
-        # NOTE: `parse_messages()` reads `r.updates` and keeps only the new and edited message
-        #       updates out of it, so an answer carrying none of those parses to an empty list.
-        #       `messages.forwardMessages` is declared to return `Updates`, and five of that type's
-        #       seven constructors have no `updates` vector at all: `updatesTooLong`, `updateShort`,
-        #       `updateShortMessage`, `updateShortChatMessage` and `updateShortSentMessage`. None of
-        #       them is an error, and all of them parse to nothing, so `messages` can be empty on a
-        #       request that succeeded.
+        # NOTE: `parse_messages()` reads `r.updates`, and five of the seven `Updates` constructors
+        #       carry no `updates` vector at all, so a successful answer can parse to nothing.
         return messages if is_iterable else messages[0] if messages else None
