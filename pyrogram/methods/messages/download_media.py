@@ -236,11 +236,11 @@ class DownloadMedia:
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``str`` | ``None`` | ``BinaryIO`` | ``List[str]`` | ``List[BinaryIO]``: On success, the absolute path of the downloaded file is returned,
-            otherwise, in case the download failed or was deliberately stopped with
+            ``str`` | ``BinaryIO`` | ``List[str]`` | ``List[BinaryIO]`` | ``None``: On success, the absolute path of the
+            downloaded file is returned. In case ``in_memory=True``, a binary file-like object with its attribute
+            ".name" set is returned. If the message contains multiple media (purchased paid media), a list of paths or
+            binary file-like objects is returned. In case the download failed or was deliberately stopped with
             :meth:`~pyrogram.Client.stop_transmission`, None is returned.
-            Otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.
-            If the message contains multiple media (purchased paid media), a list of paths or binary file-like objects is returned.
 
         Raises:
             ValueError: if the message doesn't contain any downloadable media

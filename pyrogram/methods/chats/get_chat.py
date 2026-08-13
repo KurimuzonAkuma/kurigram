@@ -48,9 +48,9 @@ class GetChat:
                 Defaults to True.
 
         Returns:
-            :obj:`~pyrogram.types.Chat` | ``None``: On success, if you've already joined the chat, a
-            chat object is returned, otherwise, a chat preview object is returned. None is returned when
-            the account can no longer see the chat and the server answers with an empty peer.
+            :obj:`~pyrogram.types.Chat` | ``None``: On success, if you've already joined the chat, a chat object is
+            returned, otherwise, a chat preview object is returned. In case the account can no longer see the chat and
+            the server answers with an empty peer, None is returned.
 
         Raises:
             ValueError: In case the chat invite link points to a chat you haven't joined yet.

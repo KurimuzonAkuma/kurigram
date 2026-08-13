@@ -58,9 +58,9 @@ class GetStories:
                 or link to get the content of the story themselves.
 
         Returns:
-            :obj:`~pyrogram.types.Story` | List of :obj:`~pyrogram.types.Story` | ``None``: In case
-            *story_ids* was not a list, a single story is returned, otherwise a list of stories is returned.
-            None is returned when *story_ids* was not a list and the story does not exist.
+            :obj:`~pyrogram.types.Story` | List of :obj:`~pyrogram.types.Story` | ``None``: In case *story_ids* was not
+            a list, a single story is returned, otherwise a list of stories is returned. In case *story_ids* was not a
+            list and the story does not exist, None is returned.
 
         Example:
             .. code-block:: python

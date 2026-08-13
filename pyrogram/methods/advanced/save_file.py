@@ -89,9 +89,9 @@ class SaveFile:
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``InputFile`` | ``None``: On success, the uploaded file is returned in form of an InputFile
-            object. None is returned when *path* is None, when *file_id* is given so that a single
-            missing part is uploaded instead of the whole file, and when the upload fails.
+            ``InputFile`` | ``None``: On success, the uploaded file is returned in form of an InputFile object. In case
+            *path* is None, in case *file_id* is given so that a single missing part is uploaded instead of the whole
+            file, and in case the upload fails, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.

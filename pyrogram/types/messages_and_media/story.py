@@ -665,9 +665,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -817,9 +816,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1103,9 +1101,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1215,9 +1212,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1394,9 +1390,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1535,9 +1530,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1667,9 +1661,8 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the sent :obj:`~pyrogram.types.Message` is returned.
-            In case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned
-            instead.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1849,8 +1842,8 @@ class Story(Object, Update):
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
 
         Returns:
-            On success, the edited :obj:`~pyrogram.types.Story` is returned, otherwise, in case the upload is
-            deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
+            :obj:`~pyrogram.types.Story` | ``None``: On success, the edited story is returned, otherwise, in case the
+            upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -2120,7 +2113,10 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            On success, the absolute path of the downloaded file as string is returned, None otherwise.
+            ``str`` | ``BinaryIO`` | ``None``: On success, the absolute path of the downloaded file is returned,
+            otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.
+            In case the download failed or was deliberately stopped with
+            :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
