@@ -43,7 +43,7 @@ class SaveFile:
         file_part: int = 0,
         progress: Optional[Callable] = None,
         progress_args: tuple = ()
-    ):
+    ) -> Optional[Union["raw.types.InputFile", "raw.types.InputFileBig"]]:
         """Upload a file onto Telegram servers, without actually sending the message to anyone.
         Useful whenever an InputFile type is required.
 
@@ -89,7 +89,9 @@ class SaveFile:
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``InputFile``: On success, the uploaded file is returned in form of an InputFile object.
+            ``InputFile`` | ``None``: On success, the uploaded file is returned in form of an InputFile
+            object. None is returned when *path* is None, when *file_id* is given so that a single
+            missing part is uploaded instead of the whole file, and when the upload fails.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -177,7 +179,7 @@ class SaveFile:
                     await queue.put(rpc)
 
                     if is_missing_part:
-                        return
+                        return None
 
                     if not is_big and not is_missing_part:
                         md5_sum.update(chunk)
@@ -223,3 +225,8 @@ class SaveFile:
 
                 if isinstance(path, (str, PurePath)):
                     fp.close()
+
+            # NOTE: The `except Exception` branch above logs the failure and swallows it, so the
+            #       upload can end without a file. Saying so explicitly keeps that outcome
+            #       visible instead of leaving it to fall off the end of the method.
+            return None
