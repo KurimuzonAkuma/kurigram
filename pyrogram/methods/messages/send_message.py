@@ -63,7 +63,7 @@ class SendMessage:
         quote_entities: Optional[List["types.MessageEntity"]] = None,
         quote_offset: Optional[int] = None,
         disable_web_page_preview: Optional[bool] = None, # TODO: Remove later
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send text messages.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -144,7 +144,8 @@ class SendMessage:
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent text message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent text message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

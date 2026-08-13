@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 import pyrogram
 from pyrogram import raw, types, utils
 
@@ -25,7 +27,7 @@ class ProcessGiftPurchaseOffer:
         self: "pyrogram.Client",
         message_id: int,
         accept: bool
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Handles a pending gift purchase offer.
 
         .. include:: /_includes/usable-by/users.rst
@@ -39,7 +41,8 @@ class ProcessGiftPurchaseOffer:
                 Pass False to reject it.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent Message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent Message is returned,
+            otherwise, in case the server answered with no message, None is returned.
         """
         r = await self.invoke(
             raw.functions.payments.ResolveStarGiftOffer(

@@ -30,7 +30,7 @@ class SendGiftPurchaseOffer:
         price: "types.GiftResalePrice",
         duration: int,
         paid_message_star_count: Optional[int] = None
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Sends an offer to purchase an upgraded gift.
 
         .. include:: /_includes/usable-by/users.rst
@@ -55,7 +55,8 @@ class SendGiftPurchaseOffer:
                 Pass User.paid_message_star_count for users and None otherwise.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent Message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent Message is returned,
+            otherwise, in case the server answered with no message, None is returned.
         """
         match = self.UPGRADED_GIFT_RE.match(gift_name)
 
