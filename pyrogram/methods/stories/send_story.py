@@ -47,7 +47,7 @@ class SendStory:
         caption_entities: Optional[List["types.MessageEntity"]] = None,
         progress: Optional[Callable] = None,
         progress_args: tuple = (),
-    ) -> "types.Story":
+    ) -> Optional["types.Story"]:
         """Post new story.
 
         .. include:: /_includes/usable-by/users.rst
@@ -136,7 +136,9 @@ class SendStory:
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Returns:
-            :obj:`~pyrogram.types.Story` a single story is returned.
+            :obj:`~pyrogram.types.Story` | ``None``: On success, the sent story is returned, otherwise,
+            in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`,
+            None is returned.
 
         Example:
             .. code-block:: python

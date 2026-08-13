@@ -38,7 +38,7 @@ class EditStoryMedia:
         file_name: Optional[str] = None,
         progress: Optional[Callable] = None,
         progress_args: tuple = ()
-    ) -> "types.Story":
+    ) -> Optional["types.Story"]:
         """Edit story media.
 
         .. include:: /_includes/usable-by/users.rst
@@ -87,7 +87,9 @@ class EditStoryMedia:
                 object or a Client instance in order to edit the message with the updated progress status.
 
         Returns:
-            :obj:`~pyrogram.types.Story`: On success, the edited story is returned.
+            :obj:`~pyrogram.types.Story` | ``None``: On success, the edited story is returned, otherwise,
+            in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`,
+            None is returned.
 
         Example:
             .. code-block:: python
