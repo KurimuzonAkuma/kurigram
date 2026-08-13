@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -26,7 +26,7 @@ class GetChatMembersCount:
     async def get_chat_members_count(
         self: "pyrogram.Client",
         chat_id: Union[int, str]
-    ) -> int:
+    ) -> Optional[int]:
         """Get the number of members in a chat.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -36,7 +36,8 @@ class GetChatMembersCount:
                 Unique identifier (int) or username (str) of the target chat.
 
         Returns:
-            ``int``: On success, the chat members count is returned.
+            ``int`` | ``None``: On success, the chat members count is returned, otherwise, in case the
+            server did not send the count, None is returned.
 
         Raises:
             ValueError: In case a chat id belongs to user.

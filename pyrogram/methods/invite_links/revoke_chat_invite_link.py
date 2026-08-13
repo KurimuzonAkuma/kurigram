@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -28,7 +28,7 @@ class RevokeChatInviteLink:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         invite_link: str,
-    ) -> "types.ChatInviteLink":
+    ) -> Optional["types.ChatInviteLink"]:
         """Revoke a previously created invite link.
 
         If the primary link is revoked, a new link is automatically generated.
@@ -46,7 +46,9 @@ class RevokeChatInviteLink:
                The invite link to revoke.
 
         Returns:
-            :obj:`~pyrogram.types.ChatInviteLink`: On success, the invite link object is returned.
+            :obj:`~pyrogram.types.ChatInviteLink` | ``None``: On success, the invite link object is
+            returned, otherwise, in case the chat only accepts join requests through its public link, None is
+            returned.
         """
 
         r = await self.invoke(

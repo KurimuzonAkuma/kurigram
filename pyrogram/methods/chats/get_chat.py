@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
@@ -29,7 +29,7 @@ class GetChat:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         force_full: bool = True
-    ) -> "types.Chat":
+    ) -> Optional["types.Chat"]:
         """Get up to date information about a chat.
 
         Information include current name of the user for one-on-one conversations, current username of a user, group or
@@ -48,8 +48,9 @@ class GetChat:
                 Defaults to True.
 
         Returns:
-            :obj:`~pyrogram.types.Chat`: On success, if you've already joined the chat, a chat object is returned,
-            otherwise, a chat preview object is returned.
+            :obj:`~pyrogram.types.Chat` | ``None``: On success, if you've already joined the chat, a
+            chat object is returned, otherwise, a chat preview object is returned. None is returned when
+            the account can no longer see the chat and the server answers with an empty peer.
 
         Raises:
             ValueError: In case the chat invite link points to a chat you haven't joined yet.

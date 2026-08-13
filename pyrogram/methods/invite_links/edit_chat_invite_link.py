@@ -33,7 +33,7 @@ class EditChatInviteLink:
         expire_date: Optional[datetime] = None,
         member_limit: Optional[int] = None,
         creates_join_request: Optional[bool] = None
-    ) -> "types.ChatInviteLink":
+    ) -> Optional["types.ChatInviteLink"]:
         """Edit a non-primary invite link.
 
         You must be an administrator in the chat for this to work and must have the appropriate admin rights.
@@ -65,7 +65,9 @@ class EditChatInviteLink:
                 If True, member_limit can't be specified.
 
         Returns:
-            :obj:`~pyrogram.types.ChatInviteLink`: On success, the new invite link is returned
+            :obj:`~pyrogram.types.ChatInviteLink` | ``None``: On success, the new invite link is
+            returned, otherwise, in case the chat only accepts join requests through its public link, None is
+            returned.
 
         Example:
             .. code-block:: python
