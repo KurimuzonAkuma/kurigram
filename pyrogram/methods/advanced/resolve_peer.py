@@ -45,7 +45,8 @@ class ResolvePeer:
                 Can be a direct id (int), a username (str), a link (str) or a phone number (str).
 
         Returns:
-            :obj:`~pyrogram.raw.base.InputPeer`: On success, the resolved peer id is returned in form of an InputPeer object.
+            :obj:`~pyrogram.raw.base.InputPeer` | ``None``: On success, the resolved peer id is returned in
+            form of an InputPeer object, otherwise, in case *peer_id* is None, None is returned.
 
         Raises:
             KeyError: In case the peer doesn't exist in the internal database.

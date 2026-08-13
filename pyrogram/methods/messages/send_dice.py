@@ -118,7 +118,8 @@ class SendDice:
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent dice message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent dice message is returned, otherwise,
+            in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

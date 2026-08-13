@@ -51,7 +51,8 @@ class SendResoldGift:
                 The price that the user agreed to pay for the gift.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise,
+            in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python
