@@ -17,10 +17,10 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import Optional, Union
+from typing import Union
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw
 
 
 class BuyGiftUpgrade:
@@ -29,7 +29,7 @@ class BuyGiftUpgrade:
         owner_id: Union[int, str],
         prepaid_upgrade_hash: str,
         star_count: int
-    ) -> Optional["types.Message"]:
+    ) -> bool:
         """Pays for upgrade of a regular gift that is owned by another user or channel chat.
 
         .. include:: /_includes/usable-by/users.rst
