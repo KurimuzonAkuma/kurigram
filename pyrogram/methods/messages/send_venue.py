@@ -61,7 +61,7 @@ class SendVenue:
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
         quote_offset: Optional[int] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send information about a venue.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -145,7 +145,8 @@ class SendVenue:
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent venue message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent venue message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

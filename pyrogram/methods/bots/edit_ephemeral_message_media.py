@@ -30,7 +30,7 @@ class EditEphemeralMessageMedia:
         ephemeral_message_id: int,
         media: "types.InputMedia",
         reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Use this method to edit the media of an ephemeral message.
         Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline.
 
@@ -57,7 +57,8 @@ class EditEphemeralMessageMedia:
                 Defaults to file's path basename.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the edited message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

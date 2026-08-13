@@ -44,7 +44,7 @@ class SendGame:
 
         reply_to_message_id: Optional[int] = None,
         reply_to_chat_id: Optional[Union[int, str]] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send a game.
 
         .. include:: /_includes/usable-by/bots.rst
@@ -87,7 +87,8 @@ class SendGame:
                 If not empty, the first button must launch the game.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent game message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent game message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

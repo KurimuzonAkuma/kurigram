@@ -26,7 +26,7 @@ class SendScreenshotNotification:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         reply_parameters: Optional["types.ReplyParameters"] = None
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Notify the other user in a private chat that a screenshot of the chat was taken.
 
         .. include:: /_includes/usable-by/users.rst
@@ -41,7 +41,8 @@ class SendScreenshotNotification:
                 Describes reply parameters for the message that is being sent.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent service message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent service message is returned,
+            otherwise, in case the server answered with no message, None is returned.
         """
 
         r = await self.invoke(

@@ -59,7 +59,7 @@ class SendContact:
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
         quote_offset: Optional[int] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send phone contacts.
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -136,7 +136,8 @@ class SendContact:
                 instructions to remove reply keyboard or to force a reply from the user.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent contact message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent contact message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

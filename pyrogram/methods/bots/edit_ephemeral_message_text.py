@@ -33,7 +33,7 @@ class EditEphemeralMessageText:
         entities: Optional[List["types.MessageEntity"]] = None,
         link_preview_options: Optional["types.LinkPreviewOptions"] = None,
         reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Use this method to edit an ephemeral text message.
         Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline.
 
@@ -66,7 +66,8 @@ class EditEphemeralMessageText:
                 An InlineKeyboardMarkup object.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the edited message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

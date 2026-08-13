@@ -45,7 +45,7 @@ class SendInlineBotResult:
         parse_mode: Optional["enums.ParseMode"] = None,
         quote_entities: Optional[List["types.MessageEntity"]] = None,
         quote_offset: Optional[int] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Send an inline bot result.
         Bot results can be retrieved using :meth:`~pyrogram.Client.get_inline_bot_results`
 
@@ -85,7 +85,8 @@ class SendInlineBotResult:
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent message is returned or False if no message was sent.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise,
+            in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python

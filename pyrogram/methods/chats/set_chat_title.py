@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -25,7 +25,7 @@ from pyrogram import raw, types, utils
 class SetChatTitle:
     async def set_chat_title(
         self: "pyrogram.Client", chat_id: Union[int, str], title: str
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Change the title of a chat.
 
         Titles can't be changed for private chats.
@@ -41,7 +41,8 @@ class SetChatTitle:
                 New chat title, 1-255 characters.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the sent service message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the sent service message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Raises:
             ValueError: In case a chat id belongs to user.

@@ -29,7 +29,7 @@ class EditEphemeralMessageReplyMarkup:
         receiver_user_id: Union[int, str],
         ephemeral_message_id: int,
         reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
-    ) -> "types.Message":
+    ) -> Optional["types.Message"]:
         """Use this method to edit only the reply markup of an ephemeral message.
         Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline.
 
@@ -49,7 +49,8 @@ class EditEphemeralMessageReplyMarkup:
                 An InlineKeyboardMarkup object.
 
         Returns:
-            :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
+            :obj:`~pyrogram.types.Message` | ``None``: On success, the edited message is returned,
+            otherwise, in case the server answered with no message, None is returned.
 
         Example:
             .. code-block:: python
