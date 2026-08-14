@@ -92,7 +92,7 @@ class MessageEntity(Object):
         self.date_time_format = date_time_format
 
     @staticmethod
-    async def _parse(client, entity: "raw.base.MessageEntity", users: dict) -> Optional["MessageEntity"]:
+    async def _parse(client, entity: "raw.base.MessageEntity", users: dict) -> "MessageEntity":
         user_id = None
         unix_time = None
         date_time_format = None

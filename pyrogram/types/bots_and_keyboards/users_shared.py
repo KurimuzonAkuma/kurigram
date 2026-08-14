@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -52,7 +52,7 @@ class UsersShared(Object):
             "raw.types.MessageActionRequestedPeerSentMe"
         ],
         users: Dict[int, "raw.base.User"] = {}
-    ) -> Optional["UsersShared"]:
+    ) -> "UsersShared":
         requested_users = types.List()
 
         for peer in action.peers:
