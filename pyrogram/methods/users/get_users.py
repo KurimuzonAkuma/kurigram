@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-from typing import Union, List, Iterable, overload
+from typing import Optional, Union, List, Iterable, overload
 
 import pyrogram
 from pyrogram import raw
@@ -31,7 +31,7 @@ class GetUsers:
     async def get_users(  # type: ignore[overload-overlap]
         self: "pyrogram.Client",
         user_ids: Union[int, str]
-    ) -> "types.User": ...
+    ) -> Optional["types.User"]: ...
 
     @overload
     async def get_users(
@@ -42,7 +42,7 @@ class GetUsers:
     async def get_users(
         self: "pyrogram.Client",
         user_ids: Union[int, str, Iterable[Union[int, str]]]
-    ) -> Union["types.User", List["types.User"]]:
+    ) -> Optional[Union["types.User", List["types.User"]]]:
         """Get information about a user.
         You can retrieve up to 200 users at once.
 
@@ -54,8 +54,10 @@ class GetUsers:
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
         Returns:
-            :obj:`~pyrogram.types.User` | List of :obj:`~pyrogram.types.User`: In case *user_ids* was not a list,
-            a single user is returned, otherwise a list of users is returned.
+            :obj:`~pyrogram.types.User` | List of :obj:`~pyrogram.types.User` | ``None``: In case *user_ids* was not a
+            list, a single user is returned, otherwise a list of users is returned. Telegram answers with an empty
+            list for an identifier that belongs to no user — a channel, a chat, or a peer this account cannot see —
+            in which case None is returned for a single identifier and the missing users are absent from the list.
 
         Example:
             .. code-block:: python
@@ -82,4 +84,4 @@ class GetUsers:
         for i in r:
             users.append(await types.User._parse(self, i))
 
-        return users if is_iterable else users[0]
+        return users if is_iterable else users[0] if users else None
