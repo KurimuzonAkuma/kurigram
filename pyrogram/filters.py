@@ -178,8 +178,34 @@ _WITH_A_SENDER_CHAT = (Message, Story)
 
 _CAN_BE_OUTGOING = (Message, Story)
 
+# Three more shapes, one update type each, that the tuples above cannot express: the
+#  attribute is there, but not under the name the tuples read.
+#
+#  `UpdateUserStatus` is parsed into the `User` whose status changed and nothing else
+#  (`User._parse_user_status`), so that update *is* its own sender; `MessageReactionUpdated`
+#  spells the reacting user `user` and the anonymous one `actor_chat`; `ChatBoostUpdated`
+#  keeps the booster one level down, in `boost.from_user`.
+#
+#  Reading them here rather than renaming the attributes leaves the public API untouched.
+_IS_ITS_OWN_SENDER = (User,)
+
+_WITH_A_SENDER_NAMED_USER = (MessageReactionUpdated,)
+
+_WITH_A_SENDER_CHAT_NAMED_ACTOR_CHAT = (MessageReactionUpdated,)
+
+_WITH_A_BOOSTER = (ChatBoostUpdated,)
+
 
 def _sender_of(update: Update) -> Optional[User]:
+    if isinstance(update, _IS_ITS_OWN_SENDER):
+        return update
+
+    if isinstance(update, _WITH_A_SENDER_NAMED_USER):
+        return update.user
+
+    if isinstance(update, _WITH_A_BOOSTER):
+        return update.boost.from_user if update.boost else None
+
     return update.from_user if isinstance(update, _WITH_A_SENDER) else None
 
 
@@ -188,7 +214,17 @@ def _chat_of(update: Update) -> Optional[Chat]:
 
 
 def _sender_chat_of(update: Update) -> Optional[Chat]:
-    return update.sender_chat if isinstance(update, _WITH_A_SENDER_CHAT) else None
+    if isinstance(update, _WITH_A_SENDER_CHAT):
+        return update.sender_chat
+
+    if isinstance(update, _WITH_A_SENDER_CHAT_NAMED_ACTOR_CHAT):
+        return update.actor_chat
+
+    # A callback query carries no sender chat of its own, but the message the button sits
+    #  under does, by the same route `business`, `linked_channel` and `topic` take below.
+    message = _message_of(update)
+
+    return message.sender_chat if message else None
 
 
 def _is_outgoing(update: Update) -> bool:
