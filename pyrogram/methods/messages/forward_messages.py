@@ -178,6 +178,4 @@ class ForwardMessages:
 
         messages = await utils.parse_messages(client=self, messages=r)
 
-        # NOTE: `parse_messages()` reads `r.updates`, and five of the seven `Updates` constructors
-        #       carry no `updates` vector at all, so a successful answer can parse to nothing.
         return messages if is_iterable else messages[0] if messages else None
