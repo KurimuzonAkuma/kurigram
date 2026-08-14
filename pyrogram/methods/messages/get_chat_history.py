@@ -81,6 +81,8 @@ class GetChatHistory:
         min_id: int = 0,
         max_id: int = 0,
         reverse: bool = False,
+        skip_empty: bool = False,
+        skip_service: bool = False,
     ) -> AsyncIterator["types.Message"]:
         """Get messages from a chat history.
 
@@ -97,6 +99,7 @@ class GetChatHistory:
             limit (``int``, *optional*):
                 Limits the number of messages to be retrieved.
                 By default, no limit is applied and all messages are returned.
+                The messages left out by *skip_empty* or *skip_service* do not count towards it.
 
             offset (``int``, *optional*):
                 Sequential number of the first message to be returned.
@@ -120,6 +123,16 @@ class GetChatHistory:
 
             reverse (``bool``, *optional*):
                 Pass True to retrieve the messages from oldest to newest.
+
+            skip_empty (``bool``, *optional*):
+                Pass True to leave out the messages that came back empty, that is, the ones that
+                were deleted or that this account is not allowed to see.
+                Defaults to False.
+
+            skip_service (``bool``, *optional*):
+                Pass True to leave out service messages, such as a member joining the chat or a
+                message being pinned.
+                Defaults to False.
 
         Returns:
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
@@ -167,6 +180,12 @@ class GetChatHistory:
 
             offset_id = messages[-1].id + (1 if reverse else 0)
             for message in messages:
+                if skip_empty and message.empty:
+                    continue
+
+                if skip_service and message.service:
+                    continue
+
                 yield message
 
                 current += 1
