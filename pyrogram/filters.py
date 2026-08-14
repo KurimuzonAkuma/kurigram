@@ -292,8 +292,8 @@ outgoing = create(outgoing_filter)
 # endregion
 
 # region text_filter
-async def text_filter(_, __, m: Message):
-    return bool(m.text)
+async def text_filter(_, __, message: Message):
+    return bool(message.text)
 
 
 text = create(text_filter)
@@ -303,8 +303,8 @@ text = create(text_filter)
 # endregion
 
 # region reply_filter
-async def reply_filter(_, __, m: Message):
-    return bool(m.reply_to_message_id or m.reply_to_story_id)
+async def reply_filter(_, __, message: Message):
+    return bool(message.reply_to_message_id or message.reply_to_story_id)
 
 
 reply = create(reply_filter)
@@ -314,8 +314,8 @@ reply = create(reply_filter)
 # endregion
 
 # region forwarded_filter
-async def forwarded_filter(_, __, m: Message):
-    return bool(m.forward_origin)
+async def forwarded_filter(_, __, message: Message):
+    return bool(message.forward_origin)
 
 
 forwarded = create(forwarded_filter)
@@ -325,8 +325,8 @@ forwarded = create(forwarded_filter)
 # endregion
 
 # region caption_filter
-async def caption_filter(_, __, m: Message):
-    return bool(m.caption)
+async def caption_filter(_, __, message: Message):
+    return bool(message.caption)
 
 
 caption = create(caption_filter)
@@ -336,8 +336,8 @@ caption = create(caption_filter)
 # endregion
 
 # region self_destruction_filter
-async def self_destruction_filter(_, __, m: Message):
-    self_destructing = (m.photo, m.voice, m.video, m.video_note)
+async def self_destruction_filter(_, __, message: Message):
+    self_destructing = (message.photo, message.voice, message.video, message.video_note)
     return any(media and media.ttl_seconds for media in self_destructing)
 
 
@@ -348,8 +348,8 @@ self_destruction = create(self_destruction_filter)
 # endregion
 
 # region audio_filter
-async def audio_filter(_, __, m: Message):
-    return bool(m.audio)
+async def audio_filter(_, __, message: Message):
+    return bool(message.audio)
 
 
 audio = create(audio_filter)
@@ -359,8 +359,8 @@ audio = create(audio_filter)
 # endregion
 
 # region document_filter
-async def document_filter(_, __, m: Message):
-    return bool(m.document)
+async def document_filter(_, __, message: Message):
+    return bool(message.document)
 
 
 document = create(document_filter)
@@ -370,8 +370,8 @@ document = create(document_filter)
 # endregion
 
 # region photo_filter
-async def photo_filter(_, __, m: Message):
-    return bool(m.photo)
+async def photo_filter(_, __, message: Message):
+    return bool(message.photo)
 
 
 photo = create(photo_filter)
@@ -381,8 +381,8 @@ photo = create(photo_filter)
 # endregion
 
 # region sticker_filter
-async def sticker_filter(_, __, m: Message):
-    return bool(m.sticker)
+async def sticker_filter(_, __, message: Message):
+    return bool(message.sticker)
 
 
 sticker = create(sticker_filter)
@@ -392,8 +392,8 @@ sticker = create(sticker_filter)
 # endregion
 
 # region animation_filter
-async def animation_filter(_, __, m: Message):
-    return bool(m.animation)
+async def animation_filter(_, __, message: Message):
+    return bool(message.animation)
 
 
 animation = create(animation_filter)
@@ -403,8 +403,8 @@ animation = create(animation_filter)
 # endregion
 
 # region game_filter
-async def game_filter(_, __, m: Message):
-    return bool(m.game)
+async def game_filter(_, __, message: Message):
+    return bool(message.game)
 
 
 game = create(game_filter)
@@ -414,8 +414,8 @@ game = create(game_filter)
 # endregion
 
 # region giveaway_filter
-async def giveaway_filter(_, __, m: Message):
-    return bool(m.giveaway)
+async def giveaway_filter(_, __, message: Message):
+    return bool(message.giveaway)
 
 
 giveaway = create(giveaway_filter)
@@ -425,8 +425,8 @@ giveaway = create(giveaway_filter)
 # endregion
 
 # region giveaway_winners_filter
-async def giveaway_winners_filter(_, __, m: Message):
-    return bool(m.giveaway_winners)
+async def giveaway_winners_filter(_, __, message: Message):
+    return bool(message.giveaway_winners)
 
 
 giveaway_winners = create(giveaway_winners_filter)
@@ -436,8 +436,8 @@ giveaway_winners = create(giveaway_winners_filter)
 # endregion
 
 # region gift_code_filter
-async def gift_code_filter(_, __, m: Message):
-    return bool(m.premium_gift_code)
+async def gift_code_filter(_, __, message: Message):
+    return bool(message.premium_gift_code)
 
 
 gift_code = create(gift_code_filter)
@@ -447,8 +447,8 @@ gift_code = create(gift_code_filter)
 # endregion
 
 # region gift_filter
-async def gift_filter(_, __, m: Message):
-    return bool(m.gift)
+async def gift_filter(_, __, message: Message):
+    return bool(message.gift)
 
 
 gift = create(gift_filter)
@@ -458,8 +458,8 @@ gift = create(gift_filter)
 # endregion
 
 # region users_shared_filter
-async def users_shared_filter(_, __, m: Message):
-    return bool(m.users_shared)
+async def users_shared_filter(_, __, message: Message):
+    return bool(message.users_shared)
 
 
 users_shared = create(users_shared_filter)
@@ -469,8 +469,8 @@ users_shared = create(users_shared_filter)
 # endregion
 
 # region chat_shared_filter
-async def chat_shared_filter(_, __, m: Message):
-    return bool(m.chat_shared)
+async def chat_shared_filter(_, __, message: Message):
+    return bool(message.chat_shared)
 
 
 chat_shared = create(chat_shared_filter)
@@ -480,8 +480,8 @@ chat_shared = create(chat_shared_filter)
 # endregion
 
 # region video_filter
-async def video_filter(_, __, m: Message):
-    return bool(m.video)
+async def video_filter(_, __, message: Message):
+    return bool(message.video)
 
 
 video = create(video_filter)
@@ -491,8 +491,8 @@ video = create(video_filter)
 # endregion
 
 # region media_group_filter
-async def media_group_filter(_, __, m: Message):
-    return bool(m.media_group_id)
+async def media_group_filter(_, __, message: Message):
+    return bool(message.media_group_id)
 
 
 media_group = create(media_group_filter)
@@ -502,8 +502,8 @@ media_group = create(media_group_filter)
 # endregion
 
 # region voice_filter
-async def voice_filter(_, __, m: Message):
-    return bool(m.voice)
+async def voice_filter(_, __, message: Message):
+    return bool(message.voice)
 
 
 voice = create(voice_filter)
@@ -513,8 +513,8 @@ voice = create(voice_filter)
 # endregion
 
 # region video_note_filter
-async def video_note_filter(_, __, m: Message):
-    return bool(m.video_note)
+async def video_note_filter(_, __, message: Message):
+    return bool(message.video_note)
 
 
 video_note = create(video_note_filter)
@@ -524,8 +524,8 @@ video_note = create(video_note_filter)
 # endregion
 
 # region contact_filter
-async def contact_filter(_, __, m: Message):
-    return bool(m.contact)
+async def contact_filter(_, __, message: Message):
+    return bool(message.contact)
 
 
 contact = create(contact_filter)
@@ -535,8 +535,8 @@ contact = create(contact_filter)
 # endregion
 
 # region location_filter
-async def location_filter(_, __, m: Message):
-    return bool(m.location and not m.location.live_period)
+async def location_filter(_, __, message: Message):
+    return bool(message.location and not message.location.live_period)
 
 
 location = create(location_filter)
@@ -546,8 +546,8 @@ location = create(location_filter)
 # endregion
 
 # region live_location_filter
-async def live_location_filter(_, __, m: Message):
-    return bool(m.location and m.location.live_period)
+async def live_location_filter(_, __, message: Message):
+    return bool(message.location and message.location.live_period)
 
 
 live_location = create(live_location_filter)
@@ -557,8 +557,8 @@ live_location = create(live_location_filter)
 # endregion
 
 # region venue_filter
-async def venue_filter(_, __, m: Message):
-    return bool(m.venue)
+async def venue_filter(_, __, message: Message):
+    return bool(message.venue)
 
 
 venue = create(venue_filter)
@@ -568,8 +568,8 @@ venue = create(venue_filter)
 # endregion
 
 # region web_page_filter
-async def web_page_filter(_, __, m: Message):
-    return bool(m.web_page)
+async def web_page_filter(_, __, message: Message):
+    return bool(message.web_page)
 
 
 web_page = create(web_page_filter)
@@ -579,8 +579,8 @@ web_page = create(web_page_filter)
 # endregion
 
 # region poll_filter
-async def poll_filter(_, __, m: Message):
-    return bool(m.poll)
+async def poll_filter(_, __, message: Message):
+    return bool(message.poll)
 
 
 poll = create(poll_filter)
@@ -590,8 +590,8 @@ poll = create(poll_filter)
 # endregion
 
 # region dice_filter
-async def dice_filter(_, __, m: Message):
-    return bool(m.dice)
+async def dice_filter(_, __, message: Message):
+    return bool(message.dice)
 
 
 dice = create(dice_filter)
@@ -601,8 +601,8 @@ dice = create(dice_filter)
 # endregion
 
 # region quote_filter
-async def quote_filter(_, __, m: Message):
-    return bool(m.quote)
+async def quote_filter(_, __, message: Message):
+    return bool(message.quote)
 
 
 quote = create(quote_filter)
@@ -612,8 +612,8 @@ quote = create(quote_filter)
 # endregion
 
 # region media_spoiler
-async def media_spoiler_filter(_, __, m: Message):
-    return bool(m.has_media_spoiler)
+async def media_spoiler_filter(_, __, message: Message):
+    return bool(message.has_media_spoiler)
 
 
 media_spoiler = create(media_spoiler_filter)
@@ -686,8 +686,8 @@ forum = create(forum_filter)
 # endregion
 
 # region story_filter
-async def story_filter(_, __, m: Message):
-    return bool(m.story)
+async def story_filter(_, __, message: Message):
+    return bool(message.story)
 
 
 story = create(story_filter)
@@ -697,8 +697,8 @@ story = create(story_filter)
 # endregion
 
 # region new_chat_members_filter
-async def new_chat_members_filter(_, __, m: Message):
-    return bool(m.new_chat_members)
+async def new_chat_members_filter(_, __, message: Message):
+    return bool(message.new_chat_members)
 
 
 new_chat_members = create(new_chat_members_filter)
@@ -708,8 +708,8 @@ new_chat_members = create(new_chat_members_filter)
 # endregion
 
 # region left_chat_member_filter
-async def left_chat_member_filter(_, __, m: Message):
-    return bool(m.left_chat_member)
+async def left_chat_member_filter(_, __, message: Message):
+    return bool(message.left_chat_member)
 
 
 left_chat_member = create(left_chat_member_filter)
@@ -719,8 +719,8 @@ left_chat_member = create(left_chat_member_filter)
 # endregion
 
 # region new_chat_title_filter
-async def new_chat_title_filter(_, __, m: Message):
-    return bool(m.new_chat_title)
+async def new_chat_title_filter(_, __, message: Message):
+    return bool(message.new_chat_title)
 
 
 new_chat_title = create(new_chat_title_filter)
@@ -730,8 +730,8 @@ new_chat_title = create(new_chat_title_filter)
 # endregion
 
 # region new_chat_photo_filter
-async def new_chat_photo_filter(_, __, m: Message):
-    return bool(m.new_chat_photo)
+async def new_chat_photo_filter(_, __, message: Message):
+    return bool(message.new_chat_photo)
 
 
 new_chat_photo = create(new_chat_photo_filter)
@@ -741,8 +741,8 @@ new_chat_photo = create(new_chat_photo_filter)
 # endregion
 
 # region delete_chat_photo_filter
-async def delete_chat_photo_filter(_, __, m: Message):
-    return bool(m.delete_chat_photo)
+async def delete_chat_photo_filter(_, __, message: Message):
+    return bool(message.delete_chat_photo)
 
 
 delete_chat_photo = create(delete_chat_photo_filter)
@@ -752,8 +752,8 @@ delete_chat_photo = create(delete_chat_photo_filter)
 # endregion
 
 # region group_chat_created_filter
-async def group_chat_created_filter(_, __, m: Message):
-    return bool(m.group_chat_created)
+async def group_chat_created_filter(_, __, message: Message):
+    return bool(message.group_chat_created)
 
 
 group_chat_created = create(group_chat_created_filter)
@@ -763,8 +763,8 @@ group_chat_created = create(group_chat_created_filter)
 # endregion
 
 # region supergroup_chat_created_filter
-async def supergroup_chat_created_filter(_, __, m: Message):
-    return bool(m.supergroup_chat_created)
+async def supergroup_chat_created_filter(_, __, message: Message):
+    return bool(message.supergroup_chat_created)
 
 
 supergroup_chat_created = create(supergroup_chat_created_filter)
@@ -774,8 +774,8 @@ supergroup_chat_created = create(supergroup_chat_created_filter)
 # endregion
 
 # region channel_chat_created_filter
-async def channel_chat_created_filter(_, __, m: Message):
-    return bool(m.channel_chat_created)
+async def channel_chat_created_filter(_, __, message: Message):
+    return bool(message.channel_chat_created)
 
 
 channel_chat_created = create(channel_chat_created_filter)
@@ -785,8 +785,8 @@ channel_chat_created = create(channel_chat_created_filter)
 # endregion
 
 # region migrate_to_chat_id_filter
-async def migrate_to_chat_id_filter(_, __, m: Message):
-    return bool(m.migrate_to_chat_id)
+async def migrate_to_chat_id_filter(_, __, message: Message):
+    return bool(message.migrate_to_chat_id)
 
 
 migrate_to_chat_id = create(migrate_to_chat_id_filter)
@@ -796,8 +796,8 @@ migrate_to_chat_id = create(migrate_to_chat_id_filter)
 # endregion
 
 # region migrate_from_chat_id_filter
-async def migrate_from_chat_id_filter(_, __, m: Message):
-    return bool(m.migrate_from_chat_id)
+async def migrate_from_chat_id_filter(_, __, message: Message):
+    return bool(message.migrate_from_chat_id)
 
 
 migrate_from_chat_id = create(migrate_from_chat_id_filter)
@@ -807,8 +807,8 @@ migrate_from_chat_id = create(migrate_from_chat_id_filter)
 # endregion
 
 # region pinned_message_filter
-async def pinned_message_filter(_, __, m: Message):
-    return bool(m.pinned_message)
+async def pinned_message_filter(_, __, message: Message):
+    return bool(message.pinned_message)
 
 
 pinned_message = create(pinned_message_filter)
@@ -818,8 +818,8 @@ pinned_message = create(pinned_message_filter)
 # endregion
 
 # region game_high_score_filter
-async def game_high_score_filter(_, __, m: Message):
-    return bool(m.game_high_score)
+async def game_high_score_filter(_, __, message: Message):
+    return bool(message.game_high_score)
 
 
 game_high_score = create(game_high_score_filter)
@@ -829,8 +829,8 @@ game_high_score = create(game_high_score_filter)
 # endregion
 
 # region reply_keyboard_filter
-async def reply_keyboard_filter(_, __, m: Message):
-    return isinstance(m.reply_markup, ReplyKeyboardMarkup)
+async def reply_keyboard_filter(_, __, message: Message):
+    return isinstance(message.reply_markup, ReplyKeyboardMarkup)
 
 
 reply_keyboard = create(reply_keyboard_filter)
@@ -840,8 +840,8 @@ reply_keyboard = create(reply_keyboard_filter)
 # endregion
 
 # region inline_keyboard_filter
-async def inline_keyboard_filter(_, __, m: Message):
-    return isinstance(m.reply_markup, InlineKeyboardMarkup)
+async def inline_keyboard_filter(_, __, message: Message):
+    return isinstance(message.reply_markup, InlineKeyboardMarkup)
 
 
 inline_keyboard = create(inline_keyboard_filter)
@@ -851,8 +851,8 @@ inline_keyboard = create(inline_keyboard_filter)
 # endregion
 
 # region mentioned_filter
-async def mentioned_filter(_, __, m: Message):
-    return bool(m.mentioned)
+async def mentioned_filter(_, __, message: Message):
+    return bool(message.mentioned)
 
 
 mentioned = create(mentioned_filter)
@@ -862,8 +862,8 @@ mentioned = create(mentioned_filter)
 # endregion
 
 # region via_bot_filter
-async def via_bot_filter(_, __, m: Message):
-    return bool(m.via_bot)
+async def via_bot_filter(_, __, message: Message):
+    return bool(message.via_bot)
 
 
 via_bot = create(via_bot_filter)
@@ -885,8 +885,8 @@ admin = create(admin_filter)
 # endregion
 
 # region video_chat_started_filter
-async def video_chat_started_filter(_, __, m: Message):
-    return bool(m.video_chat_started)
+async def video_chat_started_filter(_, __, message: Message):
+    return bool(message.video_chat_started)
 
 
 video_chat_started = create(video_chat_started_filter)
@@ -896,8 +896,8 @@ video_chat_started = create(video_chat_started_filter)
 # endregion
 
 # region video_chat_ended_filter
-async def video_chat_ended_filter(_, __, m: Message):
-    return bool(m.video_chat_ended)
+async def video_chat_ended_filter(_, __, message: Message):
+    return bool(message.video_chat_ended)
 
 
 video_chat_ended = create(video_chat_ended_filter)
@@ -907,8 +907,8 @@ video_chat_ended = create(video_chat_ended_filter)
 # endregion
 
 # region business
-async def business_filter(_, __, m: Message):
-    return bool(m.business_connection_id)
+async def business_filter(_, __, message: Message):
+    return bool(message.business_connection_id)
 
 
 business = create(business_filter)
@@ -918,8 +918,8 @@ business = create(business_filter)
 # endregion
 
 # region video_chat_members_invited_filter
-async def video_chat_members_invited_filter(_, __, m: Message):
-    return bool(m.video_chat_members_invited)
+async def video_chat_members_invited_filter(_, __, message: Message):
+    return bool(message.video_chat_members_invited)
 
 
 video_chat_members_invited = create(video_chat_members_invited_filter)
@@ -929,8 +929,8 @@ video_chat_members_invited = create(video_chat_members_invited_filter)
 # endregion
 
 # region successful_payment_filter
-async def successful_payment_filter(_, __, m: Message):
-    return bool(m.successful_payment)
+async def successful_payment_filter(_, __, message: Message):
+    return bool(message.successful_payment)
 
 
 successful_payment = create(successful_payment_filter)
@@ -940,8 +940,8 @@ successful_payment = create(successful_payment_filter)
 # endregion
 
 # region service_filter
-async def service_filter(_, __, m: Message):
-    return bool(m.service)
+async def service_filter(_, __, message: Message):
+    return bool(message.service)
 
 
 service = create(service_filter)
@@ -957,8 +957,8 @@ A service message contains any of the following fields set: *left_chat_member*,
 # endregion
 
 # region media_filter
-async def media_filter(_, __, m: Message):
-    return bool(m.media)
+async def media_filter(_, __, message: Message):
+    return bool(message.media)
 
 
 media = create(media_filter)
@@ -972,8 +972,8 @@ A media message contains any of the following fields set: *audio*, *document*, *
 # endregion
 
 # region scheduled_filter
-async def scheduled_filter(_, __, m: Message):
-    return bool(m.scheduled)
+async def scheduled_filter(_, __, message: Message):
+    return bool(message.scheduled)
 
 
 scheduled = create(scheduled_filter)
@@ -983,8 +983,8 @@ scheduled = create(scheduled_filter)
 # endregion
 
 # region from_scheduled_filter
-async def from_scheduled_filter(_, __, m: Message):
-    return bool(m.from_scheduled)
+async def from_scheduled_filter(_, __, message: Message):
+    return bool(message.from_scheduled)
 
 
 from_scheduled = create(from_scheduled_filter)
@@ -994,8 +994,8 @@ from_scheduled = create(from_scheduled_filter)
 # endregion
 
 # region paid_message_filter
-async def paid_message_filter(_, __, m: Message):
-    return bool(m.send_paid_messages_stars)
+async def paid_message_filter(_, __, message: Message):
+    return bool(message.send_paid_messages_stars)
 
 
 paid_message = create(paid_message_filter)
@@ -1005,11 +1005,11 @@ paid_message = create(paid_message_filter)
 # endregion
 
 # region linked_channel_filter
-async def linked_channel_filter(_, __, m: Message):
+async def linked_channel_filter(_, __, message: Message):
     return bool(
-        m.forward_origin and
-        m.forward_origin.type == enums.MessageOriginType.CHANNEL and
-        m.forward_origin.chat == m.sender_chat
+        message.forward_origin and
+        message.forward_origin.type == enums.MessageOriginType.CHANNEL and
+        message.forward_origin.chat == message.sender_chat
     )
 
 
@@ -1020,9 +1020,9 @@ linked_channel = create(linked_channel_filter)
 # endregion
 
 # region gift_offer_filter
-async def gift_offer_filter(_, __, m: Message):
+async def gift_offer_filter(_, __, message: Message):
     return bool(
-        m.upgraded_gift_purchase_offer and m.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.PENDING
+        message.upgraded_gift_purchase_offer and message.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.PENDING
     )
 
 
@@ -1033,9 +1033,9 @@ gift_offer = create(gift_offer_filter)
 # endregion
 
 # region gift_offer_accepted_filter
-async def gift_offer_accepted_filter(_, __, m: Message):
+async def gift_offer_accepted_filter(_, __, message: Message):
     return bool(
-        m.upgraded_gift_purchase_offer and m.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.ACCEPTED
+        message.upgraded_gift_purchase_offer and message.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.ACCEPTED
     )
 
 
@@ -1046,10 +1046,10 @@ gift_offer_accepted = create(gift_offer_accepted_filter)
 # endregion
 
 # region gift_offer_rejected_filter
-async def gift_offer_rejected_filter(_, __, m: Message):
+async def gift_offer_rejected_filter(_, __, message: Message):
     return bool(
-        (m.upgraded_gift_purchase_offer and m.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.REJECTED)
-        or m.upgraded_gift_purchase_offer_rejected
+        (message.upgraded_gift_purchase_offer and message.upgraded_gift_purchase_offer.state == enums.GiftPurchaseOfferState.REJECTED)
+        or message.upgraded_gift_purchase_offer_rejected
     )
 
 
@@ -1060,7 +1060,7 @@ gift_offer_rejected = create(gift_offer_rejected_filter)
 # endregion
 
 # region ephemeral_filter
-ephemeral = create(lambda _, __, m: m.ephemeral_message_id is not None)
+ephemeral = create(lambda _, __, message: message.ephemeral_message_id is not None)
 """Filter ephemeral messages."""
 
 
@@ -1115,8 +1115,8 @@ def command(commands: Union[str, List[str]], prefixes: Optional[Union[str, List[
 
                 # Remove the escape character from the arguments
                 message.command = [cmd] + [
-                    re.sub(r"\\([\"'])", r"\1", m.group(2) or m.group(3) or "")
-                    for m in command_re.finditer(without_command)
+                    re.sub(r"\\([\"'])", r"\1", match.group(2) or match.group(3) or "")
+                    for match in command_re.finditer(without_command)
                 ]
 
                 return True
