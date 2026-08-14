@@ -176,6 +176,21 @@ async def test_chat_me_is_saved_messages_and_nothing_else():
     assert not await filters.chat("me")(CLIENT, in_a_supergroup)
 
 
+@pytest.mark.asyncio
+async def test_me_added_to_the_container_after_the_fact_still_matches():
+    """The container is public, so an alias can enter it without `__init__` seeing it."""
+    in_saved_messages = Message(id=1, chat=SAVED_MESSAGES, from_user=MYSELF)
+
+    users = filters.user()
+    users.add("self")
+
+    chats = filters.chat()
+    chats.add("self")
+
+    assert await users(CLIENT, in_saved_messages)
+    assert await chats(CLIENT, in_saved_messages)
+
+
 UPDATE_TYPES = [
     one for one in vars(types).values()
     if inspect.isclass(one) and issubclass(one, Update) and one is not Update
