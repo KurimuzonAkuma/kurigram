@@ -91,9 +91,5 @@ class GetForumTopicsByID:
         for i in r.topics:
             topics.append(types.ForumTopic._parse(self, i, users=users, chats=chats))
 
-        # NOTE: One entry per requested id, never fewer: an id that does not exist comes back as
-        #       `forumTopicDeleted`, and one below 1 is refused with `TOPICS_EMPTY`:
-        #
-        #       GetForumTopicsByID(peer=peer, topics=[999999])
-        #       # -> messages.ForumTopics(topics=[raw.types.ForumTopicDeleted(id=999999)], ...)
+        # A topic that does not exist comes back as `forumTopicDeleted`, never as a missing entry.
         return topics if is_iterable else topics[0]
