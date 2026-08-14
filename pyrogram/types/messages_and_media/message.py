@@ -8651,7 +8651,7 @@ class Message(Object, Update):
             paid_message_star_count=paid_message_star_count,
         )
 
-    async def delete(self, revoke: bool = True):
+    async def delete(self, revoke: bool = True) -> bool:
         """Shortcut for method :obj:`~pyrogram.Client.delete_messages` and :obj:`~pyrogram.Client.delete_ephemeral_message` will automatically fill method attributes:
 
         * chat_id
@@ -8694,7 +8694,7 @@ class Message(Object, Update):
         quote: Optional[bool] = None,
         timeout: int = 10,
         password: Optional[str] = None
-    ):
+    ) -> Optional[Union[str, "types.Chat", "raw.base.messages.BotCallbackAnswer"]]:
         """Bound method *click* of :obj:`~pyrogram.types.Message`.
 
         Use as a shortcut for clicking a button attached to the message instead of:
@@ -8756,7 +8756,8 @@ class Message(Object, Update):
 
         Returns:
             -   The result of :meth:`~pyrogram.Client.request_callback_answer` in case of inline callback button clicks.
-            -   The result of :meth:`~Message.reply()` or :meth:`~Message.answer()` in case of normal button clicks.
+            -   ``None`` in case of normal button clicks: the label is sent with :meth:`~Message.reply()` or
+                :meth:`~Message.answer()`, whose result is not passed on.
             -   A string in case the inline button is a URL, a *switch_inline_query*,
                 *switch_inline_query_current_chat* or a *copy_text* button.
             -   A string URL with the user details, in case of a WebApp button.

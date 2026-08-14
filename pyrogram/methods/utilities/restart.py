@@ -24,7 +24,7 @@ class Restart:
         self: "pyrogram.Client",
         block: bool = True,
         clear_handlers: bool = False
-    ):
+    ) -> "pyrogram.Client":
         """Restart the Client.
 
         This method will first call :meth:`~pyrogram.Client.stop` and then :meth:`~pyrogram.Client.start` in a row in

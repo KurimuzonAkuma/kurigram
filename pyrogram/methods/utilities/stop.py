@@ -24,7 +24,7 @@ class Stop:
         self: "pyrogram.Client",
         block: bool = True,
         clear_handlers: bool = True
-    ):
+    ) -> "pyrogram.Client":
         """Stop the Client.
 
         This method disconnects the client from Telegram and stops the underlying tasks.

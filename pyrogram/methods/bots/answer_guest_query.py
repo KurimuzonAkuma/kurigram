@@ -23,7 +23,7 @@ from pyrogram import raw, types
 class AnswerGuestQuery:
     async def answer_guest_query(
         self: "pyrogram.Client", guest_query_id: str, result: "types.InlineQueryResult"
-    ):
+    ) -> "types.SentGuestMessage":
         """Use this method to reply to a received guest message.
 
         .. include:: /_includes/usable-by/bots.rst

@@ -390,7 +390,7 @@ class Folder(Object):
             excluded_chats=[i.id for i in self.excluded_chats or []] + [chat_id],
         )
 
-    async def pin_chat(self, chat_id: Union[int, str]):
+    async def pin_chat(self, chat_id: Union[int, str]) -> bool:
         """Bound method *pin_chat* of :obj:`~pyrogram.types.Folder`.
 
         Use as a shortcut for:
@@ -422,7 +422,7 @@ class Folder(Object):
             pinned_chats=[i.id for i in self.pinned_chats or []] + [chat_id]
         )
 
-    async def remove_chat(self, chat_id: Union[int, str]):
+    async def remove_chat(self, chat_id: Union[int, str]) -> bool:
         """Bound method *remove_chat* of :obj:`~pyrogram.types.Folder`.
 
         Remove chat in folder from included/excluded/pinned chats.
@@ -451,7 +451,7 @@ class Folder(Object):
         )
 
 
-    async def update_color(self, color: "enums.FolderColor"):
+    async def update_color(self, color: "enums.FolderColor") -> bool:
         """Bound method *update_color* of :obj:`~pyrogram.types.Folder`.
 
         Use as a shortcut for:

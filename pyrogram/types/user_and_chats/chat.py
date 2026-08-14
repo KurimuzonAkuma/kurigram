@@ -1481,7 +1481,7 @@ class Chat(Object):
     def full_name(self) -> Optional[str]:
         return " ".join(filter(None, [self.first_name, self.last_name])) or self.title or None
 
-    async def archive(self):
+    async def archive(self) -> bool:
         """Bound method *archive* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1503,7 +1503,7 @@ class Chat(Object):
         """
         return await self._client.archive_chats(self.id)
 
-    async def unarchive(self):
+    async def unarchive(self) -> bool:
         """Bound method *unarchive* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1840,7 +1840,7 @@ class Chat(Object):
             chat_id=self.id, user_id=user_id, privileges=privileges
         )
 
-    async def join(self):
+    async def join(self) -> "types.ChatJoinResult":
         """Bound method *join* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1859,7 +1859,7 @@ class Chat(Object):
             This only works for public groups, channels that have set a username or linked chats.
 
         Returns:
-            :obj:`~pyrogram.types.Chat`: On success, a chat object is returned.
+            :obj:`~pyrogram.types.ChatJoinResult`: On success, the outcome of the join is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1885,7 +1885,7 @@ class Chat(Object):
         """
         return await self._client.leave_chat(self.id)
 
-    async def export_invite_link(self):
+    async def export_invite_link(self) -> "types.ChatInviteLink":
         """Bound method *export_invite_link* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1900,7 +1900,7 @@ class Chat(Object):
                 chat.export_invite_link()
 
         Returns:
-            ``str``: On success, the exported invite link is returned.
+            :obj:`~pyrogram.types.ChatInviteLink`: On success, the exported invite link is returned.
 
         Raises:
             ValueError: In case the chat_id belongs to a user.

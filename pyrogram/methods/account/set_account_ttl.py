@@ -24,7 +24,7 @@ class SetAccountTTL:
     async def set_account_ttl(
         self: "pyrogram.Client",
         days: int
-    ):
+    ) -> bool:
         """Set days to live of account.
 
         .. note::

@@ -30,7 +30,7 @@ class AnswerCallbackQuery:
         show_alert: Optional[bool] = None,
         url: Optional[str] = None,
         cache_time: int = 0
-    ):
+    ) -> bool:
         """Send answers to callback queries sent from inline keyboards.
         The answer will be displayed to the user as a notification at the top of the chat screen or as an alert.
 

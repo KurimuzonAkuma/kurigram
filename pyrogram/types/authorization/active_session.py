@@ -156,7 +156,7 @@ class ActiveSession(Object):
             is_official_application=getattr(session, "official_app", None)
         )
 
-    async def reset(self):
+    async def reset(self) -> bool:
         """Bound method *reset* of :obj:`~pyrogram.types.ActiveSession`.
 
         Use as a shortcut for:

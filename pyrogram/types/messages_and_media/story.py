@@ -1789,7 +1789,7 @@ class Story(Object, Update):
             disallowed_users=disallowed_users
         )
 
-    async def delete(self):
+    async def delete(self) -> List[int]:
         """Bound method *delete* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -1806,7 +1806,7 @@ class Story(Object, Update):
                 await story.delete()
 
         Returns:
-            True on success, False otherwise.
+            List of ``int``: On success, the list of deleted story identifiers is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.

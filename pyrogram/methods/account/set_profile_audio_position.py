@@ -26,7 +26,7 @@ from pyrogram.file_id import FileType
 class SetProfileAudioPosition:
     async def set_profile_audio_position(
         self: "pyrogram.Client", file_id: str, after_file_id: Optional[str] = None
-    ):
+    ) -> bool:
         """Changes position of an audio file in the profile audio files of the current user.
 
         .. include:: /_includes/usable-by/users.rst

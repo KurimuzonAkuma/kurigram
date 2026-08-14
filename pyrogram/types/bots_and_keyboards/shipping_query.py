@@ -83,7 +83,7 @@ class ShippingQuery(Object, Update):
         ok: bool,
         shipping_options: Optional["types.ShippingOptions"] = None,
         error_message: Optional[str] = None
-    ):
+    ) -> bool:
         """Bound method *answer* of :obj:`~pyrogram.types.ShippingQuery`.
 
         Use this method as a shortcut for:
