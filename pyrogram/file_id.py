@@ -19,9 +19,10 @@
 import base64
 import logging
 import struct
+from dataclasses import dataclass, replace
 from enum import IntEnum
 from io import BytesIO
-from typing import List, Optional
+from typing import Final, List, Optional
 
 from pyrogram.raw.core import Bytes, String
 
@@ -133,12 +134,34 @@ class FileType(IntEnum):
 
 
 class ThumbnailSource(IntEnum):
-    """Known thumbnail sources"""
+    """Known thumbnail sources.
+
+    TDLib mints the file ids, so its ``PhotoSizeSource`` is the authority on the values:
+    https://github.com/tdlib/td/blob/master/td/telegram/PhotoSizeSource.h
+    """
     LEGACY = 0
     THUMBNAIL = 1
     CHAT_PHOTO_SMALL = 2  # DialogPhotoSmall
     CHAT_PHOTO_BIG = 3  # DialogPhotoBig
     STICKER_SET_THUMBNAIL = 4
+    FULL_LEGACY = 5
+    CHAT_PHOTO_SMALL_LEGACY = 6  # DialogPhotoSmallLegacy
+    CHAT_PHOTO_BIG_LEGACY = 7  # DialogPhotoBigLegacy
+    STICKER_SET_THUMBNAIL_LEGACY = 8
+    STICKER_SET_THUMBNAIL_VERSION = 9
+
+
+# NOTE: TDLib's `Version::RemovePhotoVolumeAndLocalId` — the minor version from which photo file ids
+#       carry neither `volume_id` nor `local_id`, the sources that still need them having become
+#       values 5 to 9 above. Reading a current file id against the older layout takes the source tag
+#       for `volume_id` and part of the tail for the source:
+#
+#         FileId.decode("AgACAgIAAxkBAAIENGfeY4AfRquwTL2LpDrzqvFMVNt_AAIG9DEbXX3wSq3o"
+#                       "I7t_PqQGAQADAgADbQADNgQ")
+#         # -> ValueError: Unknown thumbnail_source 109 of file_id AgACAgI...
+#
+#       https://github.com/tdlib/td/blob/master/td/telegram/files/FileLocation.hpp
+NO_VOLUME_AND_LOCAL_ID_MINOR: Final[int] = 32
 
 
 # Photo-like file ids are longer and contain extra info, the rest are all documents
@@ -150,6 +173,138 @@ DOCUMENT_TYPES = set(FileType) - PHOTO_TYPES
 # encode extra information about web url and file reference existence as flag inside the 4 bytes allocated for the field
 WEB_LOCATION_FLAG = 1 << 24
 FILE_REFERENCE_FLAG = 1 << 25
+
+
+@dataclass(frozen=True)
+class PhotoTail:
+    """What a photo file id carries after its source tag, one field per `FileId` argument.
+
+    Which of them are filled is decided by the source; the rest keep the default `FileId` gives them.
+    """
+    volume_id: Optional[int] = None
+    local_id: Optional[int] = None
+    secret: Optional[int] = None
+    thumbnail_file_type: Optional[int] = None
+    thumbnail_size: str = ""
+    chat_id: Optional[int] = None
+    chat_access_hash: Optional[int] = None
+    sticker_set_id: Optional[int] = None
+    sticker_set_access_hash: Optional[int] = None
+    sticker_set_version: Optional[int] = None
+
+
+def read_photo_tail(buffer: BytesIO, *, thumbnail_source: ThumbnailSource) -> PhotoTail:
+    """Each layout is the matching `store()` in TDLib's `PhotoSizeSource.hpp` read backwards.
+
+    https://github.com/tdlib/td/blob/master/td/telegram/PhotoSizeSource.hpp
+    """
+    if thumbnail_source == ThumbnailSource.LEGACY:
+        secret, = struct.unpack("<q", buffer.read(8))
+
+        return PhotoTail(secret=secret)
+
+    # NOTE: `thumbnail_size` is the `type` of the `PhotoSize` the file id points at — one letter,
+    #       whose character code the file id stores as an int32 while
+    #       `inputPhotoFileLocation.thumb_size` takes a `string`. It is a `str` from here on:
+    #       `chr()` in, `ord()` back out in `write_photo_tail()`, `get_file()` passes it through.
+    #
+    #       What the letters mean: https://core.telegram.org/api/files#image-thumbnail-types, and
+    #       the same table with the order Telegram Desktop picks them in:
+    #       https://github.com/telegramdesktop/tdesktop/blob/8e18cb71103d83d7d98994ff27f0a2bca55c489c/Telegram/SourceFiles/data/data_session.cpp#L102-L114
+    if thumbnail_source == ThumbnailSource.THUMBNAIL:
+        thumbnail_file_type, thumbnail_size = struct.unpack("<ii", buffer.read(8))
+
+        return PhotoTail(thumbnail_file_type=thumbnail_file_type, thumbnail_size=chr(thumbnail_size))
+
+    if thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL, ThumbnailSource.CHAT_PHOTO_BIG):
+        chat_id, chat_access_hash = struct.unpack("<qq", buffer.read(16))
+
+        return PhotoTail(chat_id=chat_id, chat_access_hash=chat_access_hash)
+
+    if thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL:
+        sticker_set_id, sticker_set_access_hash = struct.unpack("<qq", buffer.read(16))
+
+        return PhotoTail(sticker_set_id=sticker_set_id, sticker_set_access_hash=sticker_set_access_hash)
+
+    # NOTE: `secret` sits between the other two, where `inputPhotoLegacyFileLocation` lists them as
+    #       `volume_id local_id secret`. The file id follows `FullLegacy::store`, not the schema.
+    if thumbnail_source == ThumbnailSource.FULL_LEGACY:
+        volume_id, secret, local_id = struct.unpack("<qqi", buffer.read(20))
+
+        return PhotoTail(volume_id=volume_id, secret=secret, local_id=local_id)
+
+    if thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL_LEGACY, ThumbnailSource.CHAT_PHOTO_BIG_LEGACY):
+        chat_id, chat_access_hash, volume_id, local_id = struct.unpack("<qqqi", buffer.read(28))
+
+        return PhotoTail(
+            chat_id=chat_id,
+            chat_access_hash=chat_access_hash,
+            volume_id=volume_id,
+            local_id=local_id
+        )
+
+    if thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL_LEGACY:
+        sticker_set_id, sticker_set_access_hash, volume_id, local_id = struct.unpack("<qqqi", buffer.read(28))
+
+        return PhotoTail(
+            sticker_set_id=sticker_set_id,
+            sticker_set_access_hash=sticker_set_access_hash,
+            volume_id=volume_id,
+            local_id=local_id
+        )
+
+    if thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL_VERSION:
+        sticker_set_id, sticker_set_access_hash, sticker_set_version = struct.unpack("<qqi", buffer.read(20))
+
+        return PhotoTail(
+            sticker_set_id=sticker_set_id,
+            sticker_set_access_hash=sticker_set_access_hash,
+            sticker_set_version=sticker_set_version
+        )
+
+    msg = f"No layout for thumbnail_source: {thumbnail_source!r}"
+    raise ValueError(msg)
+
+
+def write_photo_tail(file_id: "FileId") -> bytes:
+    """The counterpart of `read_photo_tail()` — same layout per source, same order."""
+    if file_id.thumbnail_source == ThumbnailSource.LEGACY:
+        return struct.pack("<q", file_id.secret)
+
+    if file_id.thumbnail_source == ThumbnailSource.THUMBNAIL:
+        return struct.pack("<ii", file_id.thumbnail_file_type, ord(file_id.thumbnail_size))
+
+    if file_id.thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL, ThumbnailSource.CHAT_PHOTO_BIG):
+        return struct.pack("<qq", file_id.chat_id, file_id.chat_access_hash)
+
+    if file_id.thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL:
+        return struct.pack("<qq", file_id.sticker_set_id, file_id.sticker_set_access_hash)
+
+    if file_id.thumbnail_source == ThumbnailSource.FULL_LEGACY:
+        return struct.pack("<qqi", file_id.volume_id, file_id.secret, file_id.local_id)
+
+    if file_id.thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL_LEGACY, ThumbnailSource.CHAT_PHOTO_BIG_LEGACY):
+        return struct.pack("<qqqi", file_id.chat_id, file_id.chat_access_hash, file_id.volume_id, file_id.local_id)
+
+    if file_id.thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL_LEGACY:
+        return struct.pack(
+            "<qqqi",
+            file_id.sticker_set_id,
+            file_id.sticker_set_access_hash,
+            file_id.volume_id,
+            file_id.local_id
+        )
+
+    if file_id.thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL_VERSION:
+        return struct.pack(
+            "<qqi",
+            file_id.sticker_set_id,
+            file_id.sticker_set_access_hash,
+            file_id.sticker_set_version
+        )
+
+    msg = f"No layout for thumbnail_source: {file_id.thumbnail_source!r}"
+    raise ValueError(msg)
 
 
 class FileId:
@@ -175,7 +330,8 @@ class FileId:
         chat_id: Optional[int] = None,
         chat_access_hash: Optional[int] = None,
         sticker_set_id: Optional[int] = None,
-        sticker_set_access_hash: Optional[int] = None
+        sticker_set_access_hash: Optional[int] = None,
+        sticker_set_version: Optional[int] = None
     ):
         self.major = major
         self.minor = minor
@@ -195,6 +351,7 @@ class FileId:
         self.chat_access_hash = chat_access_hash
         self.sticker_set_id = sticker_set_id
         self.sticker_set_access_hash = sticker_set_access_hash
+        self.sticker_set_version = sticker_set_version
 
     @staticmethod
     def decode(file_id: str):
@@ -246,7 +403,9 @@ class FileId:
         media_id, access_hash = struct.unpack("<qq", buffer.read(16))
 
         if file_type in PHOTO_TYPES:
-            volume_id, = struct.unpack("<q", buffer.read(8))
+            has_volume_and_local_id = minor < NO_VOLUME_AND_LOCAL_ID_MINOR
+            volume_id = struct.unpack("<q", buffer.read(8))[0] if has_volume_and_local_id else None
+
             thumbnail_source, = (0,) if major < 4 else struct.unpack("<i", buffer.read(4))
 
             try:
@@ -254,77 +413,33 @@ class FileId:
             except ValueError:
                 raise ValueError(f"Unknown thumbnail_source {thumbnail_source} of file_id {file_id}")
 
-            if thumbnail_source == ThumbnailSource.LEGACY:
-                secret, local_id = struct.unpack("<qi", buffer.read(12))
+            tail = read_photo_tail(buffer, thumbnail_source=thumbnail_source)
 
-                return FileId(
-                    major=major,
-                    minor=minor,
-                    file_type=file_type,
-                    dc_id=dc_id,
-                    file_reference=file_reference,
-                    media_id=media_id,
-                    access_hash=access_hash,
-                    volume_id=volume_id,
-                    thumbnail_source=thumbnail_source,
-                    secret=secret,
-                    local_id=local_id
-                )
+            # Before minor 32 every source shared one layout, with `local_id` last.
+            if has_volume_and_local_id:
+                local_id, = struct.unpack("<i", buffer.read(4))
+                tail = replace(tail, volume_id=volume_id, local_id=local_id)
 
-            if thumbnail_source == ThumbnailSource.THUMBNAIL:
-                thumbnail_file_type, thumbnail_size, local_id = struct.unpack("<iii", buffer.read(12))
-                thumbnail_size = chr(thumbnail_size)
-
-                return FileId(
-                    major=major,
-                    minor=minor,
-                    file_type=file_type,
-                    dc_id=dc_id,
-                    file_reference=file_reference,
-                    media_id=media_id,
-                    access_hash=access_hash,
-                    volume_id=volume_id,
-                    thumbnail_source=thumbnail_source,
-                    thumbnail_file_type=thumbnail_file_type,
-                    thumbnail_size=thumbnail_size,
-                    local_id=local_id
-                )
-
-            if thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL, ThumbnailSource.CHAT_PHOTO_BIG):
-                chat_id, chat_access_hash, local_id = struct.unpack("<qqi", buffer.read(20))
-
-                return FileId(
-                    major=major,
-                    minor=minor,
-                    file_type=file_type,
-                    dc_id=dc_id,
-                    file_reference=file_reference,
-                    media_id=media_id,
-                    access_hash=access_hash,
-                    volume_id=volume_id,
-                    thumbnail_source=thumbnail_source,
-                    chat_id=chat_id,
-                    chat_access_hash=chat_access_hash,
-                    local_id=local_id
-                )
-
-            if thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL:
-                sticker_set_id, sticker_set_access_hash, local_id = struct.unpack("<qqi", buffer.read(20))
-
-                return FileId(
-                    major=major,
-                    minor=minor,
-                    file_type=file_type,
-                    dc_id=dc_id,
-                    file_reference=file_reference,
-                    media_id=media_id,
-                    access_hash=access_hash,
-                    volume_id=volume_id,
-                    thumbnail_source=thumbnail_source,
-                    sticker_set_id=sticker_set_id,
-                    sticker_set_access_hash=sticker_set_access_hash,
-                    local_id=local_id
-                )
+            return FileId(
+                major=major,
+                minor=minor,
+                file_type=file_type,
+                dc_id=dc_id,
+                file_reference=file_reference,
+                media_id=media_id,
+                access_hash=access_hash,
+                thumbnail_source=thumbnail_source,
+                volume_id=tail.volume_id,
+                local_id=tail.local_id,
+                secret=tail.secret,
+                thumbnail_file_type=tail.thumbnail_file_type,
+                thumbnail_size=tail.thumbnail_size,
+                chat_id=tail.chat_id,
+                chat_access_hash=tail.chat_access_hash,
+                sticker_set_id=tail.sticker_set_id,
+                sticker_set_access_hash=tail.sticker_set_access_hash,
+                sticker_set_version=tail.sticker_set_version
+            )
 
         if file_type in DOCUMENT_TYPES:
             return FileId(
@@ -362,34 +477,18 @@ class FileId:
         buffer.write(struct.pack("<qq", self.media_id, self.access_hash))
 
         if self.file_type in PHOTO_TYPES:
-            buffer.write(struct.pack("<q", self.volume_id))
+            has_volume_and_local_id = minor < NO_VOLUME_AND_LOCAL_ID_MINOR
+
+            if has_volume_and_local_id:
+                buffer.write(struct.pack("<q", self.volume_id))
 
             if major >= 4:
                 buffer.write(struct.pack("<i", self.thumbnail_source))
 
-            if self.thumbnail_source == ThumbnailSource.LEGACY:
-                buffer.write(struct.pack("<qi", self.secret, self.local_id))
-            elif self.thumbnail_source == ThumbnailSource.THUMBNAIL:
-                buffer.write(struct.pack(
-                    "<iii",
-                    self.thumbnail_file_type,
-                    ord(self.thumbnail_size),
-                    self.local_id
-                ))
-            elif self.thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL, ThumbnailSource.CHAT_PHOTO_BIG):
-                buffer.write(struct.pack(
-                    "<qqi",
-                    self.chat_id,
-                    self.chat_access_hash,
-                    self.local_id
-                ))
-            elif self.thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL:
-                buffer.write(struct.pack(
-                    "<qqi",
-                    self.sticker_set_id,
-                    self.sticker_set_access_hash,
-                    self.local_id
-                ))
+            buffer.write(write_photo_tail(self))
+
+            if has_volume_and_local_id:
+                buffer.write(struct.pack("<i", self.local_id))
         elif file_type in DOCUMENT_TYPES:
             buffer.write(struct.pack("<ii", minor, major))
 

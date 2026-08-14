@@ -16,9 +16,54 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import struct
+
 import pytest
 
-from pyrogram.file_id import FileId, FileUniqueId, FileType, FileUniqueType
+from pyrogram.file_id import (
+    FILE_REFERENCE_FLAG,
+    FileId,
+    FileUniqueId,
+    FileType,
+    FileUniqueType,
+    ThumbnailSource,
+    b64_encode,
+    rle_encode,
+)
+from pyrogram.raw.core import Bytes
+
+# Arbitrary, only has to survive the round trip.
+DC_ID = 2
+MEDIA_ID = 5399953792058913798
+ACCESS_HASH = 478576178729576621
+FILE_REFERENCE = b"\x01\x02\x03\x04"
+
+VOLUME_ID = 1234567890123456789
+LOCAL_ID = 42
+SECRET = 987654321098765432
+CHAT_ID = -1001234567890
+CHAT_ACCESS_HASH = 1122334455667788990
+STICKER_SET_ID = 2233445566778899001
+STICKER_SET_ACCESS_HASH = 3344556677889900112
+STICKER_SET_VERSION = 7
+
+
+def photo_file_id(*, minor: int, thumbnail_source: int, tail: bytes) -> str:
+    """Assemble a photo file id byte for byte the way TDLib's `FullRemoteFileLocation::store` does.
+
+    Built by hand rather than through `FileId.encode()`, so that what a case asserts is the layout
+    TDLib writes and not merely that our own two halves agree with each other.
+    """
+    payload = (
+        struct.pack("<ii", FileType.PHOTO | FILE_REFERENCE_FLAG, DC_ID)
+        + Bytes(FILE_REFERENCE)
+        + struct.pack("<qq", MEDIA_ID, ACCESS_HASH)
+        + struct.pack("<i", thumbnail_source)
+        + tail
+        + struct.pack("<bb", minor, 4)
+    )
+
+    return b64_encode(rle_encode(payload))
 
 
 def check(file_id: str, expected_file_type: FileType):
@@ -176,6 +221,149 @@ def test_unknown_thumbnail_source():
 
     with pytest.raises(ValueError, match=r"Unknown thumbnail_source \d+ of file_id \w+"):
         check(unknown, FileType.THUMBNAIL)
+
+
+def test_photo_from_a_current_client():
+    """The file id from #178, minted at minor 54, which `decode()` used to reject.
+
+    Twelve bytes trail `access_hash`: `01000000 02000000 6d000000`. Read against the pre-32 layout
+    the first eight become `volume_id` and `6d000000` becomes the source, hence the reported
+    `ValueError: Unknown thumbnail_source 109`. Read against the current one they are the source,
+    the thumbnail's own file type, and `chr(109)` — the size letter `m`.
+    """
+    photo = "AgACAgIAAxkBAAIENGfeY4AfRquwTL2LpDrzqvFMVNt_AAIG9DEbXX3wSq3oI7t_PqQGAQADAgADbQADNgQ"
+
+    decoded = FileId.decode(photo)
+
+    assert decoded.minor == 54
+    assert decoded.thumbnail_source == ThumbnailSource.THUMBNAIL
+    assert decoded.thumbnail_file_type == FileType.PHOTO
+    assert decoded.thumbnail_size == "m"
+    assert decoded.volume_id is None
+    assert decoded.local_id is None
+
+    check(photo, FileType.PHOTO)
+
+
+NEW_LAYOUT_SOURCES = [
+    pytest.param(
+        ThumbnailSource.LEGACY,
+        struct.pack("<q", SECRET),
+        {"secret": SECRET},
+        id="legacy",
+    ),
+    pytest.param(
+        ThumbnailSource.THUMBNAIL,
+        struct.pack("<ii", FileType.PHOTO, ord("m")),
+        {"thumbnail_file_type": FileType.PHOTO, "thumbnail_size": "m"},
+        id="thumbnail",
+    ),
+    pytest.param(
+        ThumbnailSource.CHAT_PHOTO_SMALL,
+        struct.pack("<qq", CHAT_ID, CHAT_ACCESS_HASH),
+        {"chat_id": CHAT_ID, "chat_access_hash": CHAT_ACCESS_HASH},
+        id="chat_photo_small",
+    ),
+    pytest.param(
+        ThumbnailSource.CHAT_PHOTO_BIG,
+        struct.pack("<qq", CHAT_ID, CHAT_ACCESS_HASH),
+        {"chat_id": CHAT_ID, "chat_access_hash": CHAT_ACCESS_HASH},
+        id="chat_photo_big",
+    ),
+    pytest.param(
+        ThumbnailSource.STICKER_SET_THUMBNAIL,
+        struct.pack("<qq", STICKER_SET_ID, STICKER_SET_ACCESS_HASH),
+        {"sticker_set_id": STICKER_SET_ID, "sticker_set_access_hash": STICKER_SET_ACCESS_HASH},
+        id="sticker_set_thumbnail",
+    ),
+    pytest.param(
+        ThumbnailSource.FULL_LEGACY,
+        struct.pack("<qqi", VOLUME_ID, SECRET, LOCAL_ID),
+        {"volume_id": VOLUME_ID, "secret": SECRET, "local_id": LOCAL_ID},
+        id="full_legacy",
+    ),
+    pytest.param(
+        ThumbnailSource.CHAT_PHOTO_SMALL_LEGACY,
+        struct.pack("<qqqi", CHAT_ID, CHAT_ACCESS_HASH, VOLUME_ID, LOCAL_ID),
+        {
+            "chat_id": CHAT_ID,
+            "chat_access_hash": CHAT_ACCESS_HASH,
+            "volume_id": VOLUME_ID,
+            "local_id": LOCAL_ID,
+        },
+        id="chat_photo_small_legacy",
+    ),
+    pytest.param(
+        ThumbnailSource.CHAT_PHOTO_BIG_LEGACY,
+        struct.pack("<qqqi", CHAT_ID, CHAT_ACCESS_HASH, VOLUME_ID, LOCAL_ID),
+        {
+            "chat_id": CHAT_ID,
+            "chat_access_hash": CHAT_ACCESS_HASH,
+            "volume_id": VOLUME_ID,
+            "local_id": LOCAL_ID,
+        },
+        id="chat_photo_big_legacy",
+    ),
+    pytest.param(
+        ThumbnailSource.STICKER_SET_THUMBNAIL_LEGACY,
+        struct.pack("<qqqi", STICKER_SET_ID, STICKER_SET_ACCESS_HASH, VOLUME_ID, LOCAL_ID),
+        {
+            "sticker_set_id": STICKER_SET_ID,
+            "sticker_set_access_hash": STICKER_SET_ACCESS_HASH,
+            "volume_id": VOLUME_ID,
+            "local_id": LOCAL_ID,
+        },
+        id="sticker_set_thumbnail_legacy",
+    ),
+    pytest.param(
+        ThumbnailSource.STICKER_SET_THUMBNAIL_VERSION,
+        struct.pack("<qqi", STICKER_SET_ID, STICKER_SET_ACCESS_HASH, STICKER_SET_VERSION),
+        {
+            "sticker_set_id": STICKER_SET_ID,
+            "sticker_set_access_hash": STICKER_SET_ACCESS_HASH,
+            "sticker_set_version": STICKER_SET_VERSION,
+        },
+        id="sticker_set_thumbnail_version",
+    ),
+]
+
+
+@pytest.mark.parametrize("thumbnail_source, tail, expected", NEW_LAYOUT_SOURCES)
+def test_every_source_of_the_current_layout(thumbnail_source, tail, expected):
+    file_id = photo_file_id(minor=32, thumbnail_source=thumbnail_source, tail=tail)
+
+    decoded = FileId.decode(file_id)
+
+    assert decoded.thumbnail_source == thumbnail_source
+    assert decoded.media_id == MEDIA_ID
+    assert decoded.access_hash == ACCESS_HASH
+    assert decoded.file_reference == FILE_REFERENCE
+
+    assert {name: vars(decoded)[name] for name in expected} == expected
+    assert decoded.encode() == file_id
+
+
+def test_the_pre_32_layout_still_reads_as_before():
+    """Minor 31 keeps `volume_id` ahead of the source and `local_id` after every tail."""
+    payload = (
+        struct.pack("<ii", FileType.PHOTO | FILE_REFERENCE_FLAG, DC_ID)
+        + Bytes(FILE_REFERENCE)
+        + struct.pack("<qq", MEDIA_ID, ACCESS_HASH)
+        + struct.pack("<q", VOLUME_ID)
+        + struct.pack("<i", ThumbnailSource.CHAT_PHOTO_SMALL)
+        + struct.pack("<qq", CHAT_ID, CHAT_ACCESS_HASH)
+        + struct.pack("<i", LOCAL_ID)
+        + struct.pack("<bb", 31, 4)
+    )
+    file_id = b64_encode(rle_encode(payload))
+
+    decoded = FileId.decode(file_id)
+
+    assert decoded.volume_id == VOLUME_ID
+    assert decoded.local_id == LOCAL_ID
+    assert decoded.chat_id == CHAT_ID
+    assert decoded.chat_access_hash == CHAT_ACCESS_HASH
+    assert decoded.encode() == file_id
 
 
 def test_stringify_file_id():

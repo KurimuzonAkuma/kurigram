@@ -1144,7 +1144,10 @@ class Client(Methods):
                 location = raw.types.InputPeerPhotoFileLocation(
                     peer=peer,
                     photo_id=file_id.media_id,
-                    big=file_id.thumbnail_source == ThumbnailSource.CHAT_PHOTO_BIG
+                    big=file_id.thumbnail_source in (
+                        ThumbnailSource.CHAT_PHOTO_BIG,
+                        ThumbnailSource.CHAT_PHOTO_BIG_LEGACY
+                    )
                 )
             elif file_type == FileType.PHOTO:
                 location = raw.types.InputPhotoFileLocation(
