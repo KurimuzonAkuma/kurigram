@@ -366,6 +366,159 @@ def test_the_pre_32_layout_still_reads_as_before():
     assert decoded.encode() == file_id
 
 
+def test_the_library_still_mints_the_layout_it_always_did():
+    """`FileId.MINOR` is untouched, so nothing this library hands out changes shape.
+
+    Every file id built by `types/` passes `volume_id=0, local_id=0` because the pre-32 layout has
+    nowhere to omit them. Should `MINOR` ever be raised past 32, those two arguments become dead and
+    this test is the one that says so.
+    """
+    minted = FileId(
+        file_type=FileType.PHOTO,
+        dc_id=DC_ID,
+        media_id=MEDIA_ID,
+        access_hash=ACCESS_HASH,
+        file_reference=FILE_REFERENCE,
+        thumbnail_source=ThumbnailSource.THUMBNAIL,
+        thumbnail_file_type=FileType.PHOTO,
+        thumbnail_size="m",
+        volume_id=0,
+        local_id=0,
+    ).encode()
+
+    decoded = FileId.decode(minted)
+
+    assert decoded.minor == 30
+    assert decoded.volume_id == 0
+    assert decoded.local_id == 0
+    assert decoded.encode() == minted
+
+
+def test_full_legacy_keeps_secret_between_volume_id_and_local_id():
+    """The field order here is TDLib's `FullLegacy::store`, not the schema's.
+
+    `inputPhotoLegacyFileLocation` lists the same three as `volume_id local_id secret`, so reading
+    the schema alone would swap the last two and silently produce a wrong `local_id`.
+    """
+    file_id = photo_file_id(
+        minor=32,
+        thumbnail_source=ThumbnailSource.FULL_LEGACY,
+        tail=struct.pack("<qqi", VOLUME_ID, SECRET, LOCAL_ID),
+    )
+
+    decoded = FileId.decode(file_id)
+
+    assert decoded.volume_id == VOLUME_ID
+    assert decoded.secret == SECRET
+    assert decoded.local_id == LOCAL_ID
+
+
+def test_a_source_past_the_known_ones_is_still_rejected():
+    """Nine is the last source TDLib defines; ten has to stay an error rather than a bad read."""
+    file_id = photo_file_id(minor=32, thumbnail_source=10, tail=struct.pack("<q", SECRET))
+
+    with pytest.raises(ValueError, match=r"Unknown thumbnail_source 10 of file_id \w+"):
+        FileId.decode(file_id)
+
+
+def test_documents_are_unaffected_by_the_photo_layout():
+    """Only `PHOTO_TYPES` carry a source, so a document must read the same at any minor."""
+    for minor in (30, 32, 54):
+        payload = (
+            struct.pack("<ii", FileType.DOCUMENT | FILE_REFERENCE_FLAG, DC_ID)
+            + Bytes(FILE_REFERENCE)
+            + struct.pack("<qq", MEDIA_ID, ACCESS_HASH)
+            + struct.pack("<bb", minor, 4)
+        )
+        file_id = b64_encode(rle_encode(payload))
+
+        decoded = FileId.decode(file_id)
+
+        assert decoded.file_type == FileType.DOCUMENT
+        assert decoded.media_id == MEDIA_ID
+        assert decoded.access_hash == ACCESS_HASH
+        assert decoded.volume_id is None
+        assert decoded.encode() == file_id
+
+
+EXTREMES = [0, 1, -1, 2 ** 62, -(2 ** 62), 2 ** 63 - 1, -(2 ** 63)]
+
+# `local_id` is an int32 and TDLib notes it can be negative in secret chat thumbnails.
+SMALL_EXTREMES = [0, 1, -1, 2 ** 31 - 1, -(2 ** 31)]
+
+
+def photo_fields(*, thumbnail_source: ThumbnailSource, big: int, small: int) -> dict:
+    """The fields a given source carries, filled with one value each."""
+    if thumbnail_source == ThumbnailSource.LEGACY:
+        return {"secret": big}
+
+    if thumbnail_source == ThumbnailSource.THUMBNAIL:
+        return {"thumbnail_file_type": FileType.PHOTO, "thumbnail_size": "y"}
+
+    if thumbnail_source in (ThumbnailSource.CHAT_PHOTO_SMALL, ThumbnailSource.CHAT_PHOTO_BIG):
+        return {"chat_id": big, "chat_access_hash": big}
+
+    if thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL:
+        return {"sticker_set_id": big, "sticker_set_access_hash": big}
+
+    if thumbnail_source == ThumbnailSource.FULL_LEGACY:
+        return {"volume_id": big, "secret": big, "local_id": small}
+
+    if thumbnail_source in (
+        ThumbnailSource.CHAT_PHOTO_SMALL_LEGACY,
+        ThumbnailSource.CHAT_PHOTO_BIG_LEGACY
+    ):
+        return {"chat_id": big, "chat_access_hash": big, "volume_id": big, "local_id": small}
+
+    if thumbnail_source == ThumbnailSource.STICKER_SET_THUMBNAIL_LEGACY:
+        return {
+            "sticker_set_id": big,
+            "sticker_set_access_hash": big,
+            "volume_id": big,
+            "local_id": small,
+        }
+
+    return {"sticker_set_id": big, "sticker_set_access_hash": big, "sticker_set_version": small}
+
+
+@pytest.mark.parametrize("thumbnail_source", list(ThumbnailSource))
+def test_every_source_survives_a_round_trip_at_its_extremes(thumbnail_source):
+    """Encode, decode, encode again for every source against the widest values each field holds.
+
+    The hand-built fixtures pin the layout; this pins the widths. A `<q` typed as `<i` somewhere
+    still round trips small numbers and only shows up at the ends of the range.
+    """
+    for big, small in zip(EXTREMES, SMALL_EXTREMES * 2):
+        # Before minor 32 every source shared one layout, and the ones added for it cannot occur.
+        minors = [32] if thumbnail_source >= ThumbnailSource.FULL_LEGACY else [30, 32]
+
+        for minor in minors:
+            fields = photo_fields(thumbnail_source=thumbnail_source, big=big, small=small)
+
+            if minor < 32:
+                fields.setdefault("volume_id", big)
+                fields.setdefault("local_id", small)
+
+            file_id = FileId(
+                minor=minor,
+                file_type=FileType.PHOTO,
+                dc_id=DC_ID,
+                media_id=MEDIA_ID,
+                access_hash=ACCESS_HASH,
+                file_reference=FILE_REFERENCE,
+                thumbnail_source=thumbnail_source,
+                **fields,
+            ).encode()
+
+            decoded = FileId.decode(file_id)
+
+            assert decoded.minor == minor
+            assert decoded.thumbnail_source == thumbnail_source
+
+            assert {name: vars(decoded)[name] for name in fields} == fields, thumbnail_source.name
+            assert decoded.encode() == file_id
+
+
 def test_stringify_file_id():
     file_id = "BQACAgIAAx0CAAGgr9AAAgmPX7b4UxbjNoFEO_L0I4s6wrXNJA8AAgQAA4GkuUm9FFvIaOhXWR4E"
     string = "{'major': 4, 'minor': 30, 'file_type': <FileType.DOCUMENT: 5>, 'dc_id': 2, " \
