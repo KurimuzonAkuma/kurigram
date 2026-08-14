@@ -337,7 +337,8 @@ caption = create(caption_filter)
 
 # region self_destruction_filter
 async def self_destruction_filter(_, __, m: Message):
-    return bool(m.media and getattr(getattr(m, m.media.value, None), "ttl_seconds", None))
+    self_destructing = (m.photo, m.voice, m.video, m.video_note)
+    return any(media and media.ttl_seconds for media in self_destructing)
 
 
 self_destruction = create(self_destruction_filter)
