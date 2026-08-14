@@ -216,6 +216,7 @@ def carries(update_type, field: str) -> bool:
         ("chat", filters._WITH_A_CHAT),
         ("sender_chat", filters._WITH_A_SENDER_CHAT),
         ("outgoing", filters._CAN_BE_OUTGOING),
+        ("message", filters._WITH_A_MESSAGE),
     ],
 )
 def test_the_filters_name_every_update_type_that_carries_the_field(field, declared):
@@ -238,6 +239,58 @@ def test_the_update_base_class_declares_no_fields():
     """
     for name in ("from_user", "chat", "sender_chat", "outgoing"):
         assert not hasattr(Update, name)
+
+
+A_TOPIC = types.ForumTopic(id=13)
+
+FROM_THE_LINKED_CHANNEL = {
+    "sender_chat": CHANNEL,
+    "forward_origin": types.MessageOriginChannel(chat=CHANNEL, message_id=1),
+}
+
+
+def business_message() -> Message:
+    return Message(id=1, chat=PRIVATE, business_connection_id="a_connection")
+
+
+@pytest.mark.asyncio
+async def test_business_reads_the_message_the_update_is_about():
+    assert await filters.business(CLIENT, business_message())
+    assert await filters.business(CLIENT, CallbackQuery(id="1", from_user=SOMEONE, message=business_message()))
+    assert not await filters.business(CLIENT, Message(id=1, chat=PRIVATE))
+
+
+@pytest.mark.asyncio
+async def test_linked_channel_reads_the_message_the_update_is_about():
+    forwarded = Message(id=1, chat=CHANNEL, **FROM_THE_LINKED_CHANNEL)
+
+    assert await filters.linked_channel(CLIENT, forwarded)
+    assert await filters.linked_channel(CLIENT, CallbackQuery(id="1", from_user=SOMEONE, message=forwarded))
+    assert not await filters.linked_channel(CLIENT, Message(id=1, chat=CHANNEL))
+
+
+@pytest.mark.asyncio
+async def test_topic_reads_the_message_the_update_is_about():
+    in_a_topic = Message(id=1, chat=PRIVATE, topic=A_TOPIC)
+
+    assert await filters.topic(13)(CLIENT, in_a_topic)
+    assert await filters.topic(13)(CLIENT, CallbackQuery(id="1", from_user=SOMEONE, message=in_a_topic))
+    assert not await filters.topic(1)(CLIENT, in_a_topic)
+    assert not await filters.topic(13)(CLIENT, Message(id=1, chat=PRIVATE))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("update", WITHOUT_A_CHAT)
+async def test_an_update_with_no_message_does_not_match_rather_than_raising(update):
+    """These three read a field that only `Message` has.
+
+    They used to take it off whatever the handler passed them, so a callback query or an
+    inline query answered with `AttributeError: 'CallbackQuery' object has no attribute
+    'business_connection_id'` instead of not matching.
+    """
+    assert not await filters.business(CLIENT, update)
+    assert not await filters.linked_channel(CLIENT, update)
+    assert not await filters.topic(13)(CLIENT, update)
 
 
 def test_callback_query_chat_follows_its_message():

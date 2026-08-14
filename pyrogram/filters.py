@@ -193,6 +193,20 @@ def _is_outgoing(update: Update) -> bool:
     return bool(update.outgoing) if isinstance(update, _CAN_BE_OUTGOING) else False
 
 
+# NOTE: `business_connection_id`, `forward_origin` and `topic` live on `Message` alone, so the
+#       filters that read them cannot take the field off the update the way the ones above do.
+#       They go through the message the update is about instead, which is the same message the
+#       user is looking at when a button under it is pressed.
+_WITH_A_MESSAGE = (CallbackQuery,)
+
+
+def _message_of(update: Update) -> Optional[Message]:
+    if isinstance(update, Message):
+        return update
+
+    return update.message if isinstance(update, _WITH_A_MESSAGE) else None
+
+
 def create(func: Callable, name: Optional[str] = None, **kwargs) -> Filter:
     """Easily create a custom filter.
 
@@ -907,12 +921,13 @@ video_chat_ended = create(video_chat_ended_filter)
 # endregion
 
 # region business
-async def business_filter(_, __, message: Message):
-    return bool(message.business_connection_id)
+async def business_filter(_, __, update: Update):
+    message = _message_of(update)
+    return bool(message and message.business_connection_id)
 
 
 business = create(business_filter)
-"""Filter messages sent via business bot"""
+"""Filter updates sent via business bot"""
 
 
 # endregion
@@ -1005,8 +1020,10 @@ paid_message = create(paid_message_filter)
 # endregion
 
 # region linked_channel_filter
-async def linked_channel_filter(_, __, message: Message):
+async def linked_channel_filter(_, __, update: Update):
+    message = _message_of(update)
     return bool(
+        message and
         message.forward_origin and
         message.forward_origin.type == enums.MessageOriginType.CHANNEL and
         message.forward_origin.chat == message.sender_chat
@@ -1014,7 +1031,7 @@ async def linked_channel_filter(_, __, message: Message):
 
 
 linked_channel = create(linked_channel_filter)
-"""Filter messages that are automatically forwarded from the linked channel to the group chat."""
+"""Filter updates about a message that was automatically forwarded from the linked channel to the group chat."""
 
 
 # endregion
@@ -1262,14 +1279,14 @@ class chat(Filter, set):
 
 # noinspection PyPep8Naming
 class topic(Filter, set):
-    """Filter messages coming from one or more topics.
+    """Filter updates coming from one or more topics.
 
     You can use `set bound methods <https://docs.python.org/3/library/stdtypes.html#set>`_ to manipulate the
     topics container.
 
     Parameters:
         topics (``int`` | ``list``):
-            Pass one or more topic ids to filter messages in specific topics.
+            Pass one or more topic ids to filter updates in specific topics.
             Defaults to None (no topics).
     """
 
@@ -1280,5 +1297,7 @@ class topic(Filter, set):
             t for t in topics
         )
 
-    async def __call__(self, _, message: Message):
-        return message.topic and message.topic.id in self
+    async def __call__(self, _, update: Update):
+        message = _message_of(update)
+
+        return bool(message and message.topic and message.topic.id in self)
