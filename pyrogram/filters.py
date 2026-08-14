@@ -1240,11 +1240,14 @@ class chat(Filter, set):
         if chat_of_update.id in self or (chat_of_update.username and chat_of_update.username.lower() in self):
             return True
         sender = _sender_of(update)
+
+        # NOTE: Saved Messages is the chat whose id is your own user id.
+        #       `is_self` on its own is true of anything you caused, in any chat.
         return bool(
             "me" in self
             and sender
             and sender.is_self
-            and not _is_outgoing(update)
+            and chat_of_update.id == sender.id
         )
 
 

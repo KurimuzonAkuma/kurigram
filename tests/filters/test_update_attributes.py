@@ -157,6 +157,25 @@ async def test_message_filters_are_unchanged():
     assert await filters.chat(-100)(CLIENT, outgoing_message)
 
 
+@pytest.mark.asyncio
+async def test_chat_me_is_saved_messages_and_nothing_else():
+    """`filters.chat("me")` means the chat whose id is your own user id.
+
+    It used to test the sender instead — `is_self and not outgoing` — which is
+    also true of an update you caused in a chat that is not Saved Messages.
+    """
+    assert await filters.chat("me")(CLIENT, Message(id=1, chat=SAVED_MESSAGES, from_user=MYSELF))
+    assert await filters.chat("self")(CLIENT, Message(id=1, chat=SAVED_MESSAGES, from_user=MYSELF))
+
+    in_a_supergroup = CallbackQuery(
+        id="1",
+        from_user=MYSELF,
+        message=Message(id=1, chat=Chat(id=-1001, type=enums.ChatType.SUPERGROUP)),
+    )
+
+    assert not await filters.chat("me")(CLIENT, in_a_supergroup)
+
+
 UPDATE_TYPES = [
     one for one in vars(types).values()
     if inspect.isclass(one) and issubclass(one, Update) and one is not Update
