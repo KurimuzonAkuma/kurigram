@@ -63,6 +63,10 @@ class CallbackQuery(Object, Update):
         matches (List of regex Matches, *optional*):
             A list containing all `Match Objects <https://docs.python.org/3/library/re.html#match-objects>`_ that match
             the data of this callback query. Only applicable when using :obj:`Filters.regex <pyrogram.Filters.regex>`.
+
+        chat (:obj:`~pyrogram.types.Chat`, *property*):
+            The chat *message* was sent in. None for a button attached to an inline message, which carries
+            *inline_message_id* instead.
     """
 
     def __init__(
@@ -88,6 +92,10 @@ class CallbackQuery(Object, Update):
         self.data = data
         self.game_short_name = game_short_name
         self.matches = matches
+
+    @property
+    def chat(self) -> Optional["types.Chat"]:
+        return self.message.chat if self.message else None
 
     @staticmethod
     async def _parse(client: "pyrogram.Client", callback_query, users, chats) -> "CallbackQuery":
