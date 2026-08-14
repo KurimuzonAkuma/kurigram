@@ -119,8 +119,10 @@ class Message(Object, Update):
         from_offline (``bool``, *optional*):
             True, if the message was sent by an implicit action, for example, as an away or a greeting business message, or as a scheduled message.
 
-        topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
+        topic (:obj:`~pyrogram.types.ForumTopic` | :obj:`~pyrogram.types.DirectMessagesTopic`, *optional*):
             Topic the message belongs to.
+            A :obj:`~pyrogram.types.ForumTopic` in a forum, a :obj:`~pyrogram.types.DirectMessagesTopic` in a channel
+            direct messages chat.
 
         forward_origin (:obj:`~pyrogram.types.MessageOrigin`, *optional*):
             Information about the original message for forwarded messages.
@@ -652,7 +654,7 @@ class Message(Object, Update):
         show_caption_above_media: Optional[bool] = None,
         external_reply: Optional["types.ExternalReplyInfo"] = None,
         quote: Optional["types.TextQuote"] = None,
-        topic: Optional["types.ForumTopic"] = None,
+        topic: Optional[Union["types.ForumTopic", "types.DirectMessagesTopic"]] = None,
         forward_origin: Optional["types.MessageOrigin"] = None,
         message_thread_id: Optional[int] = None,
         direct_messages_topic_id: Optional[int] = None,
