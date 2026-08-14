@@ -27,10 +27,10 @@ from .exceptions.all import exceptions
 
 
 class RPCError(Exception):
-    ID = None
-    CODE = None
-    NAME = None
-    MESSAGE = "{value}"
+    ID: Optional[str] = None
+    CODE: Optional[int] = None
+    NAME: Optional[str] = None
+    MESSAGE: str = "{value}"
 
     def __init__(
         self,
@@ -47,10 +47,13 @@ class RPCError(Exception):
             f'(caused by "{rpc_name}")' if rpc_name else ""
         ))
 
-        try:
-            self.value = int(value)
-        except (ValueError, TypeError):
-            self.value = value
+        self.value: Optional[Union[int, str, raw.types.RpcError]]
+
+        # `isdecimal()`, not `isdigit()`: the latter is true for "²" too, and `int("²")` raises.
+        if isinstance(value, str) and value.isdecimal():
+            value = int(value)
+
+        self.value = value
 
         if is_unknown:
             with open("unknown_errors.txt", "a", encoding="utf-8") as f:
@@ -85,8 +88,8 @@ class RPCError(Exception):
               is_unknown=True,
               is_signed=is_signed)
 
-        value = re.search(r"_(\d+)", error_message)
-        value = value.group(1) if value is not None else value
+        match = re.search(r"_(\d+)", error_message)
+        value = match.group(1) if match is not None else None
 
         raise getattr(
             import_module("pyrogram.errors"),
