@@ -253,9 +253,10 @@ class Client(Methods):
         loop (:py:class:`asyncio.AbstractEventLoop`, *optional*):
             Event loop.
 
-        init_connection_params (``dict``, *optional*):
+        init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JsonValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
+            A dict is converted on connect; an already built JsonValue is sent as it is.
     """
 
     APP_VERSION = f"Pyrogram {__version__}"
@@ -326,7 +327,7 @@ class Client(Methods):
         fetch_topics: Optional[bool] = True,
         fetch_stories: Optional[bool] = True,
         fetch_stickers: Optional[bool] = True,
-        init_connection_params: Optional[dict] = None,
+        init_connection_params: Optional[Union[dict, "raw.base.JsonValue"]] = None,
         connection_factory: Type[Connection] = Connection,
         protocol_factory: Type[TCP] = TCPAbridged,
         loop: Optional[asyncio.AbstractEventLoop] = None
