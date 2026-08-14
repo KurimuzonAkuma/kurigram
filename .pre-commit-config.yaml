@@ -1,0 +1,14 @@
+# The rule set and the excludes live in `pyproject.toml`, and this hook runs `make lint` —
+#  the same recipe the `lint` job runs — so the two cannot drift apart.
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: ruff
+        # The recipe uses the project venv, so `make venv-dev` has to have been run once.
+        entry: make lint
+        language: system
+        # `ruff` reads its own file list from the config, and the whole tree takes 0.03s,
+        #  so the hook checks everything rather than only what is staged.
+        pass_filenames: false
+        always_run: true

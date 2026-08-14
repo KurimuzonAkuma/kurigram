@@ -32,3 +32,24 @@ jobs:
       - name: Run tests
         run: |
           tox
+
+  lint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      # The generated packages are excluded from the check, so this job needs no `make api`.
+      - name: Install dependencies
+        run: |
+          make venv-dev
+
+      - name: Run ruff
+        run: |
+          make lint

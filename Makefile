@@ -18,7 +18,7 @@ BLUE   := \033[0;34m
 BOLD   := \033[1m
 RESET  := \033[0m
 
-.PHONY: venv venv-dev venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag test test-unit test-integration
+.PHONY: venv venv-dev venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag lint test test-unit test-integration
 
 venv:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -76,6 +76,11 @@ docs:
 
 docs-archive:
 	cd docs/build/html && zip -r ../docs.zip ./
+
+# `ruff` takes its rule set and its excludes from `pyproject.toml`, so the `lint` job and
+#  the `pre-commit` hook both run this recipe instead of spelling the check out again.
+lint:
+	$(PYTHON) -m ruff check
 
 # `make venv` installs the package alone, so the runner needs `make venv-dev` first.
 test:
