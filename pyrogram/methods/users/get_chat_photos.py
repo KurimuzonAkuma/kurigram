@@ -53,6 +53,7 @@ class GetChatPhotos:
                     print(photo)
         """
         peer_id = await self.resolve_peer(chat_id)
+        total = limit or (1 << 31)
 
         if isinstance(peer_id, raw.types.InputPeerChannel):
             r = await self.invoke(
@@ -61,16 +62,18 @@ class GetChatPhotos:
                 )
             )
 
-            current = types.Animation._parse_chat_animation(
+            photos = []
+            current = (types.Animation._parse_chat_animation(
                 self,
                 r.full_chat.chat_photo,
                 f"photo_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
-            ) or types.Photo._parse(self, r.full_chat.chat_photo) or []
+            ) or types.Photo._parse(self, r.full_chat.chat_photo))
 
             if current:
-                current = [current]
+                photos.append(current)
 
             if not self.me.is_bot:
+                search_limit = min(100, total)
                 r = await utils.parse_messages(
                     self,
                     await self.invoke(
@@ -82,7 +85,7 @@ class GetChatPhotos:
                             max_date=0,
                             offset_id=0,
                             add_offset=0,
-                            limit=limit,
+                            limit=search_limit,
                             max_id=0,
                             min_id=0,
                             hash=0
@@ -93,62 +96,54 @@ class GetChatPhotos:
                 extra = [message.new_chat_photo for message in r]
 
                 if extra:
-                    if current:
-                        photos = (current + extra) if current[0].file_id != extra[0].file_id else extra
-                    else:
+                    if photos and photos[0].file_id == extra[0].file_id:
                         photos = extra
-                else:
-                    if current:
-                        photos = current
                     else:
-                        photos = []
+                        photos.extend(extra)
 
             if not photos:
                 return
 
-            current = 0
+            for i, photo in enumerate(photos):
+                if i >= total:
+                    return
+
+                yield photo
+
+            return
+
+        current = 0
+        offset = 0
+
+        while current < total:
+            _limit = min(100, total - current)
+            r = await self.invoke(
+                raw.functions.photos.GetUserPhotos(
+                    user_id=peer_id,
+                    offset=offset,
+                    max_id=0,
+                    limit=_limit,
+                )
+            )
+
+            photos = [
+                types.Animation._parse_chat_animation(
+                    self,
+                    photo,
+                    f"photo_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
+                ) or types.Photo._parse(self, photo)
+                for photo in r.photos
+            ]
+
+            if not photos:
+                return
+
+            offset += len(r.photos)
 
             for photo in photos:
                 yield photo
 
                 current += 1
 
-                if current >= limit:
+                if current >= total:
                     return
-        else:
-            current = 0
-            total = limit or (1 << 31)
-            limit = min(100, total)
-            offset = 0
-
-            while True:
-                r = await self.invoke(
-                    raw.functions.photos.GetUserPhotos(
-                        user_id=peer_id,
-                        offset=offset,
-                        max_id=0,
-                        limit=limit
-                    )
-                )
-
-                photos = [
-                    types.Animation._parse_chat_animation(
-                        self,
-                        photo,
-                        f"photo_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
-                    ) or types.Photo._parse(self, photo)
-                    for photo in r.photos
-                ]
-
-                if not photos:
-                    return
-
-                offset += len(photos)
-
-                for photo in photos:
-                    yield photo
-
-                    current += 1
-
-                    if current >= total:
-                        return
