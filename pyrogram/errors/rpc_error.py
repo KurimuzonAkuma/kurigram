@@ -31,6 +31,7 @@ class RPCError(Exception):
     CODE = None
     NAME = None
     MESSAGE = "{value}"
+    VALUE_NAME = "value"
 
     def __init__(
         self,
@@ -43,7 +44,7 @@ class RPCError(Exception):
             "-" if is_signed else "",
             self.CODE,
             self.ID or self.NAME,
-            self.MESSAGE.format(value=value),
+            self.MESSAGE.format(**{self.VALUE_NAME: value}),
             f'(caused by "{rpc_name}")' if rpc_name else ""
         ))
 

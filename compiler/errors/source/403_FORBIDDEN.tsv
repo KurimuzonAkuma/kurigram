@@ -1,6 +1,6 @@
 id	message
 ACCESS_DENIED	You cannot perform this request.
-ALLOW_PAYMENT_REQUIRED_X	The user has enabled paid messages with {value} stars.
+ALLOW_PAYMENT_REQUIRED_X	The user has enabled paid messages with {star_count} stars.
 ANONYMOUS_REACTIONS_DISABLED	Sorry, anonymous administrators cannot leave reactions or participate in polls.
 BOT_ACCESS_FORBIDDEN	You can't access this bot.
 BOT_FORUM_CREATE_FORBIDDEN	This bot prevents users from creating or deleting topics.

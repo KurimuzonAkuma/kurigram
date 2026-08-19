@@ -1,0 +1,8 @@
+
+    VALUE_NAME = "{value_name}"
+    """``str``: Name of the property that holds this error's value"""
+
+    @property
+    def {value_name}(self) -> int:
+        """``int``: The value Telegram sent along with this error"""
+        return self.value

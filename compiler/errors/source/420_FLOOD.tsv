@@ -1,11 +1,11 @@
 id	message
-2FA_CONFIRM_WAIT_X	A wait of {value} seconds is required because this account is active and protected by a 2FA password.
+2FA_CONFIRM_WAIT_X	A wait of {seconds} seconds is required because this account is active and protected by a 2FA password.
 ADDRESS_INVALID	The specified geopoint address is invalid.
-FLOOD_PREMIUM_WAIT_X	Please wait {value} seconds before repeating the action, or purchase a [Telegram Premium subscription](https://core.telegram.org/api/premium) to remove this rate limit.
-FLOOD_TEST_PHONE_WAIT_X	A wait of {value} seconds is required in the test servers.
-FLOOD_WAIT_X	Please wait {value} seconds before repeating the action.
+FLOOD_PREMIUM_WAIT_X	Please wait {seconds} seconds before repeating the action, or purchase a [Telegram Premium subscription](https://core.telegram.org/api/premium) to remove this rate limit.
+FLOOD_TEST_PHONE_WAIT_X	A wait of {seconds} seconds is required in the test servers.
+FLOOD_WAIT_X	Please wait {seconds} seconds before repeating the action.
 FROZEN_METHOD_INVALID	The method can't be used by frozen account. You can appeal via @SpamBot if you believe this was a mistake.
-PREMIUM_SUB_ACTIVE_UNTIL_X	You already have a premium subscription active until unixtime {value}.
-SLOWMODE_WAIT_X	Slowmode is enabled in this chat: wait {value} seconds before sending another message to this chat.
-STORY_SEND_FLOOD_X	A wait of {value} seconds is required to continue posting stories.
-TAKEOUT_INIT_DELAY_X	Sorry, for security reasons, you will be able to begin downloading your data in {value} seconds. We have notified all your devices about the export request to make sure it's authorized and to give you time to react if it's not.
+PREMIUM_SUB_ACTIVE_UNTIL_X	You already have a premium subscription active until unixtime {until_date}.
+SLOWMODE_WAIT_X	Slowmode is enabled in this chat: wait {seconds} seconds before sending another message to this chat.
+STORY_SEND_FLOOD_X	A wait of {seconds} seconds is required to continue posting stories.
+TAKEOUT_INIT_DELAY_X	Sorry, for security reasons, you will be able to begin downloading your data in {seconds} seconds. We have notified all your devices about the export request to make sure it's authorized and to give you time to react if it's not.

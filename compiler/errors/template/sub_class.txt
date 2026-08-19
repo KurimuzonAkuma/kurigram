@@ -2,6 +2,6 @@ class {sub_class}({super_class}):
     {docstring}
     ID = {id}
     """``str``: RPC Error ID"""
-    MESSAGE = __doc__
+    MESSAGE = __doc__{value_property}
 
 

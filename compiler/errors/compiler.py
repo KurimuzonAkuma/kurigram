@@ -100,13 +100,23 @@ def start():
 
                     f_all.write("        \"{}\": \"{}\",\n".format(error_id, sub_class))
 
-                    sub_classes.append((sub_class, error_id, error_message))
+                    # The placeholder in the message is what the value Telegram sends along with
+                    # the error means, so it is also the name the error exposes it under. A message
+                    # that still says "{value}" gets no property: `value` is already taken by the
+                    # attribute itself, and a property of the same name would shadow it.
+                    value_name = re.search(r"\{(\w+)\}", error_message)
+                    value_name = value_name.group(1) if value_name is not None else "value"
+
+                    sub_classes.append((sub_class, error_id, error_message, value_name))
 
                 with open("{}/template/class.txt".format(HOME), "r", encoding="utf-8") as f_class_template:
                     class_template = f_class_template.read()
 
                     with open("{}/template/sub_class.txt".format(HOME), "r", encoding="utf-8") as f_sub_class_template:
                         sub_class_template = f_sub_class_template.read()
+
+                    with open("{}/template/value_property.txt".format(HOME), "r", encoding="utf-8") as f_value_property_template:
+                        value_property_template = f_value_property_template.read()
 
                     class_template = class_template.format(
                         notice=notice,
@@ -117,7 +127,8 @@ def start():
                             sub_class=k[0],
                             super_class=super_class,
                             id="\"{}\"".format(k[1]),
-                            docstring='"""{}"""'.format(k[2])
+                            docstring='"""{}"""'.format(k[2]),
+                            value_property="" if k[3] == "value" else value_property_template.format(value_name=k[3])
                         ) for k in sub_classes])
                     )
 
