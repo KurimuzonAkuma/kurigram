@@ -2,6 +2,7 @@ id	message
 ACCESS_DENIED	You cannot perform this request.
 ALLOW_PAYMENT_REQUIRED_X	The user has enabled paid messages with {value} stars.
 ANONYMOUS_REACTIONS_DISABLED	Sorry, anonymous administrators cannot leave reactions or participate in polls.
+APNS_VERIFY_CHECK_X	The request can't be completed unless the APNs verification {value} is performed.
 BOT_ACCESS_FORBIDDEN	You can't access this bot.
 BOT_FORUM_CREATE_FORBIDDEN	This bot prevents users from creating or deleting topics.
 BOT_GUARD_NOT_SUPPORTED	This bot is not designated as a "join guard" bot. This method is only available to bots that mediate user joins to chats. .
@@ -35,6 +36,7 @@ GROUPCALL_ALREADY_STARTED	The groupcall has already started, you can join direct
 GROUPCALL_CHANGE_FORBIDDEN	You cannot change this group call setting.
 GROUPCALL_FORBIDDEN	The group call has already ended.
 INLINE_BOT_REQUIRED	The action must be performed through an inline bot callback.
+INTEGRITY_CHECK_CLASSIC_X	The request can't be completed unless the classic Play Integrity verification {value} is performed.
 LIVE_DISABLED	Story is disabled server-side.
 MESSAGE_AUTHOR_REQUIRED	You are not the author of this message.
 MESSAGE_DELETE_FORBIDDEN	You don't have rights to delete one of the messages you tried to delete, most likely because it is a service message or you are not the author of them.
