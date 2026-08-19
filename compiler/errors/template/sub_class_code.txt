@@ -1,0 +1,5 @@
+
+    CODE = {code}
+    """``int``: RPC Error Code"""
+    NAME = "{name}"
+    """``str``: RPC Error Name"""

@@ -20,7 +20,7 @@ from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw
-from pyrogram.errors import UnknownError
+from pyrogram.errors import Timeout503
 
 
 class GetInlineBotResults:
@@ -84,9 +84,8 @@ class GetInlineBotResults:
                     ) if (latitude is not None and longitude is not None) else None
                 )
             )
-        except UnknownError as e:
-            # TODO: Add this -503 Timeout error into the Error DB
-            if e.value.error_code == -503 and e.value.error_message == "Timeout":
-                raise TimeoutError("The inline bot didn't answer in time") from None
-            else:
-                raise e
+        # A bot that takes too long to answer is reported as the -503 `Timeout`, which is a
+        # different error from the 500 `TIMEOUT` Telegram raises for its own workers. Both used to
+        # compile to a class named `Timeout`, so the -503 one was unreachable and this never fired.
+        except Timeout503:
+            raise TimeoutError("The inline bot didn't answer in time") from None
