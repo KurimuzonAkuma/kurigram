@@ -550,7 +550,7 @@ class Session:
             try:
                 return await self.send(query, timeout=timeout)
             except (FloodWait, FloodPremiumWait) as e:
-                amount = e.value
+                amount = e.seconds
 
                 if amount > sleep_threshold >= 0:
                     raise

@@ -166,18 +166,18 @@ class SendPhoneNumberCode:
 
                 r = await self.invoke(rpc, recaptcha_token=recaptcha_token)
             except (PhoneMigrate, NetworkMigrate) as e:
-                dc_option = await self.get_dc_option(e.value, ipv6=self.ipv6)
+                dc_option = await self.get_dc_option(e.dc_id, ipv6=self.ipv6)
                 await self.session.stop()
 
                 self.session = await self.get_session(
-                    dc_id=e.value,
+                    dc_id=e.dc_id,
                     server_address=dc_option.ip_address,
                     port=dc_option.port,
                     export_authorization=False,
                     temporary=True,
                 )
 
-                await self.storage.dc_id(e.value)
+                await self.storage.dc_id(e.dc_id)
                 await self.storage.server_address(dc_option.ip_address)
                 await self.storage.port(dc_option.port)
                 await self.storage.auth_key(self.session.auth_key)

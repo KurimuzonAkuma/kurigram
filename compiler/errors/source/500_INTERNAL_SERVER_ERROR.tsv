@@ -2,7 +2,7 @@ id	message
 API_CALL_ERROR	API call error due to Telegram having internal problems. Please try again later.
 AUTH_KEY_UNSYNCHRONIZED	Internal error, please repeat the method call.
 AUTH_RESTART	User authorization has restarted.
-AUTH_RESTART_X	Internal error (debug info {value}), please repeat the method call.
+AUTH_RESTART_X	Internal error (debug info {debug_info}), please repeat the method call.
 CALL_OCCUPY_FAILED	The call failed because the user is already making another call.
 CDN_UPLOAD_TIMEOUT	A server-side timeout occurred while reuploading the file to the CDN DC.
 CHAT_ID_GENERATE_FAILED	Failure while generating the chat ID.
@@ -19,8 +19,8 @@ GROUPCALL_ADD_PARTICIPANTS_FAILED	Failure while adding voice chat member due to 
 GROUPED_ID_OCCUPY_FAILED	Telegram is having internal problems. Please try again later.
 HISTORY_GET_FAILED	The chat history couldn't be retrieved due to Telegram having internal problems. Please try again later.
 IMAGE_ENGINE_DOWN	Image engine down due to Telegram having internal problems. Please try again later.
-INTERDC_X_CALL_ERROR	An error occurred while Telegram was intercommunicating with DC{value}. Please try again later.
-INTERDC_X_CALL_RICH_ERROR	A rich error occurred while Telegram was intercommunicating with DC{value}. Please try again later.
+INTERDC_X_CALL_ERROR	An error occurred while Telegram was intercommunicating with DC{dc_id}. Please try again later.
+INTERDC_X_CALL_RICH_ERROR	A rich error occurred while Telegram was intercommunicating with DC{dc_id}. Please try again later.
 MEMBER_FETCH_FAILED	Telegram is having internal problems. Please try again later.
 MEMBER_NO_LOCATION	Couldn't find the member's location due to Telegram having internal problems. Please try again later.
 MEMBER_OCCUPY_PRIMARY_LOC_FAILED	Telegram is having internal problems. Please try again later.

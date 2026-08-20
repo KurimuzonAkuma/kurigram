@@ -1,0 +1,4 @@
+    @property
+    def {value_name}(self) -> Optional[int]:
+        """``Optional[int]``: What Telegram sent with this error, under the name its message gives it"""
+        return self.value

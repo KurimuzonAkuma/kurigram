@@ -17,20 +17,81 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
-from typing import Optional, Type, Union
+from typing import Final, Optional, Pattern, Tuple, Type, Union
 
 from pyrogram import raw
 from pyrogram.raw.core import TLObject
 from .exceptions.all import exceptions
 
+STRING_PARAMETER_PREFIXES: Final[Tuple[str, ...]] = (
+    "APNS_VERIFY_CHECK_",
+    "INTEGRITY_CHECK_CLASSIC_",
+    "RECAPTCHA_CHECK_"
+)
+PARAMETER: Final[Pattern[str]] = re.compile(r"_(\d+)")
+
+# Canonical: `compiler/errors/compiler.py`, which writes one row per code keyed `"_"`, holding the
+# name of the category class that code's errors subclass — `BadRequest` for 400, `Forbidden` for
+# 403. It is what an error whose message is not in the table falls back to.
+CATEGORY: Final[str] = "_"
+
+
+@dataclass(frozen=True)
+class _MessageParts:
+    error_id: str
+    value: Optional[str]
+
+
+def _split_error_message(error_message: str) -> _MessageParts:
+    # The three verification errors are the only ones whose parameters are a string rather than a
+    # number, so `PARAMETER` rewrites part of the payload and yields an id that matches no table
+    # row: the caller gets a bare `Forbidden` instead of the error itself, and every occurrence
+    # appends a line to `unknown_errors.txt`.
+    #
+    # Reproduce, without the loop below:
+    #     RPCError.raise_it(
+    #         raw.types.RpcError(
+    #             error_code=403,
+    #             error_message="RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP"
+    #         ),
+    #         raw.functions.auth.SendCode
+    #     )
+    #
+    #     pyrogram.errors.exceptions.forbidden_403.Forbidden: Telegram says: [403 Forbidden]
+    #     - [403 RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP] (caused by "auth.SendCode")
+    #
+    # TDLib splits the same three prefixes off before anything else looks at the message:
+    # https://github.com/tdlib/td/blob/022d60202e446ad1287b9fb68e687c8a0760788b/td/telegram/net/NetQueryDispatcher.cpp#L112-L146
+    for prefix in STRING_PARAMETER_PREFIXES:
+        if error_message.startswith(prefix):
+            return _MessageParts(
+                error_id=f"{prefix}X",
+                value=error_message[len(prefix):]
+            )
+
+    match = PARAMETER.search(error_message)
+    if match is None:
+        return _MessageParts(error_id=error_message, value=None)
+
+    # The tables spell a parameter as `_X`, so the id of a message is the message with its numbers
+    # blanked out: `FLOOD_WAIT_42` is listed as `FLOOD_WAIT_X`. `sub()` rather than the first match
+    # alone, because the id is the shape of the whole message; no table id carries more than one
+    # parameter, which is why the single `search()` above is enough to read the value back.
+    return _MessageParts(
+        error_id=PARAMETER.sub("_X", error_message),
+        value=match.group(1)
+    )
+
 
 class RPCError(Exception):
-    ID = None
-    CODE = None
-    NAME = None
-    MESSAGE = "{value}"
+    ID: Optional[str] = None
+    CODE: Optional[int] = None
+    NAME: Optional[str] = None
+    MESSAGE: str = "{value}"
+    VALUE_NAME: str = "value"
 
     def __init__(
         self,
@@ -39,17 +100,20 @@ class RPCError(Exception):
         is_unknown: bool = False,
         is_signed: bool = False
     ):
-        super().__init__("Telegram says: [{}{} {}] - {} {}".format(
-            "-" if is_signed else "",
-            self.CODE,
-            self.ID or self.NAME,
-            self.MESSAGE.format(value=value),
-            f'(caused by "{rpc_name}")' if rpc_name else ""
-        ))
+        code = f"-{self.CODE}" if is_signed else self.CODE
+        name = self.ID or self.NAME
+        description = self.MESSAGE.format(**{self.VALUE_NAME: value})
+        caused_by = f' (caused by "{rpc_name}")' if rpc_name else ""
+        message = f"Telegram says: [{code} {name}] - {description}{caused_by}"
 
-        try:
+        super().__init__(message)
+
+        self.value: Optional[Union[int, str, raw.types.RpcError]]
+
+        # `isdecimal()`, not `isdigit()`: the latter is true for "²" too, and `int("²")` raises.
+        if isinstance(value, str) and value.isdecimal():
             self.value = int(value)
-        except (ValueError, TypeError):
+        else:
             self.value = value
 
         if is_unknown:
@@ -74,27 +138,27 @@ class RPCError(Exception):
                 is_signed=is_signed
             )
 
-        error_id = re.sub(r"_\d+", "_X", error_message)
+        errors = import_module("pyrogram.errors")
 
-        if error_id not in exceptions[error_code]:
-            raise getattr(
-                import_module("pyrogram.errors"),
-                exceptions[error_code]["_"]
-            )(value=f"[{error_code} {error_message}]",
-              rpc_name=rpc_name,
-              is_unknown=True,
-              is_signed=is_signed)
+        parts = _split_error_message(error_message)
+        if parts.error_id not in exceptions[error_code]:
+            error_type = getattr(errors, exceptions[error_code][CATEGORY])
 
-        value = re.search(r"_(\d+)", error_message)
-        value = value.group(1) if value is not None else value
+            raise error_type(
+                value=f"[{error_code} {error_message}]",
+                rpc_name=rpc_name,
+                is_unknown=True,
+                is_signed=is_signed
+            )
 
-        raise getattr(
-            import_module("pyrogram.errors"),
-            exceptions[error_code][error_id]
-        )(value=value,
-          rpc_name=rpc_name,
-          is_unknown=False,
-          is_signed=is_signed)
+        error_type = getattr(errors, exceptions[error_code][parts.error_id])
+
+        raise error_type(
+            value=parts.value,
+            rpc_name=rpc_name,
+            is_unknown=False,
+            is_signed=is_signed
+        )
 
 
 class UnknownError(RPCError):

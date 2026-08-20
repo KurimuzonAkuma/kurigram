@@ -15,7 +15,7 @@ AICOMPOSE_TONE_TITLE_INVALID	The specified tone title is invalid.
 AI_COMPOSE_TASK_MISSING	The text composition style is missing.
 ALBUM_PHOTOS_TOO_MANY	Too many photos were included in the album.
 ANONYMOUS_OPEN_INVALID	allow_adding_options is not supported for anonymous polls and quizzes.
-ANSWER_X_MEDIA_TYPE_INVALID	The option media type at index {value} is invalid.
+ANSWER_X_MEDIA_TYPE_INVALID	The option media type at index {index} is invalid.
 API_ID_INVALID	The api_id/api_hash combination is invalid.
 API_ID_PUBLISHED_FLOOD	You are using an API key that is limited on the server side because it was published somewhere.
 ARTICLE_TITLE_EMPTY	The title of the article is empty.
@@ -183,7 +183,7 @@ EMAIL_INVALID	The specified email is invalid.
 EMAIL_NOT_ALLOWED	The specified email cannot be used to complete the operation.
 EMAIL_NOT_SETUP	In order to change the login email with emailVerifyPurposeLoginChange, an existing login email must already be set using emailVerifyPurposeLoginSetup.
 EMAIL_UNCONFIRMED	Email unconfirmed.
-EMAIL_UNCONFIRMED_X	The provided email isn't confirmed, {value} is the length of the verification code that was just sent to the email: use [account.verifyEmail](https://core.telegram.org/method/account.verifyEmail) to enter the received verification code and enable the recovery email.
+EMAIL_UNCONFIRMED_X	The provided email isn't confirmed, {code_length} is the length of the verification code that was just sent to the email: use [account.verifyEmail](https://core.telegram.org/method/account.verifyEmail) to enter the received verification code and enable the recovery email.
 EMAIL_VERIFY_EXPIRED	The verification email has expired.
 EMOJI_INVALID	The specified theme emoji is valid.
 EMOJI_MARKUP_INVALID	The specified `video_emoji_markup` was invalid.
@@ -219,7 +219,7 @@ FIELD_NAME_INVALID	The field with the name FIELD_NAME is invalid.
 FILE_CONTENT_TYPE_INVALID	File content-type is invalid.
 FILE_EMTPY	An empty file was provided.
 FILE_ID_INVALID	The provided file id is invalid.
-FILE_MIGRATE_X	The file currently being accessed is stored in DC{value}, please re-send the query to that DC.
+FILE_MIGRATE_X	The file currently being accessed is stored in DC{dc_id}, please re-send the query to that DC.
 FILE_PARTS_INVALID	The number of file parts is invalid.
 FILE_PART_0_MISSING	File part 0 missing.
 FILE_PART_EMPTY	The provided file part is empty.
@@ -229,13 +229,13 @@ FILE_PART_SIZE_CHANGED	The part size is different from the size of one of the pr
 FILE_PART_SIZE_INVALID	The provided file part size is invalid.
 FILE_PART_TOO_BIG	The uploaded file part is too big.
 FILE_PART_TOO_SMALL	The size limit for the content of the file part has been exceeded.
-FILE_PART_X_MISSING	Part {value} of the file is missing from storage. Try repeating the method call to resave the part.
+FILE_PART_X_MISSING	Part {file_part} of the file is missing from storage. Try repeating the method call to resave the part.
 FILE_REFERENCE_EMPTY	The file id contains an empty [file reference](https://core.telegram.org/api/file_reference), you must obtain a valid one by fetching the message from the origin context.
 FILE_REFERENCE_EXPIRED	The file id contains an expired [file reference](https://core.telegram.org/api/file_reference), you must obtain a valid one by fetching the message from the origin context.
 FILE_REFERENCE_INVALID	The file id contains an invalid [file reference](https://core.telegram.org/api/file_reference), you must obtain a valid one by fetching the message from the origin context.
-FILE_REFERENCE_X_EMPTY	The file reference of the media file at offset {value} in the multi_media array is invalid.
-FILE_REFERENCE_X_EXPIRED	The [file reference](https://core.telegram.org/api/file_reference) of the media file at index {value} in the passed media array expired, it must be refreshed.
-FILE_REFERENCE_X_INVALID	The [file reference](https://core.telegram.org/api/file_reference) of the media file at index {value} in the passed media array is invalid.
+FILE_REFERENCE_X_EMPTY	The file reference of the media file at offset {index} in the multi_media array is invalid.
+FILE_REFERENCE_X_EXPIRED	The [file reference](https://core.telegram.org/api/file_reference) of the media file at index {index} in the passed media array expired, it must be refreshed.
+FILE_REFERENCE_X_INVALID	The [file reference](https://core.telegram.org/api/file_reference) of the media file at index {index} in the passed media array is invalid.
 FILE_TITLE_EMPTY	An empty file title was specified.
 FILE_TOKEN_INVALID	The master DC did not accept the `file_token` (e.g., the token has expired). Continue downloading the file from the master DC using upload.getFile.
 FILTER_ID_INVALID	The specified filter ID is invalid.
@@ -405,7 +405,7 @@ PASSWORD_MISSING	You must [enable 2FA](https://core.telegram.org/api/srp) before
 PASSWORD_RECOVERY_EXPIRED	The recovery code has expired.
 PASSWORD_RECOVERY_NA	No email was set, can't recover password via email.
 PASSWORD_REQUIRED	The two-step verification password is required for this method.
-PASSWORD_TOO_FRESH_X	The two-step verification password was modified less than 24 hours ago, try again in {value} seconds.
+PASSWORD_TOO_FRESH_X	The two-step verification password was modified less than 24 hours ago, try again in {seconds} seconds.
 PAYMENT_CREDENTIALS_INVALID	The specified payment credentials are invalid.
 PAYMENT_PROVIDER_INVALID	The payment provider was not recognised or its token was invalid.
 PAYMENT_REQUIRED	The payment is required.
@@ -534,7 +534,7 @@ SEND_AS_PEER_INVALID	You can't send messages as the specified peer.
 SEND_MESSAGE_GAME_INVALID	An inputBotInlineMessageGame can only be contained in an inputBotInlineResultGame, not in an inputBotInlineResult/inputBotInlineResultPhoto/etc.
 SEND_MESSAGE_MEDIA_INVALID	The message media is invalid.
 SEND_MESSAGE_TYPE_INVALID	The message type is invalid.
-SESSION_TOO_FRESH_X	This session was created less than 24 hours ago, try again in {value} seconds.
+SESSION_TOO_FRESH_X	This session was created less than 24 hours ago, try again in {seconds} seconds.
 SETTINGS_INVALID	Invalid settings were provided.
 SHA256_HASH_INVALID	The provided SHA256 hash is invalid.
 SHORTCUT_INVALID	The specified shortcut is invalid.
@@ -571,9 +571,9 @@ STARGIFT_OWNER_INVALID	The specified gift owner is invalid.
 STARGIFT_PEER_INVALID	The specified inputSavedStarGiftChat.peer is invalid.
 STARGIFT_RESELL_CURRENCY_NOT_ALLOWED	The currency provided for gift resell is not allowed.
 STARGIFT_RESELL_NOT_ALLOWED	You can't buy this gift. Someone else may have already bought it or this gift is not for sale.
-STARGIFT_RESELL_TOO_EARLY_X	A wait of {value} seconds is required to resell this gift.
+STARGIFT_RESELL_TOO_EARLY_X	A wait of {seconds} seconds is required to resell this gift.
 STARGIFT_SLUG_INVALID	The provided star gift slug is invalid (must match the format CollectionName-123).
-STARGIFT_TRANSFER_TOO_EARLY_X	A wait of {value} seconds is required to transfer this gift.
+STARGIFT_TRANSFER_TOO_EARLY_X	A wait of {seconds} seconds is required to transfer this gift.
 STARGIFT_UPGRADE_UNAVAILABLE	Gift is not available for upgrade yet.
 STARGIFT_USAGE_LIMITED	The gift is sold out.
 STARGIFT_USER_USAGE_LIMITED	You've reached the starGift.limited_per_user limit, you can't buy any more gifts of this type.
@@ -616,12 +616,12 @@ STORIES_NEVER_CREATED	This peer hasn't ever posted any stories.
 STORIES_TOO_MUCH	You have hit the maximum active stories limit as specified by the [`story_expiring_limit_*` client configuration parameters](https://core.telegram.org/api/config#story-expiring-limit-default): you should buy a [Premium](https://core.telegram.org/api/premium) subscription, delete an active story, or wait for the oldest story to expire.
 STORY_ID_EMPTY	You specified no story IDs.
 STORY_ID_INVALID	The specified story ID is invalid.
-STORY_LIVE_ALREADY_X	The user or the chat has an active live story with identifier {value}.
+STORY_LIVE_ALREADY_X	The user or the chat has an active live story with identifier {story_id}.
 STORY_NOT_MODIFIED	The new story information you passed is equal to the previous story information, thus it wasn't modified.
 STORY_PERIOD_INVALID	The specified story period is invalid for this account.
 STORY_PUBLIC_MISSING	The story you are trying to access or manipulate is not publicly available.
-STORY_SEND_FLOOD_MONTHLY_X	You've hit the monthly story limit as specified by the [`stories_sent_monthly_limit_*` client configuration parameters](https://core.telegram.org/api/config#stories-sent-monthly-limit-default): wait {value} seconds before posting a new story.
-STORY_SEND_FLOOD_WEEKLY_X	You've hit the weekly story limit as specified by the [`stories_sent_weekly_limit_*` client configuration parameters](https://core.telegram.org/api/config#stories-sent-weekly-limit-default): wait {value} seconds before posting a new story.
+STORY_SEND_FLOOD_MONTHLY_X	You've hit the monthly story limit as specified by the [`stories_sent_monthly_limit_*` client configuration parameters](https://core.telegram.org/api/config#stories-sent-monthly-limit-default): wait {seconds} seconds before posting a new story.
+STORY_SEND_FLOOD_WEEKLY_X	You've hit the weekly story limit as specified by the [`stories_sent_weekly_limit_*` client configuration parameters](https://core.telegram.org/api/config#stories-sent-weekly-limit-default): wait {seconds} seconds before posting a new story.
 SUBSCRIPTION_EXPORT_MISSING	You cannot send a [bot subscription invoice](https://core.telegram.org/api/subscriptions#bot-subscriptions) directly, you may only create invoice links using [payments.exportInvoice](https://core.telegram.org/method/payments.exportInvoice).
 SUBSCRIPTION_ID_INVALID	The specified subscription_id is invalid.
 SUBSCRIPTION_PERIOD_INVALID	The specified subscription_pricing.period is invalid.

@@ -150,4 +150,4 @@ def test_every_error_in_the_table_reports_the_code_it_came_from():
 
             checked += 1
 
-    assert checked == 934
+    assert checked == 936

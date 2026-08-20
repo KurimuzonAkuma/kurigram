@@ -16,3 +16,16 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Final
+
+from pyrogram import raw
+from pyrogram.errors import RPCError
+
+RPC_NAME: Final[str] = "messages.GetHistory"
+
+
+def raise_it(code: int, *, message: str) -> None:
+    RPCError.raise_it(
+        raw.types.RpcError(error_code=code, error_message=message),
+        raw.functions.messages.GetHistory
+    )

@@ -336,7 +336,7 @@ class SendPhoto:
 
                     r = await self.invoke(rpc, business_connection_id=business_connection_id)
                 except FilePartMissing as e:
-                    await self.save_file(photo, file_id=file.id, file_part=e.value)
+                    await self.save_file(photo, file_id=file.id, file_part=e.file_part)
                 else:
                     messages = await utils.parse_messages(client=self, messages=r)
 
