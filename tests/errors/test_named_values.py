@@ -153,6 +153,20 @@ def test_the_base_class_still_speaks_of_a_plain_value() -> None:
     assert str(RPCError("something")) == "Telegram says: [None None] - something "
 
 
+def test_no_message_asks_for_more_than_one_value() -> None:
+    errors: ModuleType = import_module("pyrogram.errors")
+
+    for table in exceptions.values():
+        for class_name in table.values():
+            error_type = getattr(errors, class_name)
+
+            # `raise_it()` reads one number out of a message and renders the message with it, so a
+            # second placeholder could never be filled in: `str.format()` would raise `KeyError`
+            # while building the error, and the caller would catch that instead of the error.
+            assert error_type.MESSAGE.count("{") <= 1
+            assert error_type.MESSAGE.count("{") == error_type.MESSAGE.count("}")
+
+
 def test_every_named_value_is_the_value_under_another_name() -> None:
     errors: ModuleType = import_module("pyrogram.errors")
     named: Set[Type[RPCError]] = set()

@@ -20,6 +20,8 @@ import csv
 import os
 import re
 import shutil
+from dataclasses import dataclass
+from typing import List
 
 HOME = "compiler/errors"
 DEST = "pyrogram/errors/exceptions"
@@ -37,7 +39,15 @@ def caml(s):
     return "".join([str(i.title()) for i in s])
 
 
-def value_property(template, value_name):
+@dataclass(frozen=True)
+class SubClass:
+    name: str
+    error_id: str
+    message: str
+    value_name: str
+
+
+def value_property(template: str, *, value_name: str) -> str:
     if value_name == "value":
         return ""
 
@@ -47,8 +57,8 @@ def value_property(template, value_name):
     return "\n\n" + template.format(value_name=value_name).rstrip("\n")
 
 
-def typing_import(sub_classes):
-    if all(k[3] == "value" for k in sub_classes):
+def typing_import(sub_classes: List[SubClass]) -> str:
+    if all(entry.value_name == "value" for entry in sub_classes):
         return ""
 
     return "from typing import Optional\n\n"
@@ -117,14 +127,37 @@ def start():
 
                     f_all.write("        \"{}\": \"{}\",\n".format(error_id, sub_class))
 
-                    # The placeholder in the message is what the value Telegram sends along with
-                    # the error means, so it is also the name the error exposes it under. A message
-                    # that still says "{value}" gets no property: `value` is already taken by the
-                    # attribute itself, and a property of the same name would shadow it.
-                    value_match = re.search(r"\{(\w+)\}", error_message)
-                    value_name = value_match.group(1) if value_match is not None else "value"
+                    # NOTE: The placeholder in a message is what the value Telegram sends along
+                    #       with the error means, so it is also the name the error exposes it
+                    #       under. A message that still says "{value}" gets no property: `value` is
+                    #       the attribute itself, and a property of that name would shadow it.
+                    #
+                    #       The names are Telegram's own words for each value, from the
+                    #       descriptions in https://corefork.telegram.org/api/errors.json, or the
+                    #       schema's word for the same thing (`dc_id` is `auth.exportAuthorization
+                    #       .dc_id`, `file_part` is `upload.saveFilePart.file_part`). Where
+                    #       Telethon already named one, the name is theirs:
+                    #       https://github.com/LonamiWebs/Telethon/blob/v1.36.0/telethon_generator/data/errors.csv
+                    #
+                    #       One placeholder per message, at most. `RPCError.raise_it()` reads a
+                    #       single number out of an error message and renders the message with it,
+                    #       so a second placeholder could never be filled in - `str.format()` would
+                    #       raise `KeyError` on the error nobody can catch.
+                    placeholders = re.findall(r"\{(\w*)\}", error_message)
 
-                    sub_classes.append((sub_class, error_id, error_message, value_name))
+                    if len(placeholders) > 1:
+                        raise ValueError("{} carries {} placeholders: {}".format(
+                            error_id, len(placeholders), error_message
+                        ))
+
+                    value_name = placeholders[0] if placeholders else "value"
+
+                    sub_classes.append(SubClass(
+                        name=sub_class,
+                        error_id=error_id,
+                        message=error_message,
+                        value_name=value_name
+                    ))
 
                 with open("{}/template/class.txt".format(HOME), "r", encoding="utf-8") as f_class_template:
                     class_template = f_class_template.read()
@@ -142,12 +175,15 @@ def start():
                         code=code,
                         docstring='"""{}"""'.format(name),
                         sub_classes="".join([sub_class_template.format(
-                            sub_class=k[0],
+                            sub_class=entry.name,
                             super_class=super_class,
-                            id="\"{}\"".format(k[1]),
-                            docstring='"""{}"""'.format(k[2]),
-                            value_property=value_property(value_property_template, k[3])
-                        ) for k in sub_classes])
+                            id="\"{}\"".format(entry.error_id),
+                            docstring='"""{}"""'.format(entry.message),
+                            value_property=value_property(
+                                value_property_template,
+                                value_name=entry.value_name
+                            )
+                        ) for entry in sub_classes])
                     )
 
                 f_class.write(class_template)
