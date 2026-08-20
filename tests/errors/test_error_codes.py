@@ -19,10 +19,12 @@
 
 import re
 from importlib import import_module
+from pathlib import Path
+from types import ModuleType
+from typing import Type
 
 import pytest
 
-from pyrogram import raw
 from pyrogram.errors import (
     BadRequest,
     ChannelPrivate,
@@ -42,13 +44,7 @@ from pyrogram.errors import (
     UnknownError400
 )
 from pyrogram.errors.exceptions.all import exceptions
-
-
-def raise_it(code, *, message):
-    RPCError.raise_it(
-        raw.types.RpcError(error_code=code, error_message=message),
-        raw.functions.messages.GetHistory
-    )
+from tests.errors import raise_it
 
 
 @pytest.mark.parametrize(
@@ -63,11 +59,11 @@ def raise_it(code, *, message):
     ]
 )
 def test_an_error_under_two_codes_is_caught_by_the_category_of_the_one_it_came_from(
-    code,
-    message,
-    error_type,
-    category
-):
+    code: int,
+    message: str,
+    error_type: Type[RPCError],
+    category: Type[RPCError]
+) -> None:
     with pytest.raises(error_type) as raised:
         raise_it(code, message=message)
 
@@ -88,12 +84,16 @@ def test_an_error_under_two_codes_is_caught_by_the_category_of_the_one_it_came_f
         pytest.param(-503, "Timeout", Timeout, id="timeout")
     ]
 )
-def test_the_name_the_two_codes_share_still_catches_both(code, message, shared_type):
+def test_the_name_the_two_codes_share_still_catches_both(
+    code: int,
+    message: str,
+    shared_type: Type[RPCError]
+) -> None:
     with pytest.raises(shared_type):
         raise_it(code, message=message)
 
 
-def test_two_ids_under_one_code_keep_their_own_message():
+def test_two_ids_under_one_code_keep_their_own_message() -> None:
     with pytest.raises(EmailUnconfirmedX) as raised:
         raise_it(400, message="EMAIL_UNCONFIRMED_6")
 
@@ -107,7 +107,10 @@ def test_two_ids_under_one_code_keep_their_own_message():
     assert EmailUnconfirmed.MESSAGE != EmailUnconfirmedX.MESSAGE
 
 
-def test_an_error_named_after_a_hand_written_one_is_still_a_bad_request(tmp_path, monkeypatch):
+def test_an_error_named_after_a_hand_written_one_is_still_a_bad_request(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.chdir(tmp_path)
 
     with pytest.raises(UnknownError400) as raised:
@@ -121,10 +124,10 @@ def test_an_error_named_after_a_hand_written_one_is_still_a_bad_request(tmp_path
     assert not (tmp_path / "unknown_errors.txt").exists()
 
 
-def test_every_error_in_the_table_reports_the_code_it_came_from():
-    errors = import_module("pyrogram.errors")
+def test_every_error_in_the_table_reports_the_code_it_came_from() -> None:
+    errors: ModuleType = import_module("pyrogram.errors")
     categories = {code: getattr(errors, table["_"]) for code, table in exceptions.items()}
-    checked = 0
+    checked: int = 0
 
     for code, table in exceptions.items():
         for error_id, class_name in table.items():
