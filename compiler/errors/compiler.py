@@ -36,30 +36,13 @@ _PLAIN_VALUE_NAME: Final[str] = "value"
 # the hand-written `UnknownError`, which reports code 520 and is no `BadRequest`.
 _RESERVED_CLASS_NAMES: Final[Tuple[str, ...]] = ("RPCError", "UnknownError")
 
-# Two blocks that a class body carries only under a condition, spelled out here rather than in
-# `template/`: a file there stands for a whole module or a whole class, while each of these is the
-# handful of lines that one kind of error gets and the rest do not.
-
-# A sub class answers with the code and the category of the class it subclasses, and an error that
-# arrived under a code of its own has to say so, or `except Forbidden` would miss the 403 that
-# shares its name with a 400.
-_CODE_AND_NAME: Final[str] = '''
-    CODE = {code}
-    """``int``: RPC Error Code"""
-    NAME = "{name}"
-    """``str``: RPC Error Name"""'''
-
-# An error that carries nothing inherits the name of a value it never has when the error it
-# subclasses names one. `ALLOW_PAYMENT_REQUIRED` at 406 is the only one: the 403 it shares a name
-# with is the parameterised `ALLOW_PAYMENT_REQUIRED_X`, whose message carries `{star_count}`.
-_INHERITED_VALUE_NAME_RESET: Final[str] = '''
-
-    # Unlike the `{primary}` it subclasses, this error carries nothing.
-    VALUE_NAME = RPCError.VALUE_NAME'''
+# A class name may not start with a digit. `2FA_CONFIRM_WAIT_X` is the only id that does, and any
+# other would need a word of its own here rather than a module Python cannot import.
+_LEADING_DIGIT_WORDS: Final[Dict[str, str]] = {"2": "Two"}
 
 
 @dataclass(frozen=True)
-class Table:
+class _Table:
     """A source table, and the module it compiles to."""
     file_name: str
     code: int
@@ -69,9 +52,9 @@ class Table:
 
 
 @dataclass(frozen=True)
-class Row:
+class _Row:
     """A line of a source table."""
-    table: Table
+    table: _Table
     error_id: str
     message: str
     value_name: str
@@ -79,108 +62,127 @@ class Row:
 
 
 @dataclass(frozen=True)
-class Error:
+class _Error:
     """A row, once every claimant of the name it asks for is known and it has one of its own."""
-    row: Row
+    row: _Row
     class_name: str
     bases: List[str]
-    primary: Optional["Error"]
+    primary: Optional["_Error"]
 
     @property
-    def table(self) -> Table:
+    def table(self) -> _Table:
         return self.row.table
 
 
 @dataclass(frozen=True)
-class Templates:
-    """The three files in `template/`. `class.txt` is the whole module: a category and its errors."""
+class _Templates:
+    """
+    The files under `template/`. `class.txt` is a whole module: a category and the errors under it,
+    each of them written from `sub_class.txt`, and each of the three blocks below written into the
+    body of a sub class that asks for it.
+
+    The newlines that join a block to that body are spelled out where the block is written, rather
+    than left to whichever ones a template file happens to begin and end with.
+    """
     module: str
     sub_class: str
+    code_and_name: str
     value_property: str
+    value_name_reset: str
 
 
-def snek(name: str) -> str:
+def _to_snake_case(name: str) -> str:
     # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
     name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
     return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
 
 
-def caml(name: str) -> str:
-    return "".join([word.title() for word in snek(name).split("_")])
+def _to_pascal_case(name: str) -> str:
+    return "".join([word.title() for word in _to_snake_case(name).split("_")])
 
 
-def read_notice() -> str:
+def _read_notice() -> str:
     with open(NOTICE_PATH, encoding="utf-8") as notice_file:
         return "\n".join(["# {}".format(line).strip() for line in notice_file.readlines()])
 
 
-def read_templates() -> Templates:
-    return Templates(
-        module=read_template("class"),
-        sub_class=read_template("sub_class"),
-        value_property=read_template("value_property")
+def _read_templates() -> _Templates:
+    return _Templates(
+        module=_read_template("class"),
+        sub_class=_read_template("sub_class"),
+        code_and_name=_read_template("code_and_name"),
+        value_property=_read_template("value_property"),
+        value_name_reset=_read_template("value_name_reset")
     )
 
 
-def read_template(template_name: str) -> str:
+def _read_template(template_name: str) -> str:
     with open("{}/template/{}.txt".format(HOME, template_name), encoding="utf-8") as template_file:
         return template_file.read()
 
 
-def read_table(file_name: str) -> Table:
+def _read_table(file_name: str) -> _Table:
     code, name = re.search(r"(\d+)_([A-Z_]+)", file_name).groups()
     words = re.sub(r"_", " ", name).lower().split(" ")
 
-    return Table(
+    return _Table(
         file_name=file_name,
         code=int(code),
         module_name="{}_{}".format(name.lower(), code),
-        super_class=caml(name),
+        super_class=_to_pascal_case(name),
         title=" ".join([word.capitalize() for word in words])
     )
 
 
-def read_rows(table: Table) -> List[Row]:
-    rows = []
-
+def _read_rows(table: _Table) -> List[_Row]:
     with open("{}/source/{}".format(HOME, table.file_name), encoding="utf-8") as table_file:
         reader = csv.reader(table_file, delimiter="\t")
         next(reader)  # The header.
 
-        for row in reader:
-            if not row:  # A blank line.
-                continue
-
-            error_id, message = row
-
-            rows.append(Row(
-                table=table,
-                error_id=error_id,
-                message=message,
-                value_name=value_name_of(error_id=error_id, message=message),
-                base_name=base_name_of(error_id)
-            ))
-
-    return rows
+        # A blank line is no error of the table.
+        return [_read_row(table, line=line) for line in reader if line]
 
 
-def base_name_of(error_id: str) -> str:
+def _read_row(table: _Table, *, line: List[str]) -> _Row:
+    error_id, message = line
+
+    return _Row(
+        table=table,
+        error_id=error_id,
+        message=message,
+        value_name=_value_name_of(error_id=error_id, message=message),
+        base_name=_base_name_of(error_id)
+    )
+
+
+def _base_name_of(error_id: str) -> str:
     # The `_X` suffix marks the ids whose message carries a value. It is not part of the name: an
     # id spelled both ways is one error, and the two are told apart by a suffix further down.
-    name = caml(re.sub(r"_X", "_", error_id))
-
-    # `2FA_CONFIRM_WAIT_X` is the one id that starts with a digit, which a class name may not.
-    name = re.sub(r"^2", "Two", name)
+    name = _to_pascal_case(re.sub(r"_X", "_", error_id))
 
     # `No workers running`, at 500, is a sentence rather than an id.
-    return name.replace(" ", "")
+    return _spell_out_leading_digit(name.replace(" ", ""), error_id=error_id)
 
 
-def value_name_of(*, error_id: str, message: str) -> str:
-    # The placeholder in a message is Telegram's own word for what the error carries: from the
-    # descriptions in https://corefork.telegram.org/api/errors.json, from the schema's word for the
-    # same thing (`dc_id` is `auth.exportAuthorization.dc_id`), or from Telethon, which named a
-    # number of them first:
+def _spell_out_leading_digit(name: str, *, error_id: str) -> str:
+    if not name[:1].isdigit():
+        return name
+
+    word = _LEADING_DIGIT_WORDS.get(name[0])
+
+    if word is None:
+        msg = "{} starts with a digit that no word is spelled out for: {}".format(error_id, name[0])
+        raise ValueError(msg)
+
+    return word + name[1:]
+
+
+def _value_name_of(*, error_id: str, message: str) -> str:
+    # The placeholder in a message is Telegram's own word for what the error carries, taken from
+    # the descriptions in the error list Telegram publishes, https://core.telegram.org/api/errors,
+    # in machine-readable form at https://core.telegram.org/api/errors.json, or from the schema's
+    # word for the same thing (`dc_id` is `auth.exportAuthorization.dc_id`), or from Telethon,
+    # which named a number of them first:
     # https://github.com/LonamiWebs/Telethon/blob/v1.36.0/telethon_generator/data/errors.csv
     #
     # One placeholder per message, at most. `RPCError.raise_it()` reads a single number out of an
@@ -198,8 +200,8 @@ def value_name_of(*, error_id: str, message: str) -> str:
     return placeholders[0]
 
 
-def name_errors(rows: List[Row]) -> List[Error]:
-    claimants: Dict[str, List[Row]] = {}
+def _name_errors(rows: List[_Row]) -> List[_Error]:
+    claimants: Dict[str, List[_Row]] = {}
 
     for row in rows:
         claimants.setdefault(row.base_name, []).append(row)
@@ -208,12 +210,12 @@ def name_errors(rows: List[Row]) -> List[Error]:
         for row in claimants.pop(reserved_name, []):
             claimants.setdefault("{}{}".format(reserved_name, row.table.code), []).append(row)
 
-    named: Dict[Row, Error] = {}
+    named: Dict[_Row, _Error] = {}
 
     for base_name, group in claimants.items():
         group.sort(key=lambda claimant: (claimant.table.code, claimant.error_id))
 
-        primary = Error(
+        primary = _Error(
             row=group[0],
             class_name=base_name,
             bases=[group[0].table.super_class],
@@ -223,22 +225,23 @@ def name_errors(rows: List[Row]) -> List[Error]:
         named[primary.row] = primary
 
         for row in group[1:]:
-            named[row] = subclass_of(primary, row=row)
+            named[row] = _subclass_of(primary, row=row)
 
     class_names = [error.class_name for error in named.values()]
 
     if len(class_names) != len(set(class_names)):
-        raise AssertionError("two errors compile to the same class name")
+        msg = "two errors compile to the same class name"
+        raise RuntimeError(msg)
 
     return [named[row] for row in rows]
 
 
-def subclass_of(primary: Error, *, row: Row) -> Error:
+def _subclass_of(primary: _Error, *, row: _Row) -> _Error:
     if row.table.code != primary.table.code:
         # The very same error under a second code. It keeps the name it shares, so that
         # `except PeerIdInvalid` still catches every one of them, and takes the category of its own
         # code as a second base, so that `except Forbidden` catches the 403 too.
-        return Error(
+        return _Error(
             row=row,
             class_name="{}{}".format(primary.class_name, row.table.code),
             bases=[primary.class_name, row.table.super_class],
@@ -248,7 +251,7 @@ def subclass_of(primary: Error, *, row: Row) -> Error:
     # Two ids under one code that only differ by the value they carry, such as `EMAIL_UNCONFIRMED`
     # and `EMAIL_UNCONFIRMED_X`. The parameterised one is the one that gets marked, and subclasses
     # the other so both are caught by the plain name.
-    return Error(
+    return _Error(
         row=row,
         class_name="{}X".format(primary.class_name),
         bases=[primary.class_name],
@@ -256,8 +259,8 @@ def subclass_of(primary: Error, *, row: Row) -> Error:
     )
 
 
-def by_table(errors: List[Error]) -> Dict[Table, List[Error]]:
-    grouped: Dict[Table, List[Error]] = {}
+def _by_table(errors: List[_Error]) -> Dict[_Table, List[_Error]]:
+    grouped: Dict[_Table, List[_Error]] = {}
 
     for error in errors:
         grouped.setdefault(error.table, []).append(error)
@@ -265,34 +268,40 @@ def by_table(errors: List[Error]) -> Dict[Table, List[Error]]:
     return grouped
 
 
-def code_and_name_block(error: Error) -> str:
+def _code_and_name_block(templates: _Templates, *, error: _Error) -> str:
+    # A sub class answers with the code and the category of the class it subclasses, and an error
+    # that arrived under a code of its own has to say so, or `except Forbidden` would miss the 403
+    # that shares its name with a 400.
     if error.primary is None or error.primary.table.code == error.table.code:
         return ""
 
-    return _CODE_AND_NAME.format(code=error.table.code, name=error.table.title)
+    return "\n" + templates.code_and_name.format(
+        code=error.table.code,
+        name=error.table.title
+    ).rstrip("\n")
 
 
-def value_block(templates: Templates, *, error: Error) -> str:
+def _value_block(templates: _Templates, *, error: _Error) -> str:
     if error.row.value_name != _PLAIN_VALUE_NAME:
-        # A blank line, then the block, appended to the `MESSAGE = __doc__` line the sub class
-        # template ends its body with. Spelled out here rather than left to whichever newlines the
-        # template file happens to begin and end with.
         return "\n\n" + templates.value_property.format(value_name=error.row.value_name).rstrip("\n")
 
+    # An error that carries nothing inherits the name of a value it never has when the error it
+    # subclasses names one. `ALLOW_PAYMENT_REQUIRED` at 406 is the only one: the 403 it shares a
+    # name with is the parameterised `ALLOW_PAYMENT_REQUIRED_X`, which carries `{star_count}`.
     if error.primary is not None and error.primary.row.value_name != _PLAIN_VALUE_NAME:
-        return _INHERITED_VALUE_NAME_RESET.format(primary=error.primary.class_name)
+        return "\n\n" + templates.value_name_reset.format(primary=error.primary.class_name).rstrip("\n")
 
     return ""
 
 
-def typing_import(errors: List[Error]) -> str:
+def _typing_import(errors: List[_Error]) -> str:
     if all(error.row.value_name == _PLAIN_VALUE_NAME for error in errors):
         return ""
 
     return "from typing import Optional\n\n"
 
 
-def import_block(table: Table, *, errors: List[Error]) -> str:
+def _import_block(table: _Table, *, errors: List[_Error]) -> str:
     imports: Dict[str, Set[str]] = {}
 
     for error in errors:
@@ -310,7 +319,7 @@ def import_block(table: Table, *, errors: List[Error]) -> str:
     ])
 
 
-def write_init(tables: List[Table], *, notice: str) -> None:
+def _write_init(tables: List[_Table], *, notice: str) -> None:
     with open("{}/__init__.py".format(DEST), "w", encoding="utf-8") as init_module:
         init_module.write(notice + "\n\n")
 
@@ -318,7 +327,7 @@ def write_init(tables: List[Table], *, notice: str) -> None:
             init_module.write("from .{} import *\n".format(table.module_name))
 
 
-def write_all(tables: Dict[Table, List[Error]], *, notice: str, count: int) -> None:
+def _write_all(tables: Dict[_Table, List[_Error]], *, notice: str, count: int) -> None:
     with open("{}/all.py".format(DEST), "w", encoding="utf-8") as all_module:
         all_module.write(notice + "\n\n")
         all_module.write("count = {}\n\n".format(count))
@@ -336,7 +345,7 @@ def write_all(tables: Dict[Table, List[Error]], *, notice: str, count: int) -> N
         all_module.write("}\n")
 
 
-def write_module(table: Table, *, errors: List[Error], notice: str, templates: Templates) -> None:
+def _write_module(table: _Table, *, errors: List[_Error], notice: str, templates: _Templates) -> None:
     sub_classes = []
     written: Set[str] = set()
 
@@ -345,15 +354,15 @@ def write_module(table: Table, *, errors: List[Error], notice: str, templates: T
 
         if primary is not None and primary.table == table and primary.class_name not in written:
             msg = "{} is written before the {} it subclasses".format(error.class_name, primary.class_name)
-            raise AssertionError(msg)
+            raise RuntimeError(msg)
 
         sub_class = templates.sub_class.format(
             sub_class=error.class_name,
             bases=", ".join(error.bases),
             id="\"{}\"".format(error.row.error_id),
             docstring='"""{}"""'.format(error.row.message),
-            code_and_name=code_and_name_block(error),
-            value_property=value_block(templates, error=error)
+            code_and_name=_code_and_name_block(templates, error=error),
+            value_property=_value_block(templates, error=error)
         )
 
         sub_classes.append(sub_class)
@@ -362,8 +371,8 @@ def write_module(table: Table, *, errors: List[Error], notice: str, templates: T
     with open("{}/{}.py".format(DEST, table.module_name), "w", encoding="utf-8") as module:
         module.write(templates.module.format(
             notice=notice,
-            typing_import=typing_import(errors),
-            imports=import_block(table, errors=errors),
+            typing_import=_typing_import(errors),
+            imports=_import_block(table, errors=errors),
             super_class=table.super_class,
             code=table.code,
             docstring='"""{}"""'.format(table.title),
@@ -375,24 +384,24 @@ def start() -> None:
     shutil.rmtree(DEST, ignore_errors=True)
     os.makedirs(DEST)
 
-    notice = read_notice()
-    templates = read_templates()
+    notice = _read_notice()
+    templates = _read_templates()
 
     # Every table is read before a single class is written. The name an error compiles to is not
     # its own to take - 52 of them are claimed by more than one error - and which claimant keeps
     # the plain name is only known once they all are.
-    rows: List[Row] = []
+    rows: List[_Row] = []
 
     for file_name in sorted(os.listdir("{}/source".format(HOME))):
-        rows.extend(read_rows(read_table(file_name)))
+        rows.extend(_read_rows(_read_table(file_name)))
 
-    tables = by_table(name_errors(rows))
+    tables = _by_table(_name_errors(rows))
 
-    write_init(list(tables), notice=notice)
-    write_all(tables, notice=notice, count=len(rows))
+    _write_init(list(tables), notice=notice)
+    _write_all(tables, notice=notice, count=len(rows))
 
     for table, errors in tables.items():
-        write_module(table, errors=errors, notice=notice, templates=templates)
+        _write_module(table, errors=errors, notice=notice, templates=templates)
 
 
 if "__main__" == __name__:

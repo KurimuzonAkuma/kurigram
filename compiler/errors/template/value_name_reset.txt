@@ -1,0 +1,2 @@
+    # Unlike the `{primary}` it subclasses, this error carries nothing.
+    VALUE_NAME = RPCError.VALUE_NAME
