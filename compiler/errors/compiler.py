@@ -58,7 +58,7 @@ def value_property(template: str, *, value_name: str) -> str:
 
 
 def typing_import(sub_classes: List[SubClass]) -> str:
-    if all(entry.value_name == "value" for entry in sub_classes):
+    if all(sub_class.value_name == "value" for sub_class in sub_classes):
         return ""
 
     return "from typing import Optional\n\n"
@@ -121,11 +121,11 @@ def start():
 
                     error_id, error_message = row
 
-                    sub_class = caml(re.sub(r"_X", "_", error_id))
-                    sub_class = re.sub(r"^2", "Two", sub_class)
-                    sub_class = re.sub(r" ", "", sub_class)
+                    class_name = caml(re.sub(r"_X", "_", error_id))
+                    class_name = re.sub(r"^2", "Two", class_name)
+                    class_name = re.sub(r" ", "", class_name)
 
-                    f_all.write("        \"{}\": \"{}\",\n".format(error_id, sub_class))
+                    f_all.write("        \"{}\": \"{}\",\n".format(error_id, class_name))
 
                     # The placeholder in a message is what the value Telegram sends along with
                     # the error means, so it is also the name the error exposes it under. A
@@ -146,18 +146,19 @@ def start():
                     placeholders = re.findall(r"\{(\w*)\}", error_message)
 
                     if len(placeholders) > 1:
-                        raise ValueError("{} carries {} placeholders: {}".format(
-                            error_id, len(placeholders), error_message
-                        ))
+                        msg = "{} carries more than one placeholder: {}".format(error_id, error_message)
+                        raise ValueError(msg)
 
                     value_name = placeholders[0] if placeholders else "value"
 
-                    sub_classes.append(SubClass(
-                        name=sub_class,
+                    sub_class = SubClass(
+                        name=class_name,
                         error_id=error_id,
                         message=error_message,
                         value_name=value_name
-                    ))
+                    )
+
+                    sub_classes.append(sub_class)
 
                 with open("{}/template/class.txt".format(HOME), "r", encoding="utf-8") as f_class_template:
                     class_template = f_class_template.read()
@@ -175,15 +176,15 @@ def start():
                         code=code,
                         docstring='"""{}"""'.format(name),
                         sub_classes="".join([sub_class_template.format(
-                            sub_class=entry.name,
+                            sub_class=sub_class.name,
                             super_class=super_class,
-                            id="\"{}\"".format(entry.error_id),
-                            docstring='"""{}"""'.format(entry.message),
+                            id="\"{}\"".format(sub_class.error_id),
+                            docstring='"""{}"""'.format(sub_class.message),
                             value_property=value_property(
                                 value_property_template,
-                                value_name=entry.value_name
+                                value_name=sub_class.value_name
                             )
-                        ) for entry in sub_classes])
+                        ) for sub_class in sub_classes])
                     )
 
                 f_class.write(class_template)
