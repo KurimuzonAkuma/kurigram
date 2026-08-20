@@ -37,6 +37,23 @@ def caml(s):
     return "".join([str(i.title()) for i in s])
 
 
+def value_property(template, value_name):
+    if value_name == "value":
+        return ""
+
+    # A blank line, then the block, appended to the `MESSAGE = __doc__` line the sub class template
+    # ends its body with. Spelled out here rather than left to whichever newlines the template file
+    # happens to begin and end with.
+    return "\n\n" + template.format(value_name=value_name).rstrip("\n")
+
+
+def typing_import(sub_classes):
+    if all(k[3] == "value" for k in sub_classes):
+        return ""
+
+    return "from typing import Optional\n\n"
+
+
 def start():
     shutil.rmtree(DEST, ignore_errors=True)
     os.makedirs(DEST)
@@ -104,8 +121,8 @@ def start():
                     # the error means, so it is also the name the error exposes it under. A message
                     # that still says "{value}" gets no property: `value` is already taken by the
                     # attribute itself, and a property of the same name would shadow it.
-                    value_name = re.search(r"\{(\w+)\}", error_message)
-                    value_name = value_name.group(1) if value_name is not None else "value"
+                    value_match = re.search(r"\{(\w+)\}", error_message)
+                    value_name = value_match.group(1) if value_match is not None else "value"
 
                     sub_classes.append((sub_class, error_id, error_message, value_name))
 
@@ -120,6 +137,7 @@ def start():
 
                     class_template = class_template.format(
                         notice=notice,
+                        typing_import=typing_import(sub_classes),
                         super_class=super_class,
                         code=code,
                         docstring='"""{}"""'.format(name),
@@ -128,7 +146,7 @@ def start():
                             super_class=super_class,
                             id="\"{}\"".format(k[1]),
                             docstring='"""{}"""'.format(k[2]),
-                            value_property="" if k[3] == "value" else value_property_template.format(value_name=k[3])
+                            value_property=value_property(value_property_template, k[3])
                         ) for k in sub_classes])
                     )
 

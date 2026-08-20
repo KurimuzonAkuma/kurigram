@@ -1,6 +1,6 @@
 {notice}
 
-from ..rpc_error import RPCError
+{typing_import}from ..rpc_error import RPCError
 
 
 class {super_class}(RPCError):
