@@ -150,7 +150,7 @@ def test_a_named_value_cannot_be_written_to() -> None:
 def test_the_base_class_still_speaks_of_a_plain_value() -> None:
     assert RPCError.VALUE_NAME == "value"
     assert RPCError.MESSAGE == "{value}"
-    assert str(RPCError("something")) == "Telegram says: [None None] - something "
+    assert str(RPCError("something")) == "Telegram says: [None None] - something"
 
 
 def test_no_message_asks_for_more_than_one_value() -> None:
