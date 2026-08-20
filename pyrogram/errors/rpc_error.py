@@ -33,9 +33,9 @@ STRING_PARAMETER_PREFIXES: Final[Tuple[str, ...]] = (
 )
 PARAMETER: Final[Pattern[str]] = re.compile(r"_(\d+)")
 
-# NOTE: Canonical: `compiler/errors/compiler.py`, which writes one row per code keyed `"_"`,
-#       holding the name of the category class that code's errors subclass — `BadRequest` for 400,
-#       `Forbidden` for 403. It is what an error whose message is not in the table falls back to.
+# Canonical: `compiler/errors/compiler.py`, which writes one row per code keyed `"_"`, holding the
+# name of the category class that code's errors subclass — `BadRequest` for 400, `Forbidden` for
+# 403. It is what an error whose message is not in the table falls back to.
 CATEGORY: Final[str] = "_"
 
 
@@ -46,25 +46,25 @@ class _MessageParts:
 
 
 def _split_error_message(error_message: str) -> _MessageParts:
-    # NOTE: The three verification errors are the only ones whose parameters are a string rather
-    #       than a number, so `PARAMETER` rewrites part of the payload and yields an id that
-    #       matches no table row: the caller gets a bare `Forbidden` instead of the error itself,
-    #       and every occurrence appends a line to `unknown_errors.txt`.
+    # The three verification errors are the only ones whose parameters are a string rather than a
+    # number, so `PARAMETER` rewrites part of the payload and yields an id that matches no table
+    # row: the caller gets a bare `Forbidden` instead of the error itself, and every occurrence
+    # appends a line to `unknown_errors.txt`.
     #
-    #       Reproduce, without the loop below:
-    #           RPCError.raise_it(
-    #               raw.types.RpcError(
-    #                   error_code=403,
-    #                   error_message="RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP"
-    #               ),
-    #               raw.functions.auth.SendCode
-    #           )
+    # Reproduce, without the loop below:
+    #     RPCError.raise_it(
+    #         raw.types.RpcError(
+    #             error_code=403,
+    #             error_message="RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP"
+    #         ),
+    #         raw.functions.auth.SendCode
+    #     )
     #
-    #           pyrogram.errors.exceptions.forbidden_403.Forbidden: Telegram says: [403 Forbidden]
-    #           - [403 RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP] (caused by "auth.SendCode")
+    #     pyrogram.errors.exceptions.forbidden_403.Forbidden: Telegram says: [403 Forbidden]
+    #     - [403 RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP] (caused by "auth.SendCode")
     #
-    #       TDLib splits the same three prefixes off before anything else looks at the message:
-    #       https://github.com/tdlib/td/blob/022d60202e446ad1287b9fb68e687c8a0760788b/td/telegram/net/NetQueryDispatcher.cpp#L112-L146
+    # TDLib splits the same three prefixes off before anything else looks at the message:
+    # https://github.com/tdlib/td/blob/022d60202e446ad1287b9fb68e687c8a0760788b/td/telegram/net/NetQueryDispatcher.cpp#L112-L146
     for prefix in STRING_PARAMETER_PREFIXES:
         if error_message.startswith(prefix):
             return _MessageParts(

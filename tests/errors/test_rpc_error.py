@@ -99,8 +99,8 @@ def test_an_unknown_message_falls_back_to_the_class_of_its_code(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # NOTE: An unknown error appends to `unknown_errors.txt` in the working directory
-    #       (`RPCError.__init__`), which is why every unknown case runs somewhere disposable.
+    # An unknown error appends to `unknown_errors.txt` in the working directory
+    # (`RPCError.__init__`), which is why every unknown case runs somewhere disposable.
     monkeypatch.chdir(tmp_path)
 
     with pytest.raises(BadRequest) as raised:
@@ -280,9 +280,8 @@ def test_a_verification_error_keeps_its_parameters_whole(
     value: str,
     text: str
 ) -> None:
-    # NOTE: Run somewhere disposable: before the prefixes were split off these raised a bare
-    #       `Forbidden` and appended to `unknown_errors.txt`, which is what the next test asserts
-    #       no longer happens.
+    # Run somewhere disposable: before the prefixes were split off these raised a bare `Forbidden`
+    # and appended to `unknown_errors.txt`, which is what the next test asserts no longer happens.
     monkeypatch.chdir(tmp_path)
 
     with pytest.raises(error_type) as raised:
