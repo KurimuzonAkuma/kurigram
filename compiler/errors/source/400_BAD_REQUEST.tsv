@@ -229,7 +229,7 @@ FILE_PART_SIZE_CHANGED	The part size is different from the size of one of the pr
 FILE_PART_SIZE_INVALID	The provided file part size is invalid.
 FILE_PART_TOO_BIG	The uploaded file part is too big.
 FILE_PART_TOO_SMALL	The size limit for the content of the file part has been exceeded.
-FILE_PART_X_MISSING	Part {part_number} of the file is missing from storage. Try repeating the method call to resave the part.
+FILE_PART_X_MISSING	Part {file_part} of the file is missing from storage. Try repeating the method call to resave the part.
 FILE_REFERENCE_EMPTY	The file id contains an empty [file reference](https://core.telegram.org/api/file_reference), you must obtain a valid one by fetching the message from the origin context.
 FILE_REFERENCE_EXPIRED	The file id contains an expired [file reference](https://core.telegram.org/api/file_reference), you must obtain a valid one by fetching the message from the origin context.
 FILE_REFERENCE_INVALID	The file id contains an invalid [file reference](https://core.telegram.org/api/file_reference), you must obtain a valid one by fetching the message from the origin context.
@@ -295,7 +295,7 @@ INLINE_RESULT_EXPIRED	The inline bot query expired.
 INPUT_CHATLIST_INVALID	The specified folder is invalid.
 INPUT_CONSTRUCTOR_INVALID	The specified TL constructor is invalid.
 INPUT_FETCH_ERROR	An error occurred while deserializing the provided TL constructor.
-INPUT_FETCH_ERROR_X	An error occurred while parsing the provided TL {constructor_id} constructor.
+INPUT_FETCH_ERROR_X	An error occurred while parsing the provided TL {value} constructor.
 INPUT_FETCH_FAIL	Failed deserializing TL payload.
 INPUT_FILE_INVALID	The specified [InputFile](https://core.telegram.org/type/InputFile) is invalid.
 INPUT_FILTER_INVALID	The specified filter is invalid.
