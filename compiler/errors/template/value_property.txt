@@ -3,5 +3,5 @@
 
     @property
     def {value_name}(self) -> Optional[int]:
-        """``Optional[int]``: Same as `value`, under the name this error's message gives it"""
+        """``Optional[int]``: What Telegram sent with this error, under the name its message gives it"""
         return self.value
