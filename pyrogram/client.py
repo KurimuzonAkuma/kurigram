@@ -409,6 +409,8 @@ class Client(Methods):
 
         self.me: Optional[User] = None
 
+        self.message_split_ranges: Optional[List["raw.base.MessageRange"]] = None
+
         self.message_cache = Cache(self.max_message_cache_size)
         self.topic_cache = Cache(self.max_topic_cache_size)
 
@@ -1530,6 +1532,11 @@ class Client(Methods):
         server_ts = msg_id / float(2**32)
         self._server_time_offset = server_ts - time.time()
         log.info(f"Time synced: offset={self._server_time_offset:.3f}s, server_time={utils.timestamp_to_datetime(server_ts)}")
+
+    async def get_message_split_ranges(self) -> List["raw.base.MessageRange"]:
+        if self.message_split_ranges is None:
+            self.message_split_ranges = await self.invoke(raw.functions.messages.GetSplitRanges())
+        return self.message_split_ranges
 
     def guess_mime_type(self, filename: Union[str, BytesIO]) -> Optional[str]:
         if isinstance(filename, BytesIO):

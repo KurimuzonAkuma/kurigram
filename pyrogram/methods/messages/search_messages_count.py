@@ -66,7 +66,7 @@ class SearchMessagesCount:
         from_id = await self.resolve_peer(from_user) if from_user else None
 
         # https://t.me/tdlibchat/189410
-        ranges = await self.invoke(raw.functions.messages.GetSplitRanges())
+        ranges = await self.get_message_split_ranges()
         total = 0
 
         for split_range in ranges:

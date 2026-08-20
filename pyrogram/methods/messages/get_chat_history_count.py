@@ -56,7 +56,7 @@ class GetChatHistoryCount:
         peer = await self.resolve_peer(chat_id)
 
         # https://t.me/tdlibchat/189410
-        ranges = await self.invoke(raw.functions.messages.GetSplitRanges())
+        ranges = await self.get_message_split_ranges()
         total = 0
 
         for split_range in ranges:
