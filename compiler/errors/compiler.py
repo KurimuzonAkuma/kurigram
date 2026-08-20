@@ -127,22 +127,22 @@ def start():
 
                     f_all.write("        \"{}\": \"{}\",\n".format(error_id, sub_class))
 
-                    # NOTE: The placeholder in a message is what the value Telegram sends along
-                    #       with the error means, so it is also the name the error exposes it
-                    #       under. A message that still says "{value}" gets no property: `value` is
-                    #       the attribute itself, and a property of that name would shadow it.
+                    # The placeholder in a message is what the value Telegram sends along with
+                    # the error means, so it is also the name the error exposes it under. A
+                    # message that still says "{value}" gets no property: `value` is the
+                    # attribute itself, and a property of that name would shadow it.
                     #
-                    #       The names are Telegram's own words for each value, from the
-                    #       descriptions in https://corefork.telegram.org/api/errors.json, or the
-                    #       schema's word for the same thing (`dc_id` is `auth.exportAuthorization
-                    #       .dc_id`, `file_part` is `upload.saveFilePart.file_part`). Where
-                    #       Telethon already named one, the name is theirs:
-                    #       https://github.com/LonamiWebs/Telethon/blob/v1.36.0/telethon_generator/data/errors.csv
+                    # The names are Telegram's own words for each value, from the descriptions in
+                    # https://corefork.telegram.org/api/errors.json, or the schema's word for the
+                    # same thing (`dc_id` is `auth.exportAuthorization.dc_id`, `file_part` is
+                    # `upload.saveFilePart.file_part`). Where Telethon already named one, the name
+                    # is theirs:
+                    # https://github.com/LonamiWebs/Telethon/blob/v1.36.0/telethon_generator/data/errors.csv
                     #
-                    #       One placeholder per message, at most. `RPCError.raise_it()` reads a
-                    #       single number out of an error message and renders the message with it,
-                    #       so a second placeholder could never be filled in - `str.format()` would
-                    #       raise `KeyError` on the error nobody can catch.
+                    # One placeholder per message, at most. `RPCError.raise_it()` reads a single
+                    # number out of an error message and renders the message with it, so a second
+                    # placeholder could never be filled in - `str.format()` would raise `KeyError`
+                    # on the error nobody can catch.
                     placeholders = re.findall(r"\{(\w*)\}", error_message)
 
                     if len(placeholders) > 1:

@@ -40,9 +40,9 @@ from pyrogram.errors import (
 from pyrogram.errors.exceptions.all import exceptions
 from tests.errors import RPC_NAME, raise_it
 
-# NOTE: Every class whose message names its value, counted once. One fewer than the 32 the tables
-#       produce: `FILE_MIGRATE_X` is listed under both 303 and 400, both rows compile to a class
-#       called `FileMigrate`, and `pyrogram.errors` keeps whichever was imported last.
+# Every class whose message names its value, counted once. One fewer than the 32 the tables produce:
+# `FILE_MIGRATE_X` is listed under both 303 and 400, both rows compile to a class called
+# `FileMigrate`, and `pyrogram.errors` keeps whichever was imported last.
 NAMED_ERRORS: Final[int] = 31
 
 
