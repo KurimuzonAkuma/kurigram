@@ -17,15 +17,17 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import csv
-import os
 import re
 import shutil
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Final, List, Optional, Set, Tuple
 
-HOME = "compiler/errors"
-DEST = "pyrogram/errors/exceptions"
-NOTICE_PATH = "NOTICE"
+# Resolved from this file rather than from the working directory, which is the repository root
+# under `hatch_build.py` and `compiler/errors` under `make errors`.
+_HOME: Final[Path] = Path(__file__).resolve().parent
+_DEST: Final[Path] = _HOME.parents[1] / "pyrogram" / "errors" / "exceptions"
+_NOTICE: Final[Path] = _HOME.parents[1] / "NOTICE"
 
 # The name an error carries its value under when its own message names none. `value` is the
 # attribute `RPCError` assigns, so a property of that name would shadow it and none is written.
@@ -44,7 +46,7 @@ _LEADING_DIGIT_WORDS: Final[Dict[str, str]] = {"2": "Two"}
 @dataclass(frozen=True)
 class _Table:
     """A source table, and the module it compiles to."""
-    file_name: str
+    path: Path
     code: int
     module_name: str
     super_class: str
@@ -102,8 +104,9 @@ def _to_pascal_case(name: str) -> str:
 
 
 def _read_notice() -> str:
-    with open(NOTICE_PATH, encoding="utf-8") as notice_file:
-        return "\n".join(["# {}".format(line).strip() for line in notice_file.readlines()])
+    lines = _NOTICE.read_text(encoding="utf-8").splitlines()
+
+    return "\n".join(["# {}".format(line).strip() for line in lines])
 
 
 def _read_templates() -> _Templates:
@@ -117,16 +120,15 @@ def _read_templates() -> _Templates:
 
 
 def _read_template(template_name: str) -> str:
-    with open("{}/template/{}.txt".format(HOME, template_name), encoding="utf-8") as template_file:
-        return template_file.read()
+    return (_HOME / "template" / "{}.txt".format(template_name)).read_text(encoding="utf-8")
 
 
-def _read_table(file_name: str) -> _Table:
-    code, name = re.search(r"(\d+)_([A-Z_]+)", file_name).groups()
+def _read_table(path: Path) -> _Table:
+    code, name = re.search(r"(\d+)_([A-Z_]+)", path.name).groups()
     words = re.sub(r"_", " ", name).lower().split(" ")
 
     return _Table(
-        file_name=file_name,
+        path=path,
         code=int(code),
         module_name="{}_{}".format(name.lower(), code),
         super_class=_to_pascal_case(name),
@@ -135,7 +137,7 @@ def _read_table(file_name: str) -> _Table:
 
 
 def _read_rows(table: _Table) -> List[_Row]:
-    with open("{}/source/{}".format(HOME, table.file_name), encoding="utf-8") as table_file:
+    with table.path.open(encoding="utf-8", newline="") as table_file:
         reader = csv.reader(table_file, delimiter="\t")
         next(reader)  # The header.
 
@@ -320,33 +322,34 @@ def _import_block(table: _Table, *, errors: List[_Error]) -> str:
 
 
 def _write_init(tables: List[_Table], *, notice: str) -> None:
-    with open("{}/__init__.py".format(DEST), "w", encoding="utf-8") as init_module:
-        init_module.write(notice + "\n\n")
+    imports = ["from .{} import *".format(table.module_name) for table in tables]
 
-        for table in tables:
-            init_module.write("from .{} import *\n".format(table.module_name))
+    _write(_DEST / "__init__.py", lines=[notice, ""] + imports)
 
 
 def _write_all(tables: Dict[_Table, List[_Error]], *, notice: str, count: int) -> None:
-    with open("{}/all.py".format(DEST), "w", encoding="utf-8") as all_module:
-        all_module.write(notice + "\n\n")
-        all_module.write("count = {}\n\n".format(count))
-        all_module.write("exceptions = {\n")
+    lines: List[str] = [notice, "", "count = {}".format(count), "", "exceptions = {"]
 
-        for table, errors in tables.items():
-            all_module.write("    {}: {{\n".format(table.code))
-            all_module.write("        \"_\": \"{}\",\n".format(table.super_class))
+    for table, errors in tables.items():
+        lines.append("    {}: {{".format(table.code))
+        lines.append("        \"_\": \"{}\",".format(table.super_class))
+        lines.extend([
+            "        \"{}\": \"{}\",".format(error.row.error_id, error.class_name)
+            for error in errors
+        ])
+        lines.append("    },")
 
-            for error in errors:
-                all_module.write("        \"{}\": \"{}\",\n".format(error.row.error_id, error.class_name))
+    lines.append("}")
 
-            all_module.write("    },\n")
+    _write(_DEST / "all.py", lines=lines)
 
-        all_module.write("}\n")
+
+def _write(path: Path, *, lines: List[str]) -> None:
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _write_module(table: _Table, *, errors: List[_Error], notice: str, templates: _Templates) -> None:
-    sub_classes = []
+    sub_classes: List[str] = []
     written: Set[str] = set()
 
     for error in errors:
@@ -368,21 +371,22 @@ def _write_module(table: _Table, *, errors: List[_Error], notice: str, templates
         sub_classes.append(sub_class)
         written.add(error.class_name)
 
-    with open("{}/{}.py".format(DEST, table.module_name), "w", encoding="utf-8") as module:
-        module.write(templates.module.format(
-            notice=notice,
-            typing_import=_typing_import(errors),
-            imports=_import_block(table, errors=errors),
-            super_class=table.super_class,
-            code=table.code,
-            docstring='"""{}"""'.format(table.title),
-            sub_classes="".join(sub_classes)
-        ))
+    module = templates.module.format(
+        notice=notice,
+        typing_import=_typing_import(errors),
+        imports=_import_block(table, errors=errors),
+        super_class=table.super_class,
+        code=table.code,
+        docstring='"""{}"""'.format(table.title),
+        sub_classes="".join(sub_classes)
+    )
+
+    (_DEST / "{}.py".format(table.module_name)).write_text(module, encoding="utf-8")
 
 
 def start() -> None:
-    shutil.rmtree(DEST, ignore_errors=True)
-    os.makedirs(DEST)
+    shutil.rmtree(_DEST, ignore_errors=True)
+    _DEST.mkdir(parents=True)
 
     notice = _read_notice()
     templates = _read_templates()
@@ -392,8 +396,8 @@ def start() -> None:
     # the plain name is only known once they all are.
     rows: List[_Row] = []
 
-    for file_name in sorted(os.listdir("{}/source".format(HOME))):
-        rows.extend(_read_rows(_read_table(file_name)))
+    for path in sorted((_HOME / "source").iterdir()):
+        rows.extend(_read_rows(_read_table(path)))
 
     tables = _by_table(_name_errors(rows))
 
@@ -405,8 +409,4 @@ def start() -> None:
 
 
 if "__main__" == __name__:
-    HOME = "."
-    DEST = "../../pyrogram/errors/exceptions"
-    NOTICE_PATH = "../../NOTICE"
-
     start()
