@@ -210,12 +210,14 @@ def test_the_base_class_renders_the_value_on_its_own() -> None:
 
 
 @pytest.mark.parametrize(
-    ("message", "error_type", "value"),
+    ("message", "error_type", "value", "text"),
     [
         pytest.param(
             "RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP",
             RecaptchaCheck,
             "signup__6LdcABcDEFghIJKlmnOP",
+            "Telegram says: [403 RECAPTCHA_CHECK_X] - The request can't be completed unless "
+            "reCAPTCHA verification signup__6LdcABcDEFghIJKlmnOP is performed.",
             id="the-shape-telegram-sends"
         ),
         # The two strings TDLib feeds its own verification tests with:
@@ -231,15 +233,41 @@ def test_the_base_class_renders_the_value_on_its_own() -> None:
             "RECAPTCHA_CHECK_AB_CD__KEY",
             RecaptchaCheck,
             "AB_CD__KEY",
+            "Telegram says: [403 RECAPTCHA_CHECK_X] - The request can't be completed unless "
+            "reCAPTCHA verification AB_CD__KEY is performed.",
             id="an-action-with-an-underscore"
         ),
-        pytest.param("RECAPTCHA_CHECK_signup", RecaptchaCheck, "signup", id="no-key-at-all"),
-        pytest.param("RECAPTCHA_CHECK_", RecaptchaCheck, "", id="no-parameters-at-all"),
-        pytest.param("APNS_VERIFY_CHECK_ABCD", ApnsVerifyCheck, "ABCD", id="an-apns-nonce"),
+        pytest.param(
+            "RECAPTCHA_CHECK_signup",
+            RecaptchaCheck,
+            "signup",
+            "Telegram says: [403 RECAPTCHA_CHECK_X] - The request can't be completed unless "
+            "reCAPTCHA verification signup is performed.",
+            id="no-key-at-all"
+        ),
+        # The template has nothing to put in its hole, hence the two spaces.
+        pytest.param(
+            "RECAPTCHA_CHECK_",
+            RecaptchaCheck,
+            "",
+            "Telegram says: [403 RECAPTCHA_CHECK_X] - The request can't be completed unless "
+            "reCAPTCHA verification  is performed.",
+            id="no-parameters-at-all"
+        ),
+        pytest.param(
+            "APNS_VERIFY_CHECK_ABCD",
+            ApnsVerifyCheck,
+            "ABCD",
+            "Telegram says: [403 APNS_VERIFY_CHECK_X] - The request can't be completed unless "
+            "the APNs verification ABCD is performed.",
+            id="an-apns-nonce"
+        ),
         pytest.param(
             "INTEGRITY_CHECK_CLASSIC_ABCD",
             IntegrityCheckClassic,
             "ABCD",
+            "Telegram says: [403 INTEGRITY_CHECK_CLASSIC_X] - The request can't be completed "
+            "unless the classic Play Integrity verification ABCD is performed.",
             id="a-play-integrity-nonce"
         )
     ]
@@ -249,7 +277,8 @@ def test_a_verification_error_keeps_its_parameters_whole(
     monkeypatch: pytest.MonkeyPatch,
     message: str,
     error_type: Type[RPCError],
-    value: str
+    value: str,
+    text: str
 ) -> None:
     # NOTE: Run somewhere disposable: before the prefixes were split off these raised a bare
     #       `Forbidden` and appended to `unknown_errors.txt`, which is what the next test asserts
@@ -259,9 +288,13 @@ def test_a_verification_error_keeps_its_parameters_whole(
     with pytest.raises(error_type) as raised:
         raise_it(403, message=message)
 
-    # Landing on `error_type` is what says the id was looked up whole; rendering the same text as
-    # the error built straight from the payload is what says the payload came through with it.
-    assert str(raised.value) == str(error_type(value, rpc_name=RPC_NAME))
+    error = raised.value
+
+    # The payload is what a caller acts on, the text is what a human reads. The text is spelled out
+    # rather than rendered from `value` a second time, because both sides of such a comparison would
+    # go through the same `MESSAGE` and neither would say anything about it.
+    assert error.value == value
+    assert str(error) == f'{text} (caused by "{RPC_NAME}")'
 
 
 def test_a_verification_error_is_not_an_unknown_error(
@@ -270,11 +303,7 @@ def test_a_verification_error_is_not_an_unknown_error(
 ) -> None:
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(RecaptchaCheck) as raised:
+    with pytest.raises(RecaptchaCheck):
         raise_it(403, message="RECAPTCHA_CHECK_signup__6LdcABcDEFghIJKlmnOP")
 
     assert not (tmp_path / "unknown_errors.txt").exists()
-    assert str(raised.value) == (
-        "Telegram says: [403 RECAPTCHA_CHECK_X] - The request can't be completed unless reCAPTCHA "
-        f'verification signup__6LdcABcDEFghIJKlmnOP is performed. (caused by "{RPC_NAME}")'
-    )
