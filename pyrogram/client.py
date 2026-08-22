@@ -928,6 +928,7 @@ class Client(Methods):
                     module = import_module(module_path)
 
                     for name in vars(module).keys():
+                        # The name comes from the module's own `__dict__`, so it always resolves.
                         target_attr = getattr(module, name)
                         if hasattr(target_attr, "handlers"):
                             for handler, group in target_attr.handlers:
