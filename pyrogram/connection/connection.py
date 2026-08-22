@@ -61,7 +61,13 @@ class Connection:
 
     async def connect(self) -> None:
         for i in range(Connection.MAX_CONNECTION_ATTEMPTS):
-            self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=self.proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
+            self.protocol = self.protocol_factory(
+                ipv6=self.ipv6,
+                proxy=self.proxy,
+                crypto_executor_workers=self.crypto_executor_workers,
+                loop=self.loop,
+                dc_id=self.dc_id,
+            )
 
             try:
                 log.info("Connecting...")

@@ -34,8 +34,9 @@ class TCPFull(TCP):
         proxy: Union[str, ProxyDict, None] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        dc_id: Optional[int] = None,
     ) -> None:
-        super().__init__(ipv6, proxy, crypto_executor_workers, loop)
+        super().__init__(ipv6, proxy, crypto_executor_workers, loop, dc_id=dc_id)
 
         self.seq_no: int = 0
 

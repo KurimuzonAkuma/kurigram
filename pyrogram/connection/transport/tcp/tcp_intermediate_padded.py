@@ -28,19 +28,30 @@ log = logging.getLogger(__name__)
 
 
 class TCPIntermediatePadded(TCP):
+    # Lets TCP._connect_via_web_proxy use this class over a WEB proxy
+    # (proxy={"scheme": "web", ...}) unmodified - Telegram's protocol
+    # requires this exact tag/framing for dd-prefixed (random-padding)
+    # secrets specifically (see TCP._connect_via_web_proxy's validation).
+    OBFUSCATE_TAG = b"\xdd\xdd\xdd\xdd"
+
     def __init__(
         self,
         ipv6: bool = False,
         proxy: Optional[Union[str, ProxyDict]] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        dc_id: Optional[int] = None,
     ) -> None:
-        super().__init__(ipv6, proxy, crypto_executor_workers, loop)
+        super().__init__(ipv6, proxy, crypto_executor_workers, loop, dc_id=dc_id)
 
     async def connect(self, address: Tuple[str, int]) -> None:
         self.marker_event.clear()
         await super().connect(address)
-        await super().send(b"\xdd" * 4, wait_for_marker=False)
+        if not self.is_web_proxy:
+            # Over a WEB proxy the obfuscated2 header TCP._connect_via_web_proxy
+            # already sent embeds this same tag - sending it again here would
+            # corrupt the stream with extra, unobfuscated bytes.
+            await super().send(b"\xdd" * 4, wait_for_marker=False)
         self.marker_event.set()
 
     async def send(self, data: bytes, *args) -> None:
