@@ -958,7 +958,7 @@ class Client(Methods):
                         warn_non_existent_functions = False
 
                     for name in handlers:
-                        target_attr = getattr(module, name)
+                        target_attr = getattr(module, name, None)
                         if hasattr(target_attr, "handlers"):
                             for handler, group in target_attr.handlers:
                                 if isinstance(handler, Handler) and isinstance(group, int):
