@@ -12,7 +12,7 @@ BLUE   := \033[0;34m
 BOLD   := \033[1m
 RESET  := \033[0m
 
-.PHONY: venv venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag
+.PHONY: venv venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag test test-unit test-integration
 
 venv:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -61,6 +61,15 @@ docs:
 
 docs-archive:
 	cd docs/build/html && zip -r ../docs.zip ./
+
+test:
+	$(PYTHON) -m pytest
+
+test-unit:
+	$(PYTHON) -m pytest -m 'not integration'
+
+test-integration:
+	$(PYTHON) -m pytest -m integration
 
 build:
 	hatch build

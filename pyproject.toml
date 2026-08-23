@@ -81,6 +81,14 @@ fast = [
     "uvloop<=0.22.1; sys_platform == 'darwin' or sys_platform == 'linux'",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = [
+    "unit: fast, no network or filesystem beyond the repo",
+    "integration: opens a real socket or talks to a real service",
+]
+
 [tool.hatch.version]
 path = "pyrogram/__init__.py"
 

@@ -57,6 +57,7 @@ import time
 import pytest
 
 from pyrogram import Client
+from pyrogram.connection import normalize_proxy
 from pyrogram.connection.transport.tcp import TCPAbridged, TCPIntermediatePadded
 from pyrogram.session.auth import Auth
 
@@ -64,15 +65,20 @@ _HOSTNAME = os.environ.get("WEB_PROXY_TEST_HOSTNAME")
 _SECRET = os.environ.get("WEB_PROXY_TEST_SECRET")
 _DC_ID = int(os.environ.get("WEB_PROXY_TEST_DC_ID", "2"))
 
-# Telegram's own long-published example api_id/api_hash pair (used by
-# numerous open-source samples for exactly this kind of connectivity
-# testing) - overridable for anyone who would rather use their own.
-_API_ID = int(os.environ.get("WEB_PROXY_TEST_API_ID", "2040"))
-_API_HASH = os.environ.get("WEB_PROXY_TEST_API_HASH", "b18441a1ff607e10a989891a5462e627")
+# No default: tdesktop's own published example pair is Telegram Desktop's
+# real credentials, and using them from a third-party client violates
+# Telegram's ToS. Bring your own api_id/api_hash for this test.
+_API_ID = os.environ.get("WEB_PROXY_TEST_API_ID")
+_API_HASH = os.environ.get("WEB_PROXY_TEST_API_HASH")
 
 pytestmark = pytest.mark.skipif(
     not _HOSTNAME or not _SECRET,
     reason="set WEB_PROXY_TEST_HOSTNAME and WEB_PROXY_TEST_SECRET to run the live WEB proxy smoke test",
+)
+
+_requires_api_credentials = pytest.mark.skipif(
+    not _API_ID or not _API_HASH,
+    reason="set WEB_PROXY_TEST_API_ID and WEB_PROXY_TEST_API_HASH to run the auth key exchange test",
 )
 
 _REQ_PQ_MULTI = 0xBE7E8EF1
@@ -104,7 +110,7 @@ def _pick_transport_class():
 @pytest.mark.asyncio
 async def test_req_pq_multi_round_trip_through_live_relay():
     transport_cls = _pick_transport_class()
-    proxy = {"scheme": "web", "hostname": _HOSTNAME, "secret": _SECRET}
+    proxy = normalize_proxy({"scheme": "web", "hostname": _HOSTNAME, "secret": _SECRET})
 
     transport = transport_cls(ipv6=False, proxy=proxy, dc_id=_DC_ID)
     try:
@@ -129,13 +135,14 @@ async def test_req_pq_multi_round_trip_through_live_relay():
         await transport.close()
 
 
+@_requires_api_credentials
 @pytest.mark.asyncio
 async def test_full_auth_key_exchange_through_live_relay():
     transport_cls = _pick_transport_class()
 
     client = Client(
         "web_proxy_smoke_test",
-        api_id=_API_ID,
+        api_id=int(_API_ID),
         api_hash=_API_HASH,
         in_memory=True,
         protocol_factory=transport_cls,
@@ -153,13 +160,13 @@ async def test_full_auth_key_exchange_through_live_relay():
 @pytest.mark.asyncio
 async def test_string_link_form_connects_through_live_relay():
     """Covers the tg://webproxy?server=...&secret=... / t.me/webproxy
-    string form specifically (TCP._parse_web_proxy_link) - the other two
-    tests above only exercise the dict form.
+    string form specifically (normalize_proxy's string-link parsing) - the
+    other two tests above only exercise the dict form.
     """
     transport_cls = _pick_transport_class()
     link = f"tg://webproxy?server={_HOSTNAME}&secret={_SECRET}"
 
-    transport = transport_cls(ipv6=False, proxy=link, dc_id=_DC_ID)
+    transport = transport_cls(ipv6=False, proxy=normalize_proxy(link), dc_id=_DC_ID)
     try:
         await transport.connect(("unused", 0))
 

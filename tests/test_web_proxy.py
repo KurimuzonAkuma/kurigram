@@ -18,10 +18,9 @@
 
 import pytest
 
-from pyrogram.connection.transport.tcp.tcp import (
+from pyrogram.connection.transport.tcp.web_proxy_carrier import (
     FRAME_HEADER_SIZE,
     FRAME_MAX_PAYLOAD,
-    TCP,
     FrameParseError,
     FrameType,
     derive_bridge_capability,
@@ -149,52 +148,8 @@ def test_derive_bridge_capability_is_sensitive_to_host_and_secret():
     assert a != c
 
 
-# --- proxy config parsing (dict and string link forms) ------------------
-
-_SECRET_HEX = "cc1405e16163887494a4425d6925f218"
-
-
-def test_web_proxy_dict_form_is_recognized():
-    t = TCP(proxy={"scheme": "web", "hostname": "relay.example.com", "secret": _SECRET_HEX}, dc_id=2)
-    assert t.is_web_proxy
-    assert t._web_hostname == "relay.example.com"
-    assert t._web_secret == bytes.fromhex(_SECRET_HEX)
-
-
-def test_web_proxy_dict_form_is_case_insensitive_scheme():
-    t = TCP(proxy={"scheme": "WEB", "hostname": "relay.example.com", "secret": _SECRET_HEX}, dc_id=2)
-    assert t.is_web_proxy
-
-
-@pytest.mark.parametrize("link", [
-    f"tg://webproxy?server=relay.example.com&secret={_SECRET_HEX}",
-    f"https://t.me/webproxy?server=relay.example.com&secret={_SECRET_HEX}",
-    f"tg://webproxy?host=relay.example.com&secret={_SECRET_HEX}",  # Android-fork compat alias
-])
-def test_web_proxy_string_link_forms_are_recognized(link):
-    t = TCP(proxy=link, dc_id=2)
-    assert t.is_web_proxy
-    assert t._web_hostname == "relay.example.com"
-    assert t._web_secret == bytes.fromhex(_SECRET_HEX)
-
-
-def test_web_proxy_string_link_missing_secret_raises():
-    with pytest.raises(ValueError):
-        TCP(proxy="tg://webproxy?server=relay.example.com", dc_id=2)
-
-
-def test_ordinary_socks_link_is_not_mistaken_for_web_proxy():
-    t = TCP(proxy="tg://socks?server=1.2.3.4&port=1080", dc_id=2)
-    assert not t.is_web_proxy
-
-
-def test_dd_prefixed_secret_keeps_marker_for_capability_but_not_for_obfuscated2():
-    dd_hex = "dd" + _SECRET_HEX
-    t = TCP(proxy={"scheme": "web", "hostname": "relay.example.com", "secret": dd_hex}, dc_id=2)
-    assert t._web_full_secret == bytes.fromhex(dd_hex)
-    assert t._web_secret == bytes.fromhex(_SECRET_HEX)  # marker stripped
-
-
-def test_invalid_secret_length_raises():
-    with pytest.raises(ValueError):
-        TCP(proxy={"scheme": "web", "hostname": "relay.example.com", "secret": "aabbcc"}, dc_id=2)
+# Proxy config parsing (dict form, string link forms, dd-marker handling,
+# secret validation) now lives in pyrogram.connection.proxy.normalize_proxy
+# and is covered in tests/unit/connection/test_proxy.py; TCP itself only
+# takes an already-normalized Proxy dataclass, covered in
+# tests/unit/connection/transport/tcp/test_tcp.py.

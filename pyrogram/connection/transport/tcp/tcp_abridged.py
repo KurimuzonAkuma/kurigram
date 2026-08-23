@@ -18,9 +18,10 @@
 
 import asyncio
 import logging
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
-from .tcp import TCP, ProxyDict
+from ...proxy import Proxy
+from .tcp import TCP
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class TCPAbridged(TCP):
     def __init__(
         self,
         ipv6: bool = False,
-        proxy: Optional[Union[str, ProxyDict]] = None,
+        proxy: Optional[Proxy] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         dc_id: Optional[int] = None,
