@@ -18,13 +18,25 @@
 
 import asyncio
 import logging
-from typing import Optional, Type, Union
+from typing import Optional, Type
 
 from pyrogram import utils
 
+from .proxy import Proxy
 from .transport import TCP, TCPAbridged
 
 log = logging.getLogger(__name__)
+
+# tdesktop's protocolDcId (session_private.cpp:254-265): the media cluster
+# is the negated dc id, test-mode servers get a further +10000 shift. Only
+# the WEB proxy scheme embeds this (TCP._connect_via_web_proxy's nonce);
+# other transports address the DC by IP and never see it.
+_TEST_MODE_DC_ID_SHIFT = 10000
+
+
+def _protocol_dc_id(dc_id: int, test_mode: bool, media: bool) -> int:
+    value = dc_id + (_TEST_MODE_DC_ID_SHIFT if test_mode else 0)
+    return -value if media else value
 
 
 class Connection:
@@ -36,7 +48,9 @@ class Connection:
         server_address: str,
         port: int,
         test_mode: bool,
-        proxy: Optional[Union[dict, str]] = None,
+        # Already normalized by pyrogram.connection.proxy.normalize_proxy at
+        # the Client boundary - never a raw dict or string here.
+        proxy: Optional[Proxy] = None,
         media: bool = False,
         protocol_factory: Type[TCP] = TCPAbridged,
         crypto_executor_workers: int = 1,
@@ -53,6 +67,7 @@ class Connection:
         self.crypto_executor_workers = crypto_executor_workers
 
         self.protocol: Optional[TCP] = None
+        self._protocol_dc_id = _protocol_dc_id(dc_id, test_mode, media)
 
         if isinstance(loop, asyncio.AbstractEventLoop):
             self.loop = loop
@@ -61,7 +76,13 @@ class Connection:
 
     async def connect(self) -> None:
         for i in range(Connection.MAX_CONNECTION_ATTEMPTS):
-            self.protocol = self.protocol_factory(ipv6=self.ipv6, proxy=self.proxy, crypto_executor_workers=self.crypto_executor_workers, loop=self.loop)
+            self.protocol = self.protocol_factory(
+                ipv6=self.ipv6,
+                proxy=self.proxy,
+                crypto_executor_workers=self.crypto_executor_workers,
+                loop=self.loop,
+                dc_id=self._protocol_dc_id,
+            )
 
             try:
                 log.info("Connecting...")

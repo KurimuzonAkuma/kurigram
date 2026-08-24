@@ -37,7 +37,7 @@ from typing import AsyncIterator, Callable, List, Optional, Type, Union
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
-from pyrogram.connection.transport.tcp import ProxyDict
+from pyrogram.connection import Proxy, ProxyDict, normalize_proxy
 from pyrogram.crypto import aes
 from pyrogram.errors import (
     AuthBytesInvalid,
@@ -117,10 +117,14 @@ class Client(Methods):
             Defaults to False (IPv4).
 
         proxy (``str`` | ``dict``, *optional*):
-            The Proxy settings as url or dict.
+            The Proxy settings as url, dict, or one of the
+            :obj:`~pyrogram.connection.proxy.Proxy` dataclasses.
             E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*
-            or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"* or *"tg://user:pass@11.22.33.44:1234"*.
+            or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"* or *"tg://socks?server=11.22.33.44&port=1234"*.
             The *username* and *password* can be omitted if the proxy doesn't require authorization.
+            A WEB proxy takes *dict(scheme="web", hostname="relay.example.com", secret="...")*, a plain
+            16-byte or dd-prefixed 17-byte MTProxy secret as hex - pass ``protocol_factory=TCPAbridged``
+            for a plain secret or ``protocol_factory=TCPIntermediatePadded`` for a dd-prefixed one.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.
@@ -287,7 +291,7 @@ class Client(Methods):
         lang_code: str = LANG_CODE,
         system_lang_code: str = SYSTEM_LANG_CODE,
         ipv6: Optional[bool] = False,
-        proxy: Optional[Union[str, ProxyDict]] = None,
+        proxy: Optional[Union[str, ProxyDict, Proxy]] = None,
         test_mode: Optional[bool] = False,
         bot_token: Optional[str] = None,
         session_string: Optional[str] = None,
@@ -331,7 +335,9 @@ class Client(Methods):
         self.lang_code = lang_code.lower()
         self.system_lang_code = system_lang_code.lower()
         self.ipv6 = ipv6
-        self.proxy = proxy
+        # The one place a raw dict/string proxy config gets validated -
+        # everything below Client takes the normalized dataclass only.
+        self.proxy = normalize_proxy(proxy)
         self.test_mode = test_mode
         self.bot_token = bot_token
         self.session_string = session_string

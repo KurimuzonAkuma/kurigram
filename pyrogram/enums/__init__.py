@@ -50,6 +50,7 @@ from .poll_type import PollType
 from .privacy_key import PrivacyKey
 from .privacy_rule_type import PrivacyRuleType
 from .profile_tab import ProfileTab
+from .proxy_scheme import ProxyScheme
 from .sent_code_type import SentCodeType
 from .sticker_type import StickerType
 from .stories_privacy_rules import StoriesPrivacyRules
@@ -94,6 +95,7 @@ __all__ = [
     'PrivacyKey',
     'PrivacyRuleType',
     'ProfileTab',
+    'ProxyScheme',
     'SentCodeType',
     'StickerType',
     'StoriesPrivacyRules',

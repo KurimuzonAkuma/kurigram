@@ -18,28 +18,27 @@
 
 import asyncio
 import logging
-import os
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import pyrogram
 from pyrogram.crypto import aes
 
-from .tcp import TCP, ProxyDict
+from ...proxy import Proxy
+from .tcp import TCP, finalize_obfuscated2_tag, generate_obfuscated2_nonce
 
 log = logging.getLogger(__name__)
 
 
 class TCPAbridgedO(TCP):
-    RESERVED = (b"HEAD", b"POST", b"GET ", b"OPTI", b"\xee" * 4)
-
     def __init__(
         self,
         ipv6: bool,
-        proxy: Union[str, ProxyDict, None] = None,
+        proxy: Optional[Proxy] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        dc_id: Optional[int] = None,
     ) -> None:
-        super().__init__(ipv6, proxy, crypto_executor_workers, loop)
+        super().__init__(ipv6, proxy, crypto_executor_workers, loop, dc_id=dc_id)
 
         self.encrypt = None
         self.decrypt = None
@@ -48,23 +47,15 @@ class TCPAbridgedO(TCP):
         self.marker_event.clear()
         await super().connect(address)
 
-        while True:
-            nonce = bytearray(os.urandom(64))
-
-            if (
-                bytes([nonce[0]]) != b"\xef"
-                and nonce[:4] not in self.RESERVED
-                and nonce[4:8] != b"\x00" * 4
-            ):
-                nonce[56] = nonce[57] = nonce[58] = nonce[59] = 0xEF
-                break
+        nonce = generate_obfuscated2_nonce()
+        nonce[56] = nonce[57] = nonce[58] = nonce[59] = 0xEF
 
         temp = bytearray(nonce[55:7:-1])
 
         self.encrypt = (nonce[8:40], nonce[40:56], bytearray(1))
         self.decrypt = (temp[0:32], temp[32:48], bytearray(1))
 
-        nonce[56:64] = aes.ctr256_encrypt(nonce, *self.encrypt)[56:64]
+        nonce[56:64] = finalize_obfuscated2_tag(nonce, self.encrypt)
 
         await super().send(nonce, wait_for_marker=False)
         self.marker_event.set()

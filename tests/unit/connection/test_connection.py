@@ -16,14 +16,25 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .connection import Connection
-from .proxy import (
-    HttpProxy,
-    MtProxy,
-    Proxy,
-    ProxyDict,
-    Socks4Proxy,
-    Socks5Proxy,
-    WebProxy,
-    normalize_proxy,
-)
+from pyrogram.connection.connection import Connection, _protocol_dc_id
+
+
+def test_protocol_dc_id_plain():
+    assert _protocol_dc_id(2, test_mode=False, media=False) == 2
+
+
+def test_protocol_dc_id_media_is_negated():
+    assert _protocol_dc_id(2, test_mode=False, media=True) == -2
+
+
+def test_protocol_dc_id_test_mode_is_shifted():
+    assert _protocol_dc_id(2, test_mode=True, media=False) == 10002
+
+
+def test_protocol_dc_id_test_mode_media_shifts_then_negates():
+    assert _protocol_dc_id(2, test_mode=True, media=True) == -10002
+
+
+def test_connection_computes_protocol_dc_id_from_media_and_test_mode():
+    connection = Connection(dc_id=5, server_address="unused", port=443, test_mode=True, media=True)
+    assert connection._protocol_dc_id == -10005
