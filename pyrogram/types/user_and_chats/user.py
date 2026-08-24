@@ -1014,6 +1014,18 @@ class User(Object, Update):
 
         return await self._client.unblock_user(self.id)
 
+    def listen(self, *args, **kwargs):
+        """Bound method *listen* of :obj:`~pyrogram.types.User`."""
+        return self._client.listen(*args, user_id=self.id, **kwargs)
+
+    def ask(self, text, *args, **kwargs):
+        """Bound method *ask* of :obj:`~pyrogram.types.User`."""
+        return self._client.ask(self.id, text, *args, user_id=self.id, **kwargs)
+
+    def stop_listening(self, *args, **kwargs):
+        """Bound method *stop_listening* of :obj:`~pyrogram.types.User`."""
+        return self._client.stop_listening(*args, user_id=self.id, **kwargs)
+
     async def get_common_chats(self):
         """Bound method *get_common_chats* of :obj:`~pyrogram.types.User`.
 
