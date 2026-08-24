@@ -26,7 +26,9 @@ from dataclasses import dataclass
 PLAIN_SECRET_HEX = "cc1405e16163887494a4425d6925f218"
 DD_SECRET_HEX = "dd" + PLAIN_SECRET_HEX
 
-# Normative capability vectors, web-proxy-plan.md §10.
+# Normative capability vectors, web-proxy-plan.md §10 - the same two the Go
+# relay's own suite (tproxy-server/internal/relay/bridge_test.go) is checked
+# against, so both sides agree with tdesktop's client byte for byte.
 BRIDGE_CAPABILITY_VECTORS = (
     ("proxy.example.com", "000102030405060708090a0b0c0d0e0f", "MHLEY5PmW1GWqJkSrlmJpvJUiLhBH_QKy6yKg8a0JPk"),
     ("proxy.example.com", "dd000102030405060708090a0b0c0d0e0f", "IpJrt3e7sKtzPyoXy6w-Zj6GGEvsvclN66JzQEfPYLA"),
