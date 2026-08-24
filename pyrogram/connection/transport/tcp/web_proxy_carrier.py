@@ -191,8 +191,8 @@ class _HttpConnection:
                 try:
                     self._writer.close()
                     await self._writer.wait_closed()
-                except Exception:
-                    pass
+                except OSError as e:
+                    log.debug("WEB proxy: closing the HTTP connection failed: %s", e)
                 self._writer = None
                 self._reader = None
 
@@ -403,7 +403,7 @@ class WebProxyCarrier:
         if self._session_id is not None:
             try:
                 await self._up.request("DELETE", f"/api/v1/session/{self._session_id}")
-            except Exception as e:
+            except WebCarrierError as e:
                 log.debug("WEB proxy: DELETE session failed during close: %s", e)
 
         await self._up.close()
@@ -420,8 +420,13 @@ class WebProxyCarrier:
             await task
         except asyncio.CancelledError:
             pass
-        except Exception as e:
-            log.debug("WEB proxy: background task ended with %s during close: %s", type(e).__name__, e)
+        except WebCarrierError as e:
+            log.debug("WEB proxy: background task ended during close: %s", e)
+
+        # Cleanup boundary: a bug in one background task must not stop close()
+        # from tearing the rest down.
+        except Exception:
+            log.exception("WEB proxy: background task crashed during close")
 
     async def _spend_send_window(self, amount: int) -> None:
         while self._send_window < amount:
@@ -492,9 +497,17 @@ class WebProxyCarrier:
                     self._handle_frame(one_frame)
         except asyncio.CancelledError:
             raise
-        except Exception as e:
-            log.exception("WEB proxy: poll loop failed")
+
+        # `FrameParseError` is a `ValueError`, and so is a malformed `x-cursor`.
+        except (WebCarrierError, ValueError) as e:
+            log.debug("WEB proxy: poll loop stopped: %s", e)
             await self._fail(e if isinstance(e, WebCarrierError) else WebCarrierError(str(e)))
+
+        # Task boundary: a poll loop that dies silently leaves the carrier alive
+        # and every reader waiting forever.
+        except Exception as e:
+            log.exception("WEB proxy: poll loop crashed")
+            await self._fail(WebCarrierError(str(e)))
 
     def _handle_frame(self, one_frame: Frame) -> None:
         if one_frame.stream_id == 0:
