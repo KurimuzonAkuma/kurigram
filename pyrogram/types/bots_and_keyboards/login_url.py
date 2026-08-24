@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
+from typing import Optional, Union
 
 from pyrogram import raw
 
@@ -75,19 +75,21 @@ class LoginUrl(Object):
         self.button_id = button_id
 
     @staticmethod
-    def read(b: "raw.types.KeyboardButtonUrlAuth") -> "LoginUrl":
+    def read(b: Union["raw.types.InlineButtonTypeUrlAuth", "raw.types.InputInlineButtonTypeUrlAuth"]) -> "LoginUrl":
         return LoginUrl(
             url=b.url,
-            forward_text=b.fwd_text,
-            button_id=b.button_id
+            forward_text=getattr(b, "fwd_text", None),
+            button_id=getattr(b, "button_id", None)
         )
 
-    def write(self, text: str, bot: "raw.types.InputUser", style: Optional["raw.types.KeyboardButtonStyle"] = None) -> "raw.types.InputKeyboardButtonUrlAuth":
-        return raw.types.InputKeyboardButtonUrlAuth(
+    async def write(self, text: str, bot: "raw.types.InputUser", style: Optional["raw.types.KeyboardButtonStyle"] = None) -> "raw.types.KeyboardInlineButton":
+        return raw.types.KeyboardInlineButton(
             text=text,
-            url=self.url,
-            bot=bot,
-            fwd_text=self.forward_text,
-            request_write_access=self.request_write_access,
+            type=raw.types.InputInlineButtonTypeUrlAuth(
+                url=self.url,
+                bot=bot,
+                fwd_text=self.forward_text,
+                request_write_access=self.request_write_access
+            ),
             style=style
         )
