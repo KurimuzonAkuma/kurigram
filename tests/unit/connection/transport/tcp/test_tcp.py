@@ -41,7 +41,6 @@ def test_tcp_is_not_web_proxy_when_no_proxy_is_set():
     assert not TCP(dc_id=2).is_web_proxy
 
 
-@pytest.mark.asyncio
 async def test_connect_via_web_proxy_requires_dc_id():
     web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(PLAIN_SECRET_HEX))
     t = TCPAbridged(proxy=web, dc_id=None)
@@ -49,7 +48,6 @@ async def test_connect_via_web_proxy_requires_dc_id():
         await t._connect_via_web_proxy()
 
 
-@pytest.mark.asyncio
 async def test_connect_via_web_proxy_requires_an_obfuscate_tag():
     web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(PLAIN_SECRET_HEX))
     t = TCP(proxy=web, dc_id=2)  # bare TCP: OBFUSCATE_TAG is None
@@ -57,7 +55,6 @@ async def test_connect_via_web_proxy_requires_an_obfuscate_tag():
         await t._connect_via_web_proxy()
 
 
-@pytest.mark.asyncio
 async def test_connect_via_web_proxy_rejects_dd_secret_on_the_wrong_class():
     web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(DD_SECRET_HEX))
     t = TCPAbridged(proxy=web, dc_id=2)  # dd secrets need TCPIntermediatePadded
@@ -65,7 +62,6 @@ async def test_connect_via_web_proxy_rejects_dd_secret_on_the_wrong_class():
         await t._connect_via_web_proxy()
 
 
-@pytest.mark.asyncio
 async def test_connect_rejects_mtproxy_as_not_implemented():
     mtproxy = MtProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(PLAIN_SECRET_HEX))
     t = TCPAbridged(proxy=mtproxy, dc_id=2)

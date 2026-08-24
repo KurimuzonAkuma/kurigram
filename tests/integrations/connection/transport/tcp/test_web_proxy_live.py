@@ -107,7 +107,6 @@ def _pick_transport_class():
     return TCPAbridged
 
 
-@pytest.mark.asyncio
 async def test_req_pq_multi_round_trip_through_live_relay():
     transport_cls = _pick_transport_class()
     proxy = normalize_proxy({"scheme": "web", "hostname": _HOSTNAME, "secret": _SECRET})
@@ -136,7 +135,6 @@ async def test_req_pq_multi_round_trip_through_live_relay():
 
 
 @_requires_api_credentials
-@pytest.mark.asyncio
 async def test_full_auth_key_exchange_through_live_relay():
     transport_cls = _pick_transport_class()
 
@@ -157,7 +155,6 @@ async def test_full_auth_key_exchange_through_live_relay():
     assert len(auth_key) == 256
 
 
-@pytest.mark.asyncio
 async def test_string_link_form_connects_through_live_relay():
     """Covers the tg://webproxy?server=...&secret=... / t.me/webproxy
     string form specifically (normalize_proxy's string-link parsing) - the

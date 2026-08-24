@@ -42,7 +42,6 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.mark.asyncio
 async def test_uplink_flow_control_crosses_stream_window(web_proxy_config):
     """Sends 5 MiB in one call - more than the 4 MiB implicit per-stream
     window - directly through WebProxyCarrier, bypassing MTProto framing
