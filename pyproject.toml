@@ -63,6 +63,7 @@ dev = [
     "pytest<=9.1.1",
     "pytest-asyncio<=1.4.0",
     "pytest-cov<=7.1.0",
+    "pytest-timeout<=2.4.0",
     "twine<=6.2.0",
 ]
 
@@ -86,6 +87,10 @@ testpaths = ["tests"]
 addopts = "--strict-markers"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# A relay that never answers `down?cursor=&wait=` hangs a run with nothing to
+# break the deadlock. Offline tests finish in ~0.1s and the live ones stay
+# under the carrier's own 25-30s ceilings, so this only ever fires on a hang.
+timeout = 120
 markers = [
     "unit: fast, no network or filesystem beyond the repo",
     "integration: opens a real socket or talks to a real service",
