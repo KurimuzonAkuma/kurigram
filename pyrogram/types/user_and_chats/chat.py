@@ -2079,6 +2079,18 @@ class Chat(Object):
             self.id, mute=True, mute_until=mute_until
         )
 
+    def listen(self, *args, **kwargs):
+        """Bound method *listen* of :obj:`~pyrogram.types.Chat`."""
+        return self._client.listen(*args, chat_id=self.id, **kwargs)
+
+    def ask(self, text, *args, **kwargs):
+        """Bound method *ask* of :obj:`~pyrogram.types.Chat`."""
+        return self._client.ask(self.id, text, *args, **kwargs)
+
+    def stop_listening(self, *args, **kwargs):
+        """Bound method *stop_listening* of :obj:`~pyrogram.types.Chat`."""
+        return self._client.stop_listening(*args, chat_id=self.id, **kwargs)
+
     async def unmute(self) -> bool:
         """Bound method *unmute* of :obj:`~pyrogram.types.Chat`.
 

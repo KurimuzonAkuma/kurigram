@@ -10502,6 +10502,26 @@ class Message(Object, Update):
             accept=False
         )
 
+    async def wait_for_click(
+        self,
+        from_user_id: Optional[Union[Union[int, str], List[Union[int, str]]]] = None,
+        timeout: Optional[int] = None,
+        filters=None,
+        alert: Union[str, bool] = True,
+    ):
+        """Bound method *wait_for_click* of :obj:`~pyrogram.types.Message`."""
+        message_id = getattr(self, "id", getattr(self, "message_id", None))
+
+        return await self._client.listen(
+            listener_type=types.ListenerTypes.CALLBACK_QUERY,
+            timeout=timeout,
+            filters=filters,
+            unallowed_click_alert=alert,
+            chat_id=self.chat.id if self.chat else None,
+            user_id=from_user_id,
+            message_id=message_id,
+        )
+
     async def summarize(self, translate_to_language_code: Optional[str] = None) -> "types.FormattedText":
         """Shortcut for method :obj:`~pyrogram.Client.summarize_message` will automatically fill method attributes:
 

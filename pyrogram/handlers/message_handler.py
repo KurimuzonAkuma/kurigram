@@ -16,12 +16,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, Any, Callable
+from inspect import iscoroutinefunction
+from typing import TYPE_CHECKING, Any, Callable, Tuple
 
+import pyrogram
+from pyrogram.types import Identifier, ListenerTypes
 from .handler import Handler
 
 if TYPE_CHECKING:
-    import pyrogram
     from pyrogram import types
 
 
@@ -52,4 +54,77 @@ class MessageHandler(Handler):
     def __init__(
         self, callback: Callable[["pyrogram.Client", "types.Message"], Any], filters=None
     ):
-        super().__init__(callback, filters)
+        self.original_callback = callback
+        super().__init__(self.resolve_future_or_callback, filters)
+
+    async def check_if_has_matching_listener(self, client: "pyrogram.Client", message: "types.Message") -> Tuple[bool, Any]:
+        from_user = getattr(message, "from_user", None)
+        from_user_id = from_user.id if from_user else None
+        from_user_username = from_user.username if from_user else None
+
+        message_id = getattr(message, "id", getattr(message, "message_id", None))
+
+        chat_ids = [message.chat.id, message.chat.username] if message.chat else None
+
+        data = Identifier(
+            message_id=message_id,
+            chat_id=chat_ids,
+            from_user_id=[from_user_id, from_user_username],
+        )
+
+        listener = client.get_listener_matching_with_data(data, ListenerTypes.MESSAGE)
+
+        listener_does_match = False
+
+        if listener:
+            filters = listener.filters
+            if callable(filters):
+                if iscoroutinefunction(filters.__call__):
+                    listener_does_match = await filters(client, message)
+                else:
+                    listener_does_match = await client.loop.run_in_executor(
+                        None, filters, client, message
+                    )
+            else:
+                listener_does_match = True
+
+        return listener_does_match, listener
+
+    async def check(self, client: "pyrogram.Client", message: "types.Message") -> bool:
+        listener_does_match = (
+            await self.check_if_has_matching_listener(client, message)
+        )[0]
+
+        if callable(self.filters):
+            if iscoroutinefunction(self.filters.__call__):
+                handler_does_match = await self.filters(client, message)
+            else:
+                handler_does_match = await client.loop.run_in_executor(
+                    None, self.filters, client, message
+                )
+        else:
+            handler_does_match = True
+
+        return listener_does_match or handler_does_match
+
+    async def resolve_future_or_callback(self, client: "pyrogram.Client", message: "types.Message", *args):
+        listener_does_match, listener = await self.check_if_has_matching_listener(
+            client, message
+        )
+
+        if listener and listener_does_match:
+            client.remove_listener(listener)
+
+            if listener.future and not listener.future.done():
+                listener.future.set_result(message)
+                raise pyrogram.StopPropagation
+            elif listener.callback:
+                if iscoroutinefunction(listener.callback):
+                    await listener.callback(client, message, *args)
+                else:
+                    listener.callback(client, message, *args)
+                raise pyrogram.StopPropagation
+            else:
+                raise ValueError("Listener must have either a future or a callback")
+        else:
+            await self.original_callback(client, message, *args)

@@ -24,6 +24,7 @@ from .run import Run
 from .start import Start
 from .stop import Stop
 from .stop_transmission import StopTransmission
+from .listeners import Listeners
 
 
 class Utilities(
@@ -34,6 +35,7 @@ class Utilities(
     Run,
     Start,
     Stop,
-    StopTransmission
+    StopTransmission,
+    Listeners
 ):
     pass
