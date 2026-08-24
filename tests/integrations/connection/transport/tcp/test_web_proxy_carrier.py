@@ -36,13 +36,15 @@ from pyrogram.connection.transport.tcp.web_proxy_carrier import WebCarrierError
 
 from tests.web_proxy_values import load_live_relay_config
 
+_CONFIG = load_live_relay_config()
+
 pytestmark = pytest.mark.skipif(
-    not load_live_relay_config().is_configured,
+    not _CONFIG.is_configured,
     reason="set WEB_PROXY_TEST_HOSTNAME and WEB_PROXY_TEST_SECRET to run this test",
 )
 
 
-async def test_uplink_flow_control_crosses_stream_window(web_proxy_config):
+async def test_uplink_flow_control_crosses_stream_window():
     """Sends 5 MiB in one call - more than the 4 MiB implicit per-stream
     window - directly through WebProxyCarrier, bypassing MTProto framing
     entirely so this is purely a transport-level check of the client's own
@@ -61,9 +63,9 @@ async def test_uplink_flow_control_crosses_stream_window(web_proxy_config):
     logged-in session pulling a large file, which cannot be scripted here
     without interactive login.
     """
-    proxy = normalize_proxy({"scheme": "web", "hostname": web_proxy_config.hostname, "secret": web_proxy_config.secret})
+    proxy = normalize_proxy({"scheme": "web", "hostname": _CONFIG.hostname, "secret": _CONFIG.secret})
     transport_cls = TCPIntermediatePadded if len(proxy.secret) == 17 else TCPAbridged
-    transport = transport_cls(ipv6=False, proxy=proxy, dc_id=web_proxy_config.dc_id)
+    transport = transport_cls(ipv6=False, proxy=proxy, dc_id=_CONFIG.dc_id)
     try:
         await transport.connect(("unused", 0))
         carrier = transport._web_carrier

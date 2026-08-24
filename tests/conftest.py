@@ -49,9 +49,3 @@ def pytest_collection_modifyitems(config: pytest.Config, items) -> None:
             item.add_marker(pytest.mark.unit)
         elif "integrations" in parts:
             item.add_marker(pytest.mark.integration)
-
-
-@pytest.fixture(scope="session")
-def web_proxy_config():
-    from tests.web_proxy_values import load_live_relay_config
-    return load_live_relay_config()

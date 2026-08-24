@@ -46,13 +46,14 @@ deployment. Run it against your own relay with e.g.::
     WEB_PROXY_TEST_HOSTNAME=relay.example.com \\
     WEB_PROXY_TEST_SECRET=000102030405060708090a0b0c0d0e0f \\
     WEB_PROXY_TEST_DC_ID=2 \\
-    pytest tests/test_web_proxy_live.py -v -s
+    pytest tests/integrations/connection/transport/tcp/test_web_proxy_live.py -v -s
 """
 
 import asyncio
 import os
 import struct
 import time
+from dataclasses import dataclass
 
 import pytest
 
@@ -61,23 +62,20 @@ from pyrogram.connection import normalize_proxy
 from pyrogram.connection.transport.tcp import TCPAbridged, TCPIntermediatePadded
 from pyrogram.session.auth import Auth
 
-_HOSTNAME = os.environ.get("WEB_PROXY_TEST_HOSTNAME")
-_SECRET = os.environ.get("WEB_PROXY_TEST_SECRET")
-_DC_ID = int(os.environ.get("WEB_PROXY_TEST_DC_ID", "2"))
+from tests.web_proxy_values import load_live_relay_config
 
-# No default: tdesktop's own published example pair is Telegram Desktop's
-# real credentials, and using them from a third-party client violates
-# Telegram's ToS. Bring your own api_id/api_hash for this test.
-_API_ID = os.environ.get("WEB_PROXY_TEST_API_ID")
-_API_HASH = os.environ.get("WEB_PROXY_TEST_API_HASH")
+_CONFIG = load_live_relay_config()
 
 pytestmark = pytest.mark.skipif(
-    not _HOSTNAME or not _SECRET,
+    not _CONFIG.is_configured,
     reason="set WEB_PROXY_TEST_HOSTNAME and WEB_PROXY_TEST_SECRET to run the live WEB proxy smoke test",
 )
 
+# No default anywhere: tdesktop's published example pair is Telegram Desktop's
+# real credentials, and using them from a third-party client violates
+# Telegram's ToS. Bring your own api_id/api_hash for this test.
 _requires_api_credentials = pytest.mark.skipif(
-    not _API_ID or not _API_HASH,
+    not _CONFIG.has_api_credentials,
     reason="set WEB_PROXY_TEST_API_ID and WEB_PROXY_TEST_API_HASH to run the auth key exchange test",
 )
 
@@ -85,7 +83,13 @@ _REQ_PQ_MULTI = 0xBE7E8EF1
 _RES_PQ = 0x05162463
 
 
-def _build_req_pq_multi() -> (bytes, bytes):
+@dataclass(frozen=True)
+class _ReqPqMulti:
+    packet: bytes
+    nonce: bytes
+
+
+def _build_req_pq_multi() -> _ReqPqMulti:
     """A hand-built, unencrypted req_pq_multi query - MTProto's very
     first handshake step. No auth key exists yet, so this is the
     simplest possible real message to round-trip for a genuine
@@ -98,25 +102,25 @@ def _build_req_pq_multi() -> (bytes, bytes):
     message_id -= message_id % 4  # low bits must be clear for a client message
 
     packet = struct.pack("<qQi", 0, message_id, len(body)) + body
-    return packet, nonce
+    return _ReqPqMulti(packet=packet, nonce=nonce)
 
 
 def _pick_transport_class():
-    if len(bytes.fromhex(_SECRET)) == 17:
+    if len(bytes.fromhex(_CONFIG.secret)) == 17:
         return TCPIntermediatePadded
     return TCPAbridged
 
 
 async def test_req_pq_multi_round_trip_through_live_relay():
     transport_cls = _pick_transport_class()
-    proxy = normalize_proxy({"scheme": "web", "hostname": _HOSTNAME, "secret": _SECRET})
+    proxy = normalize_proxy({"scheme": "web", "hostname": _CONFIG.hostname, "secret": _CONFIG.secret})
 
-    transport = transport_cls(ipv6=False, proxy=proxy, dc_id=_DC_ID)
+    transport = transport_cls(ipv6=False, proxy=proxy, dc_id=_CONFIG.dc_id)
     try:
         await transport.connect(("unused", 0))
 
-        packet, nonce = _build_req_pq_multi()
-        await transport.send(packet)
+        query = _build_req_pq_multi()
+        await transport.send(query.packet)
 
         response = await asyncio.wait_for(transport.recv(), timeout=15)
         assert response is not None, "no response from the real DC through the WEB proxy carrier"
@@ -129,7 +133,7 @@ async def test_req_pq_multi_round_trip_through_live_relay():
         assert constructor == _RES_PQ, f"expected resPQ (0x{_RES_PQ:x}), got 0x{constructor:x}"
 
         echoed_nonce = body[4:20]
-        assert echoed_nonce == nonce, "resPQ echoed a different nonce than the one we sent"
+        assert echoed_nonce == query.nonce, "resPQ echoed a different nonce than the one we sent"
     finally:
         await transport.close()
 
@@ -139,16 +143,16 @@ async def test_full_auth_key_exchange_through_live_relay():
     transport_cls = _pick_transport_class()
 
     client = Client(
-        "web_proxy_smoke_test",
-        api_id=int(_API_ID),
-        api_hash=_API_HASH,
+        "test_client",
+        api_id=int(_CONFIG.api_id),
+        api_hash=_CONFIG.api_hash,
         in_memory=True,
         protocol_factory=transport_cls,
-        proxy={"scheme": "web", "hostname": _HOSTNAME, "secret": _SECRET},
+        proxy={"scheme": "web", "hostname": _CONFIG.hostname, "secret": _CONFIG.secret},
     )
 
     auth_key = await Auth(
-        client, dc_id=_DC_ID, server_address="unused", port=443, test_mode=False,
+        client, dc_id=_CONFIG.dc_id, server_address="unused", port=443, test_mode=False,
     ).create()
 
     assert isinstance(auth_key, bytes)
@@ -161,20 +165,20 @@ async def test_string_link_form_connects_through_live_relay():
     other two tests above only exercise the dict form.
     """
     transport_cls = _pick_transport_class()
-    link = f"tg://webproxy?server={_HOSTNAME}&secret={_SECRET}"
+    link = f"tg://webproxy?server={_CONFIG.hostname}&secret={_CONFIG.secret}"
 
-    transport = transport_cls(ipv6=False, proxy=normalize_proxy(link), dc_id=_DC_ID)
+    transport = transport_cls(ipv6=False, proxy=normalize_proxy(link), dc_id=_CONFIG.dc_id)
     try:
         await transport.connect(("unused", 0))
 
-        packet, nonce = _build_req_pq_multi()
-        await transport.send(packet)
+        query = _build_req_pq_multi()
+        await transport.send(query.packet)
 
         response = await asyncio.wait_for(transport.recv(), timeout=15)
         assert response is not None
 
         body = response[20:20 + struct.unpack("<qQi", response[:20])[2]]
         assert struct.unpack("<I", body[:4])[0] == _RES_PQ
-        assert body[4:20] == nonce
+        assert body[4:20] == query.nonce
     finally:
         await transport.close()
