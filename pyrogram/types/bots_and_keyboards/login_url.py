@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, Union
+from typing import Optional
 
 from pyrogram import raw
 
@@ -75,7 +75,7 @@ class LoginUrl(Object):
         self.button_id = button_id
 
     @staticmethod
-    def read(b: Union["raw.types.InlineButtonTypeUrlAuth", "raw.types.InputInlineButtonTypeUrlAuth"]) -> "LoginUrl":
+    def read(b: "raw.base.InlineButtonType") -> "LoginUrl":
         return LoginUrl(
             url=b.url,
             forward_text=getattr(b, "fwd_text", None),

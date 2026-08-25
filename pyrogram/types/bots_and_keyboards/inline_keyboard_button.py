@@ -241,6 +241,7 @@ class InlineKeyboardButton(Object):
             )
 
     async def write(self, client: "pyrogram.Client"):
+        # Layer 229 update: KeyboardButtonStyle is now a standalone flag-based object
         style = raw.types.KeyboardButtonStyle(
             bg_primary=self.style == enums.ButtonStyle.PRIMARY,
             bg_danger=self.style == enums.ButtonStyle.DANGER,
@@ -248,6 +249,9 @@ class InlineKeyboardButton(Object):
             icon=int(self.icon_custom_emoji_id) if self.icon_custom_emoji_id is not None else None
         ) if self.style != enums.ButtonStyle.DEFAULT or self.icon_custom_emoji_id is not None else None
 
+        # Layer 229 compatibility: 
+        # Independent button constructors (like KeyboardButtonUrl) are deprecated in raw types.
+        # We now use KeyboardInlineButton with a specific InlineButtonType.
         if self.callback_data is not None:
             data = bytes(self.callback_data, "utf-8") if isinstance(self.callback_data, str) else self.callback_data
             button_type = raw.types.InlineButtonTypeCallback(

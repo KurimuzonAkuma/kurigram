@@ -294,17 +294,24 @@ class SendMessage:
                 message=message,
                 entities=entities,
             )
-        elif link_preview_options and link_preview_options.url:
+        # Compatibility fix: 
+        # Some bots pass link_preview_options as a dict (e.g., from old configurations).
+        # We now support both dict and LinkPreviewOptions objects to prevent AttributeError.
+        elif link_preview_options and (link_preview_options.get("url") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "url", None)):
+            lpo_url = link_preview_options.get("url") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "url", None)
+            lpo_large = link_preview_options.get("prefer_large_media") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "prefer_large_media", None)
+            lpo_small = link_preview_options.get("prefer_small_media") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "prefer_small_media", None)
+            lpo_above = link_preview_options.get("show_above_text") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "show_above_text", None)
             rpc = raw.functions.messages.SendMedia(
                 peer=peer,
                 media=raw.types.InputMediaWebPage(
-                    url=link_preview_options.url,
-                    force_large_media=link_preview_options.prefer_large_media,
-                    force_small_media=link_preview_options.prefer_small_media,
+                    url=lpo_url,
+                    force_large_media=lpo_large,
+                    force_small_media=lpo_small,
                     optional=True
                 ),
                 silent=disable_notification or None,
-                invert_media=link_preview_options.show_above_text,
+                invert_media=lpo_above,
                 reply_to=await utils.get_reply_to(
                     self,
                     reply_parameters,
@@ -326,9 +333,9 @@ class SendMessage:
         else:
             rpc = raw.functions.messages.SendMessage(
                 peer=peer,
-                no_webpage=getattr(link_preview_options, "is_disabled", None) or None,
+                no_webpage=(link_preview_options.get("is_disabled") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "is_disabled", None)) or None,
                 silent=disable_notification or None,
-                invert_media=getattr(link_preview_options, "show_above_text", None),
+                invert_media=(link_preview_options.get("show_above_text") if isinstance(link_preview_options, dict) else getattr(link_preview_options, "show_above_text", None)),
                 reply_to=await utils.get_reply_to(
                     self,
                     reply_parameters,

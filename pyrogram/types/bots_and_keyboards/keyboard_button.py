@@ -210,6 +210,7 @@ class KeyboardButton(Object):
             )
 
     def write(self):
+        # Layer 229 update: KeyboardButtonStyle is now a standalone flag-based object
         style = raw.types.KeyboardButtonStyle(
             bg_primary=self.style == enums.ButtonStyle.PRIMARY,
             bg_danger=self.style == enums.ButtonStyle.DANGER,
@@ -217,19 +218,14 @@ class KeyboardButton(Object):
             icon=int(self.icon_custom_emoji_id) if self.icon_custom_emoji_id is not None else None
         ) if self.style != enums.ButtonStyle.DEFAULT or self.icon_custom_emoji_id is not None else None
 
+        # Layer 229 compatibility:
+        # Standard buttons now use KeyboardButton with a ButtonType constructor.
         if self.request_contact:
-            return raw.types.KeyboardButtonRequestPhone(
-                text=self.text,
-                style=style,
-            )
+            button_type = raw.types.ButtonTypeRequestPhone()
         elif self.request_location:
-            return raw.types.KeyboardButtonRequestGeoLocation(text=self.text, style=style)
+            button_type = raw.types.ButtonTypeRequestGeoLocation()
         elif self.request_poll:
-            return raw.types.KeyboardButtonRequestPoll(
-                text=self.text,
-                quiz=self.request_poll.is_quiz,
-                style=style
-            )
+            button_type = raw.types.ButtonTypeRequestPoll(quiz=self.request_poll.is_quiz)
         elif self.request_chat:
             user_privileges = self.request_chat.user_administrator_rights
             bot_privileges = self.request_chat.bot_administrator_rights
@@ -285,19 +281,16 @@ class KeyboardButton(Object):
                     bot_admin_rights=bot_admin_rights
                 )
 
-            return raw.types.InputKeyboardButtonRequestPeer(
-                text=self.text,
+            button_type = raw.types.ButtonTypeRequestPeer(
                 button_id=self.request_chat.button_id,
                 peer_type=peer_type,
                 max_quantity=self.request_chat.max_quantity,
                 name_requested=self.request_chat.request_title,
                 username_requested=self.request_chat.request_username,
-                photo_requested=self.request_chat.request_photo,
-                style=style,
+                photo_requested=self.request_chat.request_photo
             )
         elif self.request_managed_bot:
-            return raw.types.InputKeyboardButtonRequestPeer(
-                text=self.text,
+            button_type = raw.types.ButtonTypeRequestPeer(
                 button_id=self.request_managed_bot.button_id,
                 peer_type=raw.types.RequestPeerTypeCreateBot(
                     bot_managed=True,
@@ -312,17 +305,21 @@ class KeyboardButton(Object):
                 premium=self.request_users.user_is_premium
             )
 
-            return raw.types.InputKeyboardButtonRequestPeer(
-                text=self.text,
+            button_type = raw.types.ButtonTypeRequestPeer(
                 button_id=self.request_users.button_id,
                 peer_type=peer_type,
                 max_quantity=self.request_users.max_quantity,
                 name_requested=self.request_users.request_name,
                 username_requested=self.request_users.request_username,
-                photo_requested=self.request_users.request_photo,
-                style=style,
+                photo_requested=self.request_users.request_photo
             )
         elif self.web_app:
-            return raw.types.KeyboardButtonSimpleWebView(text=self.text, url=self.web_app.url, style=style)
+            button_type = raw.types.ButtonTypeSimpleWebView(url=self.web_app.url)
         else:
-            return raw.types.KeyboardButton(text=self.text, style=style)
+            button_type = raw.types.ButtonTypeDefault()
+
+        return raw.types.KeyboardButton(
+            text=self.text,
+            type=button_type,
+            style=style
+        )
