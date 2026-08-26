@@ -253,8 +253,8 @@ _SOCKS_LINK_RE: Final[Pattern[str]] = re.compile(
 )
 
 
-def _query_param(params: Dict[str, List[str]], name: str) -> Optional[str]:
-    values = params.get(name)
+def _query_param(query_parameters: Dict[str, List[str]], *, name: str) -> Optional[str]:
+    values = query_parameters.get(name)
 
     return values[0] if values else None
 
@@ -263,10 +263,10 @@ def _parse_proxy_link(link: str) -> Proxy:
     web_match = _WEB_PROXY_LINK_RE.match(link)
 
     if web_match:
-        params = parse_qs(web_match.group(1))
+        query_parameters = parse_qs(web_match.group(1))
         # `host` is the alias the Android fork emits for the same field.
-        hostname = _query_param(params, "server") or _query_param(params, "host")
-        secret_hex = _query_param(params, "secret")
+        hostname = _query_param(query_parameters, name="server") or _query_param(query_parameters, name="host")
+        secret_hex = _query_param(query_parameters, name="secret")
 
         if not hostname or not secret_hex:
             msg = "WEB proxy link must contain 'server' (or 'host') and 'secret' params"
@@ -277,9 +277,9 @@ def _parse_proxy_link(link: str) -> Proxy:
     socks_match = _SOCKS_LINK_RE.match(link)
 
     if socks_match:
-        params = parse_qs(socks_match.group(1))
-        hostname = _query_param(params, "server")
-        port = _query_param(params, "port")
+        query_parameters = parse_qs(socks_match.group(1))
+        hostname = _query_param(query_parameters, name="server")
+        port = _query_param(query_parameters, name="port")
 
         if not hostname or not port:
             msg = "Telegram proxy link must contain 'server' and 'port' params"
@@ -289,8 +289,8 @@ def _parse_proxy_link(link: str) -> Proxy:
             scheme=ProxyScheme.SOCKS5,
             hostname=hostname,
             port=port,
-            username=_query_param(params, "user"),
-            password=_query_param(params, "pass"),
+            username=_query_param(query_parameters, name="user"),
+            password=_query_param(query_parameters, name="pass"),
         )
 
     parts = urlsplit(link)
