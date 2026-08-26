@@ -23,7 +23,7 @@ already-deployed relay + stock MTProxy + real Telegram DC.
 This is deliberately NOT a mock: it drives the full chain - the obfuscated2
 handshake TCP._connect_via_web_proxy performs, the long-poll carrier, the
 hosted relay, a real stock MTProxy instance, and a real Telegram datacenter -
-two ways:
+three ways:
 
 1. A hand-built plaintext ``req_pq_multi`` query (MTProto's first,
    unencrypted handshake step, which needs no auth key), checking a genuine
@@ -34,6 +34,9 @@ two ways:
    ``pyrogram.session.auth.Auth``, proving a *sustained*, multi-message,
    partially-encrypted exchange works end to end through the same transport -
    not just one request/response.
+3. An ordinary high-level API call on an existing, already-authorized session,
+   which is the only one of the three that exercises a fully encrypted MTProto
+   session with its own salt, acknowledgements and update loop on top.
 
 Both run through TCPAbridged (plain secrets) or TCPIntermediatePadded
 (dd-prefixed secrets) unmodified - proxy={"scheme": "web", ...} is all that
@@ -53,15 +56,22 @@ from dataclasses import dataclass
 from typing import Final, Type
 
 from pyrogram import Client
-from pyrogram.connection.proxy import Proxy, normalize_proxy
+from pyrogram.connection.proxy import WebProxy, normalize_proxy
 from pyrogram.connection.transport.tcp import TCP
 from pyrogram.session.auth import Auth
 
-from tests.integrations.connection.transport.tcp.conftest import RelayConfig, SessionConfig
+from tests.integrations.connection.transport.tcp.conftest import RelayConfig
 
 _REQ_PQ_MULTI: Final[int] = 0xBE7E8EF1
 _RES_PQ: Final[int] = 0x05162463
-_RESPONSE_HEADER = struct.Struct("<qQi")
+_RESPONSE_HEADER: Final[struct.Struct] = struct.Struct("<qQi")
+
+# The address `Auth` is handed is never dialed - the carrier reaches the DC
+#  through the relay - but the signature still requires a port.
+_MTPROTO_PORT: Final[int] = 443
+
+# An MTProto auth key is 2048 bits.
+_AUTH_KEY_SIZE: Final[int] = 256
 
 
 @dataclass(frozen=True)
@@ -106,7 +116,7 @@ async def _round_trip_req_pq_multi(transport: TCP) -> None:
 
 async def test_req_pq_multi_round_trip_through_live_relay(
     relay_config: RelayConfig,
-    relay_proxy: Proxy,
+    relay_proxy: WebProxy,
     relay_transport_class: Type[TCP],
 ) -> None:
     transport = relay_transport_class(ipv6=False, proxy=relay_proxy, dc_id=relay_config.dc_id)
@@ -126,7 +136,7 @@ async def test_string_link_form_connects_through_live_relay(
     form specifically (normalize_proxy's link parsing) - the other tests here
     only exercise the dict form.
     """
-    link = f"tg://webproxy?server={relay_config.hostname}&secret={relay_config.secret}"
+    link = f"tg://webproxy?server={relay_config.hostname}&secret={relay_config.secret.hex()}"
     transport = relay_transport_class(
         ipv6=False,
         proxy=normalize_proxy(link),
@@ -142,25 +152,26 @@ async def test_string_link_form_connects_through_live_relay(
 
 async def test_full_auth_key_exchange_through_live_relay(
     relay_config: RelayConfig,
-    relay_transport_class: Type[TCP],
-    session_config: SessionConfig,
+    unauthorized_client: Client,
 ) -> None:
-    client = Client(
-        "test_client",
-        api_id=session_config.api_id,
-        api_hash=session_config.api_hash,
-        in_memory=True,
-        protocol_factory=relay_transport_class,
-        proxy={"scheme": "web", "hostname": relay_config.hostname, "secret": relay_config.secret},
-    )
-
     auth_key = await Auth(
-        client,
+        unauthorized_client,
         dc_id=relay_config.dc_id,
         server_address="unused",
-        port=443,
+        port=_MTPROTO_PORT,
         test_mode=False,
     ).create()
 
     assert isinstance(auth_key, bytes)
-    assert len(auth_key) == 256
+    assert len(auth_key) == _AUTH_KEY_SIZE
+
+
+async def test_high_level_api_call_through_live_relay(client: Client) -> None:
+    """The only test here that runs a fully encrypted MTProto session - salt,
+    acknowledgements, update loop and all - over the carrier, on a real
+    already-authorized account.
+    """
+    me = await client.get_me()
+
+    assert me.is_self
+    assert me.id > 0
