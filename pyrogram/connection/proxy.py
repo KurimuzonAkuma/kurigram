@@ -16,69 +16,83 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import ipaddress
 import re
 from dataclasses import dataclass
-from typing import Literal, Optional, TypedDict, Union
+from typing import ClassVar, Dict, Final, Literal, Optional, Pattern, Tuple, Type, TypedDict, Union
 from urllib.parse import parse_qs, urlsplit
 
 from pyrogram.enums import ProxyScheme
 
-# --- canonical internal representation ------------------------------------
-# One frozen dataclass per proxy kind. Connection, TCP and the transports
-# take only these - never a raw dict or string.
+# One frozen dataclass per proxy kind. Connection, TCP and the transports take
+#  only these - never a raw dict or string.
 
 
 @dataclass(frozen=True)
 class Socks4Proxy:
+    scheme: ClassVar[Literal[ProxyScheme.SOCKS4]] = ProxyScheme.SOCKS4
+
     hostname: str
     port: int
     username: Optional[str] = None
     password: Optional[str] = None
-    scheme: Literal[ProxyScheme.SOCKS4] = ProxyScheme.SOCKS4
 
 
 @dataclass(frozen=True)
 class Socks5Proxy:
+    scheme: ClassVar[Literal[ProxyScheme.SOCKS5]] = ProxyScheme.SOCKS5
+
     hostname: str
     port: int
     username: Optional[str] = None
     password: Optional[str] = None
-    scheme: Literal[ProxyScheme.SOCKS5] = ProxyScheme.SOCKS5
 
 
 @dataclass(frozen=True)
 class HttpProxy:
+    scheme: ClassVar[Literal[ProxyScheme.HTTP]] = ProxyScheme.HTTP
+
     hostname: str
     port: int
     username: Optional[str] = None
     password: Optional[str] = None
-    scheme: Literal[ProxyScheme.HTTP] = ProxyScheme.HTTP
 
 
 @dataclass(frozen=True)
 class MtProxy:
-    # Classic MTProxy: obfuscated2 straight to (hostname, port), no relay.
-    # Not connected yet - TCP raises a clear NotImplementedError for it
-    # until #325 lands. The type exists now so that landing doesn't need
-    # another round of proxy-shape changes.
+    # Classic MTProxy: obfuscated2 straight to (hostname, port), no relay. Not
+    #  connected yet - TCP raises a clear NotImplementedError for it until #325
+    #  lands. The type exists now so that landing doesn't need another round of
+    #  proxy-shape changes.
+    scheme: ClassVar[Literal[ProxyScheme.MTPROXY]] = ProxyScheme.MTPROXY
+
     hostname: str
     port: int
     secret: bytes  # decoded, dd marker kept when present
-    scheme: Literal[ProxyScheme.MTPROXY] = ProxyScheme.MTPROXY
 
 
 @dataclass(frozen=True)
 class WebProxy:
+    scheme: ClassVar[Literal[ProxyScheme.WEB]] = ProxyScheme.WEB
+
     hostname: str  # canonical lowercase ASCII/IDNA A-label
     secret: bytes  # decoded, dd marker kept when present
-    scheme: Literal[ProxyScheme.WEB] = ProxyScheme.WEB
 
 
 Proxy = Union[Socks4Proxy, Socks5Proxy, HttpProxy, MtProxy, WebProxy]
 
+_PROXY_TYPES: Final[Tuple[type, ...]] = (Socks4Proxy, Socks5Proxy, HttpProxy, MtProxy, WebProxy)
 
-# --- dict form accepted at the public boundary (Client(proxy={...})) ------
+# Schemes python_socks dials for us; the rest need a transport of their own.
+_DIALED_PROXY_TYPES: Final[Dict[ProxyScheme, Type[Union[Socks4Proxy, Socks5Proxy, HttpProxy]]]] = {
+    ProxyScheme.SOCKS4: Socks4Proxy,
+    ProxyScheme.SOCKS5: Socks5Proxy,
+    ProxyScheme.HTTP: HttpProxy,
+}
+
+
+# The dict form accepted at the public boundary, Client(proxy={...}).
 
 class _Socks4ProxyDictRequired(TypedDict):
     scheme: Literal["socks4"]
@@ -129,32 +143,35 @@ class WebProxyDict(TypedDict):
 ProxyDict = Union[Socks4ProxyDict, Socks5ProxyDict, HttpProxyDict, MtProxyDict, WebProxyDict]
 
 
-# --- hostname canonicalization (WEB only) ----------------------------------
-
 def canonicalize_web_hostname(hostname: str) -> str:
-    # Best-effort mirror of tdesktop's WEB `host` validation (§2.4): the
-    # canonical lowercase ASCII/IDNA A-label. Different normalizations of
-    # the same hostname derive different bridge capabilities, so this must
-    # run once, at normalization time, before the hostname is used for
-    # anything.
+    # Best-effort mirror of tdesktop's WEB `host` validation (web-proxy-plan.md
+    #  §2.4): the canonical lowercase ASCII/IDNA A-label. Different
+    #  normalizations of the same hostname derive different bridge
+    #  capabilities, so this must run once, at normalization time, before the
+    #  hostname is used for anything.
     hostname = hostname.strip().rstrip(".")
+
     if not hostname:
-        raise ValueError("WEB proxy hostname is empty")
+        msg = "WEB proxy hostname is empty"
+        raise ValueError(msg)
 
     try:
         ipaddress.ip_address(hostname)
     except ValueError:
         pass
     else:
-        raise ValueError(f"WEB proxy hostname must not be an IP literal: {hostname!r}")
+        msg = f"WEB proxy hostname must not be an IP literal: {hostname!r}"
+        raise ValueError(msg)
 
     try:
         canonical = hostname.encode("idna").decode("ascii").lower()
     except UnicodeError as e:
-        raise ValueError(f"WEB proxy hostname is not a valid DNS name: {hostname!r}") from e
+        msg = f"WEB proxy hostname is not a valid DNS name: {hostname!r}"
+        raise ValueError(msg) from e
 
     if "." not in canonical:
-        raise ValueError(f"WEB proxy hostname must not be a single-label name: {hostname!r}")
+        msg = f"WEB proxy hostname must not be a single-label name: {hostname!r}"
+        raise ValueError(msg)
 
     return canonical
 
@@ -163,114 +180,185 @@ def _decode_mtproxy_secret(secret_hex: str, *, allow_dd: bool) -> bytes:
     try:
         full_secret = bytes.fromhex(secret_hex)
     except ValueError as e:
-        raise ValueError(f"proxy 'secret' must be a hex string: {e}") from e
+        msg = f"proxy 'secret' must be a hex string: {e}"
+        raise ValueError(msg) from e
 
     if full_secret[:1] == b"\xee":
-        raise ValueError(
+        msg = (
             "proxy secret uses TLS-emulation ('ee') framing: the relay would need to add the "
             "inner fake-TLS record stock MTProxy expects, and it deliberately does not "
             "(web-proxy-plan.md §3). Use a plain 16-byte or dd-prefixed secret instead."
         )
+        raise ValueError(msg)
 
     if allow_dd and len(full_secret) == 17 and full_secret[0] == 0xDD:
         return full_secret
+
     if len(full_secret) == 16:
         return full_secret
 
     expected = "16 bytes (plain) or 17 bytes (dd-prefixed)" if allow_dd else "16 bytes"
-    raise ValueError(f"proxy secret must decode to {expected}, got {len(full_secret)}")
+    msg = f"proxy secret must decode to {expected}, got {len(full_secret)}"
+    raise ValueError(msg)
 
 
-# --- string form: tg://…, https://t.me/…, scheme://user:pass@host:port ----
+# The one place each kind is built, so the dict form and the string form below
+#  cannot validate differently.
 
-_WEB_PROXY_LINK_RE = re.compile(
+def _build_web_proxy(*, hostname: str, secret_hex: str) -> WebProxy:
+    return WebProxy(
+        hostname=canonicalize_web_hostname(hostname),
+        secret=_decode_mtproxy_secret(secret_hex, allow_dd=True),
+    )
+
+
+def _build_mtproxy(*, hostname: str, port: Union[int, str], secret_hex: str) -> MtProxy:
+    return MtProxy(
+        hostname=hostname,
+        port=int(port),
+        secret=_decode_mtproxy_secret(secret_hex, allow_dd=True),
+    )
+
+
+def _build_dialed_proxy(
+    *,
+    scheme: ProxyScheme,
+    hostname: str,
+    port: Union[int, str],
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> Union[Socks4Proxy, Socks5Proxy, HttpProxy]:
+    proxy_type = _DIALED_PROXY_TYPES[scheme]
+
+    return proxy_type(hostname=hostname, port=int(port), username=username, password=password)
+
+
+def _parse_scheme(scheme_value: object) -> ProxyScheme:
+    if not scheme_value:
+        msg = "proxy dict must contain 'scheme'"
+        raise ValueError(msg)
+
+    try:
+        return ProxyScheme(str(scheme_value).lower())
+    except ValueError as e:
+        msg = f"unknown proxy scheme: {scheme_value!r}"
+        raise ValueError(msg) from e
+
+
+_WEB_PROXY_LINK_RE: Final[Pattern[str]] = re.compile(
     r"(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/webproxy\?|tg://webproxy\?)(.+)"
 )
-_SOCKS_LINK_RE = re.compile(
+_SOCKS_LINK_RE: Final[Pattern[str]] = re.compile(
     r"(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/socks\?|tg://socks\?)(.+)"
 )
 
 
-def _parse_proxy_string(link: str) -> dict:
-    match = _WEB_PROXY_LINK_RE.match(link)
-    if match:
-        params = parse_qs(match.group(1))
-        hostname = params.get("server", [None])[0] or params.get("host", [None])[0]  # host: Android-fork alias
-        secret = params.get("secret", [None])[0]
-        if not hostname or not secret:
-            raise ValueError("WEB proxy link must contain 'server' (or 'host') and 'secret' params")
-        return {"scheme": "web", "hostname": hostname, "secret": secret}
+def _query_param(params: Dict[str, list], name: str) -> Optional[str]:
+    values = params.get(name)
 
-    match = _SOCKS_LINK_RE.match(link)
-    if match:
-        params = parse_qs(match.group(1))
-        server = params.get("server", [None])[0]
-        port = params.get("port", [None])[0]
-        user = params.get("user", [None])[0]
-        password = params.get("pass", [None])[0]
-        if not server or not port:
-            raise ValueError("Telegram proxy link must contain 'server' and 'port' params")
-        return {"scheme": "socks5", "hostname": server, "port": port, "username": user, "password": password}
+    return values[0] if values else None
+
+
+def _parse_proxy_link(link: str) -> Proxy:
+    web_match = _WEB_PROXY_LINK_RE.match(link)
+
+    if web_match:
+        params = parse_qs(web_match.group(1))
+        # `host` is the alias the Android fork emits for the same field.
+        hostname = _query_param(params, "server") or _query_param(params, "host")
+        secret_hex = _query_param(params, "secret")
+
+        if not hostname or not secret_hex:
+            msg = "WEB proxy link must contain 'server' (or 'host') and 'secret' params"
+            raise ValueError(msg)
+
+        return _build_web_proxy(hostname=hostname, secret_hex=secret_hex)
+
+    socks_match = _SOCKS_LINK_RE.match(link)
+
+    if socks_match:
+        params = parse_qs(socks_match.group(1))
+        hostname = _query_param(params, "server")
+        port = _query_param(params, "port")
+
+        if not hostname or not port:
+            msg = "Telegram proxy link must contain 'server' and 'port' params"
+            raise ValueError(msg)
+
+        return _build_dialed_proxy(
+            scheme=ProxyScheme.SOCKS5,
+            hostname=hostname,
+            port=port,
+            username=_query_param(params, "user"),
+            password=_query_param(params, "pass"),
+        )
 
     parts = urlsplit(link)
+
     if not parts.scheme or not parts.hostname or not parts.port:
-        raise ValueError(f"proxy string is not a recognized proxy URL: {link!r}")
-    return {
-        "scheme": parts.scheme,
-        "hostname": parts.hostname,
-        "port": parts.port,
-        "username": parts.username,
-        "password": parts.password,
-    }
+        msg = f"proxy string is not a recognized proxy URL: {link!r}"
+        raise ValueError(msg)
+
+    scheme = _parse_scheme(parts.scheme)
+
+    if scheme not in _DIALED_PROXY_TYPES:
+        msg = f"{scheme.value} proxy cannot be written as a plain URL; use the dict or tg:// form"
+        raise ValueError(msg)
+
+    return _build_dialed_proxy(
+        scheme=scheme,
+        hostname=parts.hostname,
+        port=parts.port,
+        username=parts.username,
+        password=parts.password,
+    )
 
 
-# --- the normalizer: the one place that validates --------------------------
+def _parse_proxy_dict(proxy: dict) -> Proxy:
+    scheme = _parse_scheme(proxy.get("scheme"))
+    hostname = proxy.get("hostname")
+    port = proxy.get("port")
+    secret_hex = proxy.get("secret")
 
-def normalize_proxy(proxy: Union[str, dict, "Proxy", None]) -> Optional["Proxy"]:
+    if scheme is ProxyScheme.WEB:
+        if not hostname or not secret_hex:
+            msg = "WEB proxy config requires both 'hostname' and 'secret'"
+            raise ValueError(msg)
+
+        return _build_web_proxy(hostname=hostname, secret_hex=secret_hex)
+
+    if scheme is ProxyScheme.MTPROXY:
+        if not hostname or not port or not secret_hex:
+            msg = "MTProxy config requires 'hostname', 'port', and 'secret'"
+            raise ValueError(msg)
+
+        return _build_mtproxy(hostname=hostname, port=port, secret_hex=secret_hex)
+
+    if not hostname or not port:
+        msg = f"{scheme.value} proxy config requires 'hostname' and 'port'"
+        raise ValueError(msg)
+
+    return _build_dialed_proxy(
+        scheme=scheme,
+        hostname=hostname,
+        port=port,
+        username=proxy.get("username"),
+        password=proxy.get("password"),
+    )
+
+
+def normalize_proxy(proxy: Union[str, dict, Proxy, None]) -> Optional[Proxy]:
     if proxy is None:
         return None
-    if isinstance(proxy, (Socks4Proxy, Socks5Proxy, HttpProxy, MtProxy, WebProxy)):
+
+    if isinstance(proxy, _PROXY_TYPES):
         return proxy
 
     if isinstance(proxy, str):
-        proxy = _parse_proxy_string(proxy)
-    if not isinstance(proxy, dict):
-        raise TypeError(f"proxy must be a str, dict, or Proxy, got {type(proxy).__name__}")
+        return _parse_proxy_link(proxy)
 
-    scheme_value = proxy.get("scheme")
-    if not scheme_value:
-        raise ValueError("proxy dict must contain 'scheme'")
-    try:
-        scheme = ProxyScheme(str(scheme_value).lower())
-    except ValueError as e:
-        raise ValueError(f"unknown proxy scheme: {scheme_value!r}") from e
+    if isinstance(proxy, dict):
+        return _parse_proxy_dict(proxy)
 
-    if scheme is ProxyScheme.WEB:
-        hostname = proxy.get("hostname")
-        secret_hex = proxy.get("secret")
-        if not hostname or not secret_hex:
-            raise ValueError("WEB proxy config requires both 'hostname' and 'secret'")
-        return WebProxy(
-            hostname=canonicalize_web_hostname(hostname),
-            secret=_decode_mtproxy_secret(secret_hex, allow_dd=True),
-        )
-    elif scheme is ProxyScheme.MTPROXY:
-        hostname = proxy.get("hostname")
-        port = proxy.get("port")
-        secret_hex = proxy.get("secret")
-        if not hostname or not port or not secret_hex:
-            raise ValueError("MTProxy config requires 'hostname', 'port', and 'secret'")
-        return MtProxy(hostname=hostname, port=int(port), secret=_decode_mtproxy_secret(secret_hex, allow_dd=True))
-    elif scheme in (ProxyScheme.SOCKS4, ProxyScheme.SOCKS5, ProxyScheme.HTTP):
-        hostname = proxy.get("hostname")
-        port = proxy.get("port")
-        if not hostname or not port:
-            raise ValueError(f"{scheme.value} proxy config requires 'hostname' and 'port'")
-        kwargs = dict(hostname=hostname, port=int(port), username=proxy.get("username"), password=proxy.get("password"))
-        if scheme is ProxyScheme.SOCKS4:
-            return Socks4Proxy(**kwargs)
-        if scheme is ProxyScheme.SOCKS5:
-            return Socks5Proxy(**kwargs)
-        return HttpProxy(**kwargs)
-    else:
-        raise AssertionError(f"unhandled proxy scheme: {scheme!r}")  # every ProxyScheme member is covered above
+    msg = f"proxy must be a str, dict, or Proxy, got {type(proxy).__name__}"
+    raise TypeError(msg)
