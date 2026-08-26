@@ -23,17 +23,17 @@ from struct import pack, unpack
 from typing import Optional, Tuple
 
 from ...proxy import Proxy
-from .tcp import TCP
+from .tcp import INTERMEDIATE_PADDED_OBFUSCATE_TAG, TCP
 
 log = logging.getLogger(__name__)
 
 
 class TCPIntermediatePadded(TCP):
     # Lets TCP._connect_via_web_proxy use this class over a WEB proxy
-    # (proxy={"scheme": "web", ...}) unmodified - Telegram's protocol
-    # requires this exact tag/framing for dd-prefixed (random-padding)
-    # secrets specifically (see TCP._connect_via_web_proxy's validation).
-    OBFUSCATE_TAG = b"\xdd\xdd\xdd\xdd"
+    #  (proxy={"scheme": "web", ...}) unmodified - Telegram's protocol requires
+    #  this exact tag/framing for dd-prefixed (random-padding) secrets
+    #  specifically, which TCP._connect_via_web_proxy checks.
+    OBFUSCATE_TAG = INTERMEDIATE_PADDED_OBFUSCATE_TAG
 
     def __init__(
         self,
@@ -52,7 +52,7 @@ class TCPIntermediatePadded(TCP):
             # Over a WEB proxy the obfuscated2 header TCP._connect_via_web_proxy
             # already sent embeds this same tag - sending it again here would
             # corrupt the stream with extra, unobfuscated bytes.
-            await super().send(b"\xdd" * 4, wait_for_marker=False)
+            await super().send(INTERMEDIATE_PADDED_OBFUSCATE_TAG, wait_for_marker=False)
         self.marker_event.set()
 
     async def send(self, data: bytes, *args) -> None:

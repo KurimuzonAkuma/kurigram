@@ -21,16 +21,15 @@ import logging
 from typing import Optional, Tuple
 
 from ...proxy import Proxy
-from .tcp import TCP
+from .tcp import ABRIDGED_OBFUSCATE_TAG, TCP
 
 log = logging.getLogger(__name__)
 
 
 class TCPAbridged(TCP):
-    # The 4-byte obfuscated2 tag stock MTProxy uses to recognize this
-    # framing - lets TCP._connect_via_web_proxy use this class over a
-    # WEB proxy (proxy={"scheme": "web", ...}) unmodified.
-    OBFUSCATE_TAG = b"\xef\xef\xef\xef"
+    # Lets TCP._connect_via_web_proxy use this class over a WEB proxy
+    #  (proxy={"scheme": "web", ...}) unmodified.
+    OBFUSCATE_TAG = ABRIDGED_OBFUSCATE_TAG
 
     def __init__(
         self,

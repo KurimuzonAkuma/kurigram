@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram.crypto import aes
 
 from ...proxy import Proxy
-from .tcp import TCP, finalize_obfuscated2_tag, generate_obfuscated2_nonce
+from .tcp import ABRIDGED_OBFUSCATE_TAG, TCP, finalize_obfuscated2_tag, generate_obfuscated2_nonce
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class TCPAbridgedO(TCP):
         await super().connect(address)
 
         nonce = generate_obfuscated2_nonce()
-        nonce[56] = nonce[57] = nonce[58] = nonce[59] = 0xEF
+        nonce[56:60] = ABRIDGED_OBFUSCATE_TAG
 
         temp = bytearray(nonce[55:7:-1])
 

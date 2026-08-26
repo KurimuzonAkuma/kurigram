@@ -21,7 +21,7 @@ import logging
 import os
 import socket
 from concurrent.futures import ThreadPoolExecutor
-from typing import ClassVar, NamedTuple, Optional, Tuple
+from typing import ClassVar, Final, NamedTuple, Optional, Tuple
 
 import asyncio
 from python_socks.async_.asyncio import Proxy as SocksProxy
@@ -35,21 +35,39 @@ from .web_proxy_carrier import WebCarrierError, WebProxyCarrier
 log = logging.getLogger(__name__)
 
 
-# --- MTProxy "obfuscated2" handshake -------------------------------------
-# Secret-mixed AES-256-CTR framing with the DC id embedded - what a direct
-# MTProxy client speaks to a stock MTProxy server, and so what the relay's
-# locally-configured stock MTProxy expects over the WEB proxy carrier.
+# The obfuscated2 handshake: secret-mixed AES-256-CTR framing with the DC id
+#  embedded - what a direct MTProxy client speaks to a stock MTProxy server, and
+#  so what the relay's locally-configured stock MTProxy expects over the WEB
+#  proxy carrier.
 
-_OBFUSCATED2_RESERVED_PREFIXES = (b"HEAD", b"POST", b"GET ", b"OPTI", b"\xee\xee\xee\xee")
+_OBFUSCATED2_RESERVED_PREFIXES: Final[Tuple[bytes, ...]] = (
+    b"HEAD",
+    b"POST",
+    b"GET ",
+    b"OPTI",
+    b"\xee\xee\xee\xee",
+)
+
+# The 4-byte tag written at nonce[56:60], by which stock MTProxy recognizes the
+#  packet framing that follows.
+ABRIDGED_OBFUSCATE_TAG: Final[bytes] = b"\xef\xef\xef\xef"
+INTERMEDIATE_PADDED_OBFUSCATE_TAG: Final[bytes] = b"\xdd\xdd\xdd\xdd"
+
+# The obfuscated2 secret is the bare AES key, and a dd-prefixed one carries a
+#  marker byte in front of it.
+_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
+_DD_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
+
+_OBFUSCATE_TAG_SIZE: Final[int] = 4
 
 CipherArgs = Tuple[bytes, bytearray, bytearray]  # (key, iv, state) for aes.ctr256_{en,de}crypt
 
 
 def generate_obfuscated2_nonce(reserved_prefixes: Tuple[bytes, ...] = _OBFUSCATED2_RESERVED_PREFIXES) -> bytearray:
     # Avoids fixed prefixes a firewall could use to fingerprint the stream:
-    # a literal 0xef tag byte, common cleartext protocol prefixes, and an
-    # all-zero field. Shared by TCPAbridgedO's plain obfuscated2 handshake
-    # and build_obfuscated2_header's MTProxy-secret variant below.
+    #  a literal 0xef tag byte, common cleartext protocol prefixes, and an
+    #  all-zero field. Shared by TCPAbridgedO's plain obfuscated2 handshake
+    #  and build_obfuscated2_header's MTProxy-secret variant below.
     while True:
         nonce = bytearray(os.urandom(64))
         if (
@@ -62,9 +80,9 @@ def generate_obfuscated2_nonce(reserved_prefixes: Tuple[bytes, ...] = _OBFUSCATE
 
 def finalize_obfuscated2_tag(nonce: bytearray, encrypt: CipherArgs) -> bytes:
     # Encrypting the whole 64-byte buffer both puts the tag/dc_id bytes
-    # already written at nonce[56:64] onto the wire in obfuscated form and
-    # advances the keystream exactly 64 bytes, so the first real send()
-    # continues it rather than restarting.
+    #  already written at nonce[56:64] onto the wire in obfuscated form and
+    #  advances the keystream exactly 64 bytes, so the first real send()
+    #  continues it rather than restarting.
     return aes.ctr256_encrypt(bytes(nonce), *encrypt)[56:64]
 
 
@@ -75,11 +93,14 @@ class Obfuscated2Header(NamedTuple):
 
 
 def build_obfuscated2_header(secret: bytes, dc_id: int, obfuscate_tag: bytes) -> Obfuscated2Header:
-    # secret is the bare 16-byte key - callers strip any 0xDD marker first.
-    if len(secret) != 16:
-        raise ValueError(f"obfuscated2: secret must be exactly 16 bytes, got {len(secret)}")
-    if len(obfuscate_tag) != 4:
-        raise ValueError("obfuscated2: obfuscate_tag must be exactly 4 bytes")
+    # secret is the bare key - callers strip any 0xDD marker first.
+    if len(secret) != _OBFUSCATED2_SECRET_SIZE:
+        msg = f"obfuscated2: secret must be exactly {_OBFUSCATED2_SECRET_SIZE} bytes, got {len(secret)}"
+        raise ValueError(msg)
+
+    if len(obfuscate_tag) != _OBFUSCATE_TAG_SIZE:
+        msg = f"obfuscated2: obfuscate_tag must be exactly {_OBFUSCATE_TAG_SIZE} bytes"
+        raise ValueError(msg)
 
     nonce = generate_obfuscated2_nonce()
     reversed_tail = bytearray(nonce[55:7:-1])
@@ -90,7 +111,7 @@ def build_obfuscated2_header(secret: bytes, dc_id: int, obfuscate_tag: bytes) ->
     decrypt_iv = bytearray(reversed_tail[32:48])
 
     # (iv, state) are mutated in place by every ctr256_{en,de}crypt call, so
-    # these tuples must be reused as-is for the life of the connection.
+    #  these tuples must be reused as-is for the life of the connection.
     encrypt: CipherArgs = (encrypt_key, encrypt_iv, bytearray(1))
     decrypt: CipherArgs = (decrypt_key, decrypt_iv, bytearray(1))
 
@@ -105,8 +126,8 @@ class TCP:
     TIMEOUT = 10
 
     # Set by a packet-framing subclass (TCPAbridged, TCPIntermediatePadded)
-    # safe to use over a WEB proxy: the 4-byte tag stock MTProxy uses to
-    # recognize the framing that follows. None = "no obfuscated2 story".
+    #  safe to use over a WEB proxy: the 4-byte tag stock MTProxy uses to
+    #  recognize the framing that follows. None = "no obfuscated2 story".
     OBFUSCATE_TAG: ClassVar[Optional[bytes]] = None
 
     def __init__(
@@ -119,13 +140,13 @@ class TCP:
     ) -> None:
         self.ipv6 = ipv6
         # Already-normalized: Client.proxy went through
-        # pyrogram.connection.proxy.normalize_proxy once. TCP never parses
-        # a dict or a string itself.
+        #  pyrogram.connection.proxy.normalize_proxy once. TCP never parses
+        #  a dict or a string itself.
         self.proxy = proxy
         # Needed only for the WEB proxy scheme, which routes by relay
-        # hostname rather than DC address and embeds this in its handshake.
-        # Connection passes the already-shifted protocol dc id (media/test
-        # mode folded in), not the bare logical one.
+        #  hostname rather than DC address and embeds this in its handshake.
+        #  Connection passes the already-shifted protocol dc id (media/test
+        #  mode folded in), not the bare logical one.
         self.dc_id = dc_id
 
         self.crypto_executor_workers = crypto_executor_workers
@@ -157,17 +178,22 @@ class TCP:
         web_proxy: WebProxy = self.proxy
 
         if self.dc_id is None:
-            raise ValueError("The WEB proxy scheme requires a dc_id, passed through by Connection")
+            msg = "The WEB proxy scheme requires a dc_id, passed through by Connection"
+            raise ValueError(msg)
+
         if not self.OBFUSCATE_TAG:
-            raise ValueError(
+            msg = (
                 f"{type(self).__name__} has no OBFUSCATE_TAG and cannot be used over a WEB "
                 f"proxy; use e.g. TCPAbridged for a plain secret, TCPIntermediatePadded for dd"
             )
-        is_dd_secret = len(web_proxy.secret) == 17
-        if is_dd_secret and self.OBFUSCATE_TAG != b"\xdd\xdd\xdd\xdd":
-            raise ValueError(
-                f"dd-prefixed secrets require TCPIntermediatePadded, not {type(self).__name__}"
-            )
+            raise ValueError(msg)
+
+        is_dd_secret = len(web_proxy.secret) == _DD_SECRET_SIZE
+
+        if is_dd_secret and self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
+            msg = f"dd-prefixed secrets require TCPIntermediatePadded, not {type(self).__name__}"
+            raise ValueError(msg)
+
         bare_secret = web_proxy.secret[1:] if is_dd_secret else web_proxy.secret
 
         log.info("Connecting to WEB proxy relay %s (dc_id=%s)", web_proxy.hostname, self.dc_id)
@@ -179,7 +205,7 @@ class TCP:
         except WebCarrierError as e:
             self._web_carrier = None
             await carrier.close()
-            raise OSError(str(e)) from e
+            raise OSError(e) from e
 
         built = build_obfuscated2_header(bare_secret, self.dc_id, self.OBFUSCATE_TAG)
         self._encrypt = built.encrypt
@@ -190,25 +216,23 @@ class TCP:
         except WebCarrierError as e:
             self._web_carrier = None
             await carrier.close()
-            raise OSError(str(e)) from e
+            raise OSError(e) from e
 
         log.info("WEB proxy carrier established")
 
     async def _build_proxy(self) -> SocksProxy:
-        p = self.proxy
-        if isinstance(p, Socks4Proxy):
-            scheme = "socks4"
-        elif isinstance(p, Socks5Proxy):
-            scheme = "socks5"
-        elif isinstance(p, HttpProxy):
-            scheme = "http"
-        else:
-            raise ValueError(f"{type(p).__name__} cannot be dialed as a SOCKS/HTTP proxy")
+        proxy = self.proxy
 
-        if p.username and p.password:
-            url = f"{scheme}://{p.username}:{p.password}@{p.hostname}:{p.port}"
+        if not isinstance(proxy, (Socks4Proxy, Socks5Proxy, HttpProxy)):
+            msg = f"{type(proxy).__name__} cannot be dialed as a SOCKS/HTTP proxy"
+            raise ValueError(msg)
+
+        scheme = proxy.scheme.value
+
+        if proxy.username and proxy.password:
+            url = f"{scheme}://{proxy.username}:{proxy.password}@{proxy.hostname}:{proxy.port}"
         else:
-            url = f"{scheme}://{p.hostname}:{p.port}"
+            url = f"{scheme}://{proxy.hostname}:{proxy.port}"
 
         return SocksProxy.from_url(url)
 
@@ -279,15 +303,20 @@ class TCP:
     async def _connect(self, destination: Tuple[str, int]) -> None:
         if isinstance(self.proxy, WebProxy):
             await self._connect_via_web_proxy()
-        elif isinstance(self.proxy, MtProxy):
-            raise NotImplementedError(
+            return
+
+        if isinstance(self.proxy, MtProxy):
+            msg = (
                 "Classic MTProxy (scheme='mtproxy') has no connection implementation yet; "
                 "use a WEB proxy (scheme='web'), or track upstream PR #325."
             )
-        elif self.proxy is not None:
+            raise NotImplementedError(msg)
+
+        if self.proxy is not None:
             await self._connect_via_proxy(destination)
-        else:
-            await self._connect_via_direct(destination)
+            return
+
+        await self._connect_via_direct(destination)
 
     async def connect(self, address: Tuple[str, int]) -> None:
         try:
@@ -378,7 +407,7 @@ class TCP:
         result = bytes(self._web_recv_buffer[:length])
         del self._web_recv_buffer[:length]
         # Grant downlink credit back only now, once bytes actually leave the
-        # carrier for the framing/MTProto layer above (§7).
+        #  carrier for the framing/MTProto layer above (§7).
         await self._web_carrier.grant_credit(length)
         return result
 
