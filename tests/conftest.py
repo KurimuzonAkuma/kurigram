@@ -16,36 +16,27 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from pathlib import Path
+from typing import Dict, Final, List
 
 import pytest
 
+_TESTS_DIR: Final[Path] = Path(__file__).parent
 
-def _load_env_test() -> None:
-    # No python-dotenv dependency: pytest does not read env files on its
-    # own, and this is the one place that does it. Existing environment
-    # variables always win over the file.
-    path = Path(__file__).resolve().parent.parent / ".env.test"
-    if not path.is_file():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+# The marker comes from the directory a test file lives in, not from a decorator
+#  on each test - a path cannot be forgotten the way a decorator can. The
+#  environment `.env.test` carries is loaded by the runner (see `Makefile`), not
+#  from here: a test process that reads files of its own has two config sources.
+_LAYER_MARKERS: Final[Dict[str, str]] = {
+    "unit": "unit",
+    "integrations": "integration",
+}
 
 
-_load_env_test()
-
-
-def pytest_collection_modifyitems(config: pytest.Config, items) -> None:
-    # Marker comes from where a test file lives, not a decorator on each
-    # test - a path can't be forgotten the way a decorator can.
+def pytest_collection_modifyitems(items: List[pytest.Item]) -> None:
     for item in items:
-        parts = item.path.parts
-        if "unit" in parts:
-            item.add_marker(pytest.mark.unit)
-        elif "integrations" in parts:
-            item.add_marker(pytest.mark.integration)
+        relative = Path(item.fspath).relative_to(_TESTS_DIR)
+        top_directory = relative.parts[0] if len(relative.parts) > 1 else None
+
+        if top_directory in _LAYER_MARKERS:
+            item.add_marker(getattr(pytest.mark, _LAYER_MARKERS[top_directory]))

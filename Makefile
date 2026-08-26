@@ -1,4 +1,10 @@
 VENV := venv
+
+# The live tests take every parameter from the environment. `.env.test` is the
+#  git-ignored file that carries them locally; the runner loads it so nothing
+#  under `tests/` has to read a file of its own. Absent, the tests skip by name.
+ENV_TEST := .env.test
+LOAD_ENV_TEST := set -a; if [ -f $(ENV_TEST) ]; then . ./$(ENV_TEST); fi; set +a;
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 TAG = v$(shell grep -E '__version__ = ".*"' pyrogram/__init__.py | cut -d\" -f2)
@@ -63,13 +69,13 @@ docs-archive:
 	cd docs/build/html && zip -r ../docs.zip ./
 
 test:
-	$(PYTHON) -m pytest
+	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest
 
 test-unit:
 	$(PYTHON) -m pytest -m 'not integration'
 
 test-integration:
-	$(PYTHON) -m pytest -m integration
+	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest -m integration
 
 build:
 	hatch build
