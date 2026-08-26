@@ -88,8 +88,8 @@ addopts = "--strict-markers"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 # A relay that never answers `down?cursor=&wait=` hangs a run with nothing to
-# break the deadlock. Offline tests finish in ~0.1s and the live ones stay
-# under the carrier's own 25-30s ceilings, so this only ever fires on a hang.
+#  break the deadlock. Offline tests finish in ~0.1s and the live ones stay
+#  under the carrier's own 25-30s ceilings, so this only ever fires on a hang.
 timeout = 120
 markers = [
     "unit: fast, no network or filesystem beyond the repo",
