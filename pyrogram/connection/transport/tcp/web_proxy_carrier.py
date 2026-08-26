@@ -218,11 +218,15 @@ _CRLF: Final[bytes] = b"\r\n"
 # One retry, on a fresh connection - see `_HttpConnection.request`.
 _REQUEST_ATTEMPTS: Final[int] = 2
 
-# The relay's HTTP API. §8 names only `DELETE /api/v1/session`; the `/up` and
-#  `/down` sub-resources, the `seq` and `cursor` query parameters and the
-#  `x-cursor` response header are the deployed bridge's own contract, which
-#  this carrier was written against and the live tests exercise.
+# The relay's HTTP API. §8 names only `DELETE /api/v1/session`, and the relay's
+#  own spec describes a different carrier meant for the browser bridge page - a
+#  bootstrap token, `POST /api/v1/up`, `X-Up-Seq`. A client with no WebView gets
+#  the JSON session API used below instead: `{"bridge": <capability>}` in,
+#  `{"id", "cursor"}` back, then `/up?seq=` and `/down?cursor=` under that id.
+#  No document describes it, so it was read off a live relay and is what the
+#  live tests exercise.
 #  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L343
+#  https://github.com/telegramdesktop/tproxy-server/blob/52a5feb7fac38f68da5afef9cedd9b3bfc8473ca/PROTOCOL.md#L193-L216
 _SESSION_ENDPOINT: Final[str] = "/api/v1/session"
 _CURSOR_HEADER: Final[str] = "x-cursor"
 _JSON_CONTENT_TYPE: Final[str] = "application/json"
