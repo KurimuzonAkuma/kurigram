@@ -335,8 +335,6 @@ class Client(Methods):
         self.lang_code = lang_code.lower()
         self.system_lang_code = system_lang_code.lower()
         self.ipv6 = ipv6
-        # The one place a raw dict/string proxy config gets validated -
-        # everything below Client takes the normalized dataclass only.
         self.proxy = normalize_proxy(proxy)
         self.test_mode = test_mode
         self.bot_token = bot_token
