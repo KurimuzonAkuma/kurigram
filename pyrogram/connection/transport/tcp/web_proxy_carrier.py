@@ -26,7 +26,7 @@ import ssl
 from dataclasses import dataclass
 from enum import IntEnum
 from http import HTTPStatus
-from typing import Dict, Final, FrozenSet, List, Optional, Pattern, Tuple
+from typing import Coroutine, Dict, Final, FrozenSet, List, Optional
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +61,9 @@ class FrameType(IntEnum):
 
 _KNOWN_FRAME_TYPES: Final[FrozenSet[int]] = frozenset(frame_type.value for frame_type in FrameType)
 
+# The stream id is three bytes wide.
+_MAX_STREAM_ID: Final[int] = 0x00FFFFFF
+
 
 class FrameParseError(ValueError):
     pass
@@ -73,10 +76,11 @@ class Frame:
     payload: bytes
 
 
-def serialize_frame(frame_type: FrameType, stream_id: int, payload: bytes = b"") -> bytes:
-    if not (0 <= stream_id <= 0x00FFFFFF):
+def serialize_frame(frame_type: FrameType, *, stream_id: int, payload: bytes) -> bytes:
+    if not (0 <= stream_id <= _MAX_STREAM_ID):
         msg = f"frame: stream id {stream_id} out of range"
         raise ValueError(msg)
+
     if len(payload) > FRAME_MAX_PAYLOAD:
         msg = f"frame: payload too large ({len(payload)} bytes)"
         raise ValueError(msg)
@@ -87,30 +91,41 @@ def serialize_frame(frame_type: FrameType, stream_id: int, payload: bytes = b"")
         (stream_id >> 8) & 0xFF,
         stream_id & 0xFF,
     )) + len(payload).to_bytes(4, "big")
+
     return header + payload
 
 
-def parse_frames(wire: bytes) -> Tuple[List[Frame], int]:
-    # Returns (frames, bytes_consumed); a trailing partial frame is left unconsumed.
-    #  No frame-count cap: the relay may legally batch up to 2 MiB of small frames
-    #  (§7.1) into one response, and a count limit would make that a parse error.
+@dataclass(frozen=True)
+class ParsedFrames:
+    frames: List[Frame]
+    consumed: int  # a trailing partial frame is left unconsumed
+
+
+def parse_frames(wire: bytes) -> ParsedFrames:
+    # No frame-count cap: §7.1 lets the relay batch up to 2 MiB of small frames
+    #  into one response, so a count limit would turn a legal batch into a parse
+    #  error.
+    #  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L246
     frames: List[Frame] = []
     offset = 0
     wire_len = len(wire)
 
     while wire_len - offset >= FRAME_HEADER_SIZE:
         type_byte = wire[offset]
+
         if type_byte not in _KNOWN_FRAME_TYPES:
             msg = f"frame: unknown type 0x{type_byte:02x}"
             raise FrameParseError(msg)
 
         stream_id = (wire[offset + 1] << 16) | (wire[offset + 2] << 8) | wire[offset + 3]
         size = int.from_bytes(wire[offset + 4:offset + 8], "big")
+
         if size > FRAME_MAX_PAYLOAD:
             msg = f"frame: payload too large ({size} bytes)"
             raise FrameParseError(msg)
 
         full = FRAME_HEADER_SIZE + size
+
         if wire_len - offset < full:
             break
 
@@ -118,7 +133,7 @@ def parse_frames(wire: bytes) -> Tuple[List[Frame], int]:
         frames.append(Frame(FrameType(type_byte), stream_id, payload))
         offset += full
 
-    return frames, offset
+    return ParsedFrames(frames=frames, consumed=offset)
 
 
 def parse_frame_message(body: bytes) -> List[Frame]:
@@ -126,11 +141,14 @@ def parse_frame_message(body: bytes) -> List[Frame]:
     if not body:
         msg = "frame: empty message"
         raise FrameParseError(msg)
-    frames, consumed = parse_frames(body)
-    if consumed != len(body) or not frames:
+
+    parsed = parse_frames(body)
+
+    if parsed.consumed != len(body) or not parsed.frames:
         msg = "frame: trailing partial frame"
         raise FrameParseError(msg)
-    return frames
+
+    return parsed.frames
 
 
 # §10 defines the derivation below and the vectors the tests check it against.
@@ -152,10 +170,17 @@ def derive_bridge_capability(hostname: str, secret: bytes) -> str:
 #  /api/v1/session* API. `TCP._connect_via_web_proxy` layers the actual MTProxy
 #  obfuscation on top of it.
 
+_HTTPS_PORT: Final[int] = 443
 _CONNECT_TIMEOUT: Final[int] = 10
 _REQUEST_TIMEOUT: Final[int] = 10
 _LONG_POLL_WAIT: Final[int] = 25
 _WELCOME_TIMEOUT: Final[int] = 30
+
+# §6: stream 0 carries the session-wide frames - HELLO, WELCOME, PING, BYE.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L190
+_CONTROL_STREAM_ID: Final[int] = 0
+
+# The carrier is one socket, so it opens exactly one stream and never more.
 _STREAM_ID: Final[int] = 1
 
 # §7: "Both directions start with an implicit 4 MiB per-stream window."
@@ -181,14 +206,55 @@ class WebCarrierError(ConnectionError):
     pass
 
 
+@dataclass(frozen=True)
+class StatusAndHeaders:
+    status: int
+    headers: Dict[str, str]
+
+
+_CRLF: Final[bytes] = b"\r\n"
+
+# One retry, on a fresh connection - see `_HttpConnection.request`.
+_REQUEST_ATTEMPTS: Final[int] = 2
+
+# The relay's HTTP API. §8 names only `DELETE /api/v1/session`; the `/up` and
+#  `/down` sub-resources, the `seq` and `cursor` query parameters and the
+#  `x-cursor` response header are the deployed bridge's own contract, which
+#  this carrier was written against and the live tests exercise.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L343
+_SESSION_ENDPOINT: Final[str] = "/api/v1/session"
+_CURSOR_HEADER: Final[str] = "x-cursor"
+_JSON_CONTENT_TYPE: Final[str] = "application/json"
+_FRAMES_CONTENT_TYPE: Final[str] = "application/octet-stream"
+
+# The relay answers the long poll only when it has frames or the wait expires,
+#  so the read timeout has to outlast the wait the request itself asks for.
+_LONG_POLL_READ_MARGIN: Final[int] = 10
+
+# §6: HELLO carries the one-byte protocol version.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L190
+_HELLO_PAYLOAD: Final[bytes] = b"\x01"
+
+# A WINDOW frame's payload is a big-endian u32 credit count.
+_WINDOW_PAYLOAD_SIZE: Final[int] = 4
+
+
+@dataclass(frozen=True)
+class HttpResponse:
+    status: int
+    headers: Dict[str, str]
+    body: bytes
+
+
 class _HttpConnection:
     # Minimal HTTP/1.1 client for the relay's POST/GET/DELETE calls, over a
     #  single keep-alive connection. Stdlib asyncio/ssl only.
 
-    def __init__(self, host: str, port: int, ssl_context: ssl.SSLContext) -> None:
+    def __init__(self, host: str, *, port: int, ssl_context: ssl.SSLContext) -> None:
         self._host = host
         self._port = port
         self._ssl_context = ssl_context
+
         self._reader: Optional[asyncio.StreamReader] = None
         self._writer: Optional[asyncio.StreamWriter] = None
         self._lock = asyncio.Lock()
@@ -196,79 +262,108 @@ class _HttpConnection:
     async def _ensure_connected(self) -> None:
         if self._writer is not None and not self._writer.is_closing():
             return
+
         self._reader, self._writer = await asyncio.wait_for(
             asyncio.open_connection(
-                host=self._host, port=self._port,
-                ssl=self._ssl_context, server_hostname=self._host,
+                host=self._host,
+                port=self._port,
+                ssl=self._ssl_context,
+                server_hostname=self._host,
             ),
             timeout=_CONNECT_TIMEOUT,
         )
 
     async def close(self) -> None:
         async with self._lock:
-            if self._writer is not None:
-                try:
-                    self._writer.close()
-                    await self._writer.wait_closed()
-                except OSError as e:
-                    log.debug("WEB proxy: closing the HTTP connection failed: %s", e)
-                self._writer = None
-                self._reader = None
+            if self._writer is None:
+                return
+
+            try:
+                self._writer.close()
+                await self._writer.wait_closed()
+
+            except OSError as e:
+                log.debug("WEB proxy: closing the HTTP connection failed: %s", e)
+
+            self._writer = None
+            self._reader = None
 
     async def request(
-        self, method: str, path: str, body: bytes = b"",
-        headers: Optional[Dict[str, str]] = None, timeout: float = _REQUEST_TIMEOUT,
-    ) -> Tuple[int, Dict[str, str], bytes]:
-        # Retries once on a fresh connection - the pooled one may have died
-        #  silently on the server's idle-keepalive timeout.
+        self,
+        method: str,
+        *,
+        path: str,
+        body: bytes = b"",
+        headers: Optional[Dict[str, str]] = None,
+        timeout: float = _REQUEST_TIMEOUT,
+    ) -> HttpResponse:
+        last_error: Optional[Exception] = None
+        last_detail: str = ""
+
+        # Retries on a fresh connection - the pooled one may have died silently
+        #  on the server's idle-keepalive timeout.
         async with self._lock:
-            for attempt in (1, 2):
+            for _attempt in range(_REQUEST_ATTEMPTS):
                 try:
                     await self._ensure_connected()
+
                     return await asyncio.wait_for(
-                        self._send_and_read(method, path, body, headers), timeout=timeout,
+                        self._send_and_read(method, path=path, body=body, headers=headers),
+                        timeout=timeout,
                     )
+
                 except (ConnectionError, EOFError, OSError) as e:
-                    self._writer = None
-                    self._reader = None
-                    if attempt == 2:
-                        msg = f"{method} {path}: {e}"
-                        raise WebCarrierError(msg) from e
+                    last_error, last_detail = e, str(e)
+                    self._drop_connection()
+
+                # `asyncio.TimeoutError` carries no message of its own.
                 except asyncio.TimeoutError as e:
-                    self._writer = None
-                    self._reader = None
-                    if attempt == 2:
-                        msg = f"{method} {path}: timed out"
-                        raise WebCarrierError(msg) from e
-            msg = "unreachable"
-            raise AssertionError(msg)
+                    last_error, last_detail = e, "timed out"
+                    self._drop_connection()
+
+        msg = f"{method} {path}: {last_detail}"
+        raise WebCarrierError(msg) from last_error
+
+    def _drop_connection(self) -> None:
+        self._writer = None
+        self._reader = None
 
     async def _send_and_read(
-        self, method: str, path: str, body: bytes, headers: Optional[Dict[str, str]],
-    ) -> Tuple[int, Dict[str, str], bytes]:
-        request_headers = {
-            "Host": self._host, "Connection": "keep-alive", "Content-Length": str(len(body)),
+        self,
+        method: str,
+        *,
+        path: str,
+        body: bytes,
+        headers: Optional[Dict[str, str]],
+    ) -> HttpResponse:
+        request_headers: Dict[str, str] = {
+            "Host": self._host,
+            "Connection": "keep-alive",
+            "Content-Length": str(len(body)),
         }
+
         if headers:
             request_headers.update(headers)
 
-        lines = [f"{method} {path} HTTP/1.1"] + [f"{k}: {v}" for k, v in request_headers.items()]
+        lines: List[str] = [f"{method} {path} HTTP/1.1"]
+        lines += [f"{name}: {value}" for name, value in request_headers.items()]
         request = ("\r\n".join(lines) + "\r\n\r\n").encode("ascii") + body
 
         self._writer.write(request)
         await self._writer.drain()
 
-        status, resp_headers = await self._read_status_and_headers()
-        resp_body = await self._read_body(status, resp_headers)
+        head = await self._read_status_and_headers()
+        response_body = await self._read_body(head.status, response_headers=head.headers)
 
-        if resp_headers.get("connection", "").lower() == "close":
+        # The relay keeps the pool alive, but an intermediary may still ask for
+        #  the connection back; the next request then reconnects.
+        if head.headers.get("connection", "").lower() == "close":
             self._writer.close()
-            self._writer = None
-            self._reader = None
+            self._drop_connection()
 
-        return status, resp_headers, resp_body
+        return HttpResponse(status=head.status, headers=head.headers, body=response_body)
 
-    async def _read_body(self, status: int, resp_headers: Dict[str, str]) -> bytes:
+    async def _read_body(self, status: int, *, response_headers: Dict[str, str]) -> bytes:
         # A reverse proxy in front of the relay re-frames anything it cannot
         #  buffer whole, so every downlink batch above a few KiB arrives as
         #  `transfer-encoding: chunked` with no `Content-Length`. Reading only
@@ -276,17 +371,21 @@ class _HttpConnection:
         #  rejected with "frame: empty message" - the carrier died and every
         #  response larger than about 2 KiB was lost.
         #  https://www.rfc-editor.org/rfc/rfc9112#section-7.1
-        if "chunked" in resp_headers.get("transfer-encoding", "").lower():
+        transfer_encoding: str = response_headers.get("transfer-encoding", "").lower()
+
+        if "chunked" in transfer_encoding:
             return await self._read_chunked_body()
 
-        content_length_header = resp_headers.get("content-length")
+        content_length_header: Optional[str] = response_headers.get("content-length")
 
         if content_length_header is not None:
             try:
                 content_length = int(content_length_header)
+
             except ValueError as e:
                 msg = f"malformed Content-Length header: {content_length_header!r}"
                 raise ConnectionError(msg) from e
+
             return await self._reader.readexactly(content_length)
 
         if status == HTTPStatus.NO_CONTENT:
@@ -302,15 +401,18 @@ class _HttpConnection:
         chunks: List[bytes] = []
 
         while True:
-            size_line = await self._reader.readline()
+            size_line: bytes = await self._reader.readline()
+
             if not size_line:
                 msg = "connection closed inside a chunked body"
                 raise ConnectionError(msg)
 
             # The chunk size may carry extensions after a semicolon.
-            size_field = size_line.split(b";", 1)[0].strip()
+            size_field: bytes = size_line.split(b";", 1)[0].strip()
+
             try:
                 chunk_size = int(size_field, 16)
+
             except ValueError as e:
                 msg = f"malformed chunk size: {size_line!r}"
                 raise ConnectionError(msg) from e
@@ -319,38 +421,47 @@ class _HttpConnection:
                 break
 
             chunks.append(await self._reader.readexactly(chunk_size))
-            if await self._reader.readexactly(2) != b"\r\n":
+
+            if await self._reader.readexactly(len(_CRLF)) != _CRLF:
                 msg = "malformed chunk terminator"
                 raise ConnectionError(msg)
 
         # Trailer fields, if any, then the blank line closing the body.
         while True:
-            line = await self._reader.readline()
-            if line in (b"\r\n", b""):
+            line: bytes = await self._reader.readline()
+
+            if line in (_CRLF, b""):
                 break
 
         return b"".join(chunks)
 
-    async def _read_status_and_headers(self) -> Tuple[int, Dict[str, str]]:
-        status_line = await self._reader.readline()
+    async def _read_status_and_headers(self) -> StatusAndHeaders:
+        status_line: bytes = await self._reader.readline()
+
         if not status_line:
             msg = "connection closed before a response arrived"
             raise ConnectionError(msg)
+
+        # "HTTP/1.1 204 No Content" - the status code is the second field.
         try:
             status = int(status_line.decode("latin-1").split(None, 2)[1])
+
         except (IndexError, ValueError) as e:
             msg = f"malformed HTTP status line: {status_line!r}"
             raise ConnectionError(msg) from e
 
         headers: Dict[str, str] = {}
-        while True:
-            line = await self._reader.readline()
-            if line in (b"\r\n", b""):
-                break
-            key, _, value = line.decode("latin-1").partition(":")
-            headers[key.strip().lower()] = value.strip()
 
-        return status, headers
+        while True:
+            line: bytes = await self._reader.readline()
+
+            if line in (_CRLF, b""):
+                break
+
+            name, _, value = line.decode("latin-1").partition(":")
+            headers[name.strip().lower()] = value.strip()
+
+        return StatusAndHeaders(status=status, headers=headers)
 
 
 class WebProxyCarrier:
@@ -360,19 +471,27 @@ class WebProxyCarrier:
     #  its own session; simpler, and keeps failures isolated.
 
     def __init__(
-        self, hostname: str, secret: bytes, *,
-        port: int = 443, loop: Optional[asyncio.AbstractEventLoop] = None,
+        self,
+        hostname: str,
+        *,
+        secret: bytes,
+        port: int = _HTTPS_PORT,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         self._hostname = hostname
         self._secret = secret
         self._loop = loop or asyncio.get_event_loop()
 
+        # `http/1.1` only: the framing this client speaks is HTTP/1.1, and an
+        #  ALPN-negotiated h2 would make every response unparseable.
         ssl_context = ssl.create_default_context()
         ssl_context.set_alpn_protocols(["http/1.1"])
         self._ssl_context = ssl_context
 
-        self._up = _HttpConnection(hostname, port, ssl_context)
-        self._down = _HttpConnection(hostname, port, ssl_context)
+        # Uplink and downlink get a connection each: the downlink one is parked
+        #  in a long poll almost all the time, and would otherwise block sends.
+        self._up = _HttpConnection(hostname, port=port, ssl_context=ssl_context)
+        self._down = _HttpConnection(hostname, port=port, ssl_context=ssl_context)
         self._up_send_lock = asyncio.Lock()
 
         self._session_id: Optional[str] = None
@@ -382,6 +501,7 @@ class WebProxyCarrier:
         self._send_window = _INITIAL_STREAM_WINDOW
         self._send_window_event = asyncio.Event()
         self._send_window_event.set()
+
         self._recv_window_remaining = _INITIAL_STREAM_WINDOW
         self._pending_grant = 0
         self._grant_flush_task: Optional["asyncio.Task"] = None
@@ -394,30 +514,44 @@ class WebProxyCarrier:
         self._background_tasks: "set" = set()
 
     async def start(self) -> None:
+        # The relay authenticates the session by the bridge capability alone:
+        #  proof we hold the secret for this hostname, never the secret itself.
         capability = derive_bridge_capability(self._hostname, self._secret)
         body = json.dumps({"bridge": capability}).encode("utf-8")
 
-        status, _headers, resp_body = await self._up.request(
-            "POST", "/api/v1/session", body=body, headers={"Content-Type": "application/json"},
+        response = await self._up.request(
+            "POST",
+            path=_SESSION_ENDPOINT,
+            body=body,
+            headers={"Content-Type": _JSON_CONTENT_TYPE},
         )
-        if status != HTTPStatus.OK:
-            msg = f"session creation rejected: HTTP {status}"
+
+        if response.status != HTTPStatus.OK:
+            msg = f"session creation rejected: HTTP {response.status}"
             raise WebCarrierError(msg)
 
+        # `{"id": "<session>", "cursor": <int>}`; the cursor is where the
+        #  downlink poll starts, and the relay may hand back a non-zero one.
         try:
-            data = json.loads(resp_body)
-            self._session_id = data["id"]
-            self._down_cursor = int(data.get("cursor", 0))
+            session = json.loads(response.body)
+            self._session_id = session["id"]
+            self._down_cursor = int(session.get("cursor", 0))
+
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
             msg = f"malformed session creation response: {e}"
             raise WebCarrierError(msg) from e
 
+        # The poll has to be running before HELLO goes out: WELCOME comes back
+        #  down the downlink, and nothing would be reading it otherwise.
         self._poll_task = self._loop.create_task(self._poll_loop())
 
-        await self._send_frames([serialize_frame(FrameType.HELLO, 0, b"\x01")])
+        await self._send_frames([
+            serialize_frame(FrameType.HELLO, stream_id=_CONTROL_STREAM_ID, payload=_HELLO_PAYLOAD),
+        ])
 
         try:
             await asyncio.wait_for(self._welcome_event.wait(), timeout=_WELCOME_TIMEOUT)
+
         except asyncio.TimeoutError:
             exc = WebCarrierError("timed out waiting for WELCOME")
             await self._fail(exc)
@@ -426,29 +560,37 @@ class WebProxyCarrier:
         if self._fail_exc is not None:
             raise self._fail_exc
 
-        await self._send_frames([serialize_frame(FrameType.OPEN, _STREAM_ID, b"")])
+        await self._send_frames([
+            serialize_frame(FrameType.OPEN, stream_id=_STREAM_ID, payload=b""),
+        ])
 
     async def send(self, data: bytes) -> None:
         if self._fail_exc is not None:
             raise self._fail_exc
+
         if not data:
             return
 
         pending: List[bytes] = []
         offset = 0
+
         while offset < len(data):
             chunk = data[offset:offset + _UPLINK_FRAME_MAX]
+
             if self._send_window < len(chunk):
-                # Nothing we're waiting on can arrive until the relay sees
-                #  what we already have and grants more credit back - flush
-                #  before blocking, not after every chunk is queued.
+                # Nothing we are waiting on can arrive until the relay sees what
+                #  we already have and grants more credit back - flush before
+                #  blocking, not after every chunk is queued.
                 if pending:
                     await self._send_frames(pending)
                     pending = []
+
                 await self._spend_send_window(len(chunk))
+
             else:
                 self._send_window -= len(chunk)
-            pending.append(serialize_frame(FrameType.DATA, _STREAM_ID, chunk))
+
+            pending.append(serialize_frame(FrameType.DATA, stream_id=_STREAM_ID, payload=chunk))
             offset += len(chunk)
 
         if pending:
@@ -458,15 +600,19 @@ class WebProxyCarrier:
         return await self._recv_queue.get()
 
     async def grant_credit(self, amount: int) -> None:
-        # Called by TCP._recv_from_web_proxy once bytes are actually handed
-        #  to the caller - the same "drain into the MTProto engine" point §7
-        #  ties downlink credit to, not merely arriving off the wire.
+        # Called by `TCP._recv_from_web_proxy` once bytes are actually handed to
+        #  the caller - the same "drain into the MTProto engine" point §7 ties
+        #  downlink credit to, not merely arriving off the wire.
         if amount <= 0 or self._fail_exc is not None:
             return
+
         self._pending_grant += amount
+
         if self._pending_grant >= _DOWNLINK_GRANT_THRESHOLD:
             await self._flush_grant()
-        elif self._grant_flush_task is None:
+            return
+
+        if self._grant_flush_task is None:
             task = self._loop.create_task(self._delayed_grant_flush())
             self._grant_flush_task = task
             self._track(task)
@@ -478,22 +624,31 @@ class WebProxyCarrier:
 
         if self._poll_task is not None:
             await self._cancel_tracked(self._poll_task)
+
         for task in list(self._background_tasks):
             await self._cancel_tracked(task)
 
+        # §8: the session is dropped by `DELETE`; a relay that never sees it
+        #  keeps the session alive until its own idle timeout expires.
         if self._session_id is not None:
             try:
-                await self._up.request("DELETE", f"/api/v1/session/{self._session_id}")
+                await self._up.request("DELETE", path=f"{_SESSION_ENDPOINT}/{self._session_id}")
+
             except WebCarrierError as e:
                 log.debug("WEB proxy: DELETE session failed during close: %s", e)
 
         await self._up.close()
         await self._down.close()
+
+        # `None` is what `recv()` hands its caller as end-of-stream.
         self._recv_queue.put_nowait(None)
 
     def _track(self, task: "asyncio.Task") -> None:
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
+
+    def _track_task(self, coroutine: "Coroutine[None, None, None]") -> None:
+        self._track(self._loop.create_task(coroutine))
 
     async def _cancel_tracked(self, task: "asyncio.Task") -> None:
         task.cancel()
@@ -513,70 +668,76 @@ class WebProxyCarrier:
         while self._send_window < amount:
             if self._fail_exc is not None:
                 raise self._fail_exc
+
             self._send_window_event.clear()
+
             try:
                 await asyncio.wait_for(self._send_window_event.wait(), timeout=_CREDIT_WAIT_TIMEOUT)
+
             except asyncio.TimeoutError:
                 exc = WebCarrierError("timed out waiting for uplink WINDOW credit")
                 await self._fail(exc)
                 raise exc
+
         self._send_window -= amount
 
     async def _flush_grant(self) -> None:
         amount, self._pending_grant = self._pending_grant, 0
+
         if amount <= 0 or self._fail_exc is not None:
             return
+
         self._recv_window_remaining += amount
+        credit = amount.to_bytes(_WINDOW_PAYLOAD_SIZE, "big")
+
         try:
-            await self._send_frames([serialize_frame(FrameType.WINDOW, _STREAM_ID, amount.to_bytes(4, "big"))])
-        except WebCarrierError:
-            pass  # carrier already failed; nothing left to grant credit to
+            await self._send_frames([
+                serialize_frame(FrameType.WINDOW, stream_id=_STREAM_ID, payload=credit),
+            ])
+
+        # The carrier has already failed, so there is nothing left to credit.
+        except WebCarrierError as e:
+            log.debug("WEB proxy: dropping a WINDOW grant on a failed carrier: %s", e)
 
     async def _delayed_grant_flush(self) -> None:
         try:
             await asyncio.sleep(_DOWNLINK_GRANT_DELAY)
             await self._flush_grant()
+
         finally:
             self._grant_flush_task = None
 
     async def _send_frames(self, frames: List[bytes]) -> None:
         body = b"".join(frames)
+
         async with self._up_send_lock:
+            # `seq` numbers the uplink posts so the relay can order and
+            #  de-duplicate them; it is per session and never reused.
             seq = self._up_seq
             self._up_seq += 1
+
             try:
-                status, _headers, _body = await self._up.request(
-                    "POST", f"/api/v1/session/{self._session_id}/up?seq={seq}",
-                    body=body, headers={"Content-Type": "application/octet-stream"},
+                response = await self._up.request(
+                    "POST",
+                    path=f"{_SESSION_ENDPOINT}/{self._session_id}/up?seq={seq}",
+                    body=body,
+                    headers={"Content-Type": _FRAMES_CONTENT_TYPE},
                 )
+
             except WebCarrierError as e:
                 await self._fail(e)
                 raise
-            if status != HTTPStatus.OK:
-                exc = WebCarrierError(f"uplink rejected: HTTP {status}")
+
+            if response.status != HTTPStatus.OK:
+                exc = WebCarrierError(f"uplink rejected: HTTP {response.status}")
                 await self._fail(exc)
                 raise exc
 
     async def _poll_loop(self) -> None:
         try:
             while True:
-                path = (
-                    f"/api/v1/session/{self._session_id}/down"
-                    f"?cursor={self._down_cursor}&wait={_LONG_POLL_WAIT * 1000}"
-                )
-                status, headers, body = await self._down.request("GET", path, timeout=_LONG_POLL_WAIT + 10)
-                if status == HTTPStatus.NO_CONTENT:
-                    continue
-                if status != HTTPStatus.OK:
-                    msg = f"downlink rejected: HTTP {status}"
-                    raise WebCarrierError(msg)
+                await self._poll_once()
 
-                cursor_header = headers.get("x-cursor")
-                if cursor_header is not None:
-                    self._down_cursor = int(cursor_header)
-
-                for one_frame in parse_frame_message(body):
-                    self._handle_frame(one_frame)
         except asyncio.CancelledError:
             raise
 
@@ -591,44 +752,103 @@ class WebProxyCarrier:
             log.exception("WEB proxy: poll loop crashed")
             await self._fail(WebCarrierError(str(e)))
 
-    def _handle_frame(self, one_frame: Frame) -> None:
-        if one_frame.stream_id == 0:
-            if one_frame.type == FrameType.WELCOME:
-                self._welcome_event.set()
-            elif one_frame.type == FrameType.PING:
-                self._track(self._loop.create_task(
-                    self._send_frames([serialize_frame(FrameType.PONG, 0, one_frame.payload)])
-                ))
-            elif one_frame.type == FrameType.BYE:
-                self._track(self._loop.create_task(self._fail(WebCarrierError("relay sent BYE"))))
+    async def _poll_once(self) -> None:
+        # The long poll: the relay holds the request open for `wait`
+        #  milliseconds and answers early as soon as it has frames for us.
+        path = (
+            f"{_SESSION_ENDPOINT}/{self._session_id}/down"
+            f"?cursor={self._down_cursor}&wait={_LONG_POLL_WAIT * 1000}"
+        )
+
+        response = await self._down.request(
+            "GET",
+            path=path,
+            timeout=_LONG_POLL_WAIT + _LONG_POLL_READ_MARGIN,
+        )
+
+        # An expired wait comes back empty - poll again from the same cursor.
+        if response.status == HTTPStatus.NO_CONTENT:
             return
 
+        if response.status != HTTPStatus.OK:
+            msg = f"downlink rejected: HTTP {response.status}"
+            raise WebCarrierError(msg)
+
+        # The cursor the next poll resumes from. Without it the relay would
+        #  replay the frames this response has just delivered.
+        cursor_header = response.headers.get(_CURSOR_HEADER)
+
+        if cursor_header is not None:
+            self._down_cursor = int(cursor_header)
+
+        for one_frame in parse_frame_message(response.body):
+            self._handle_frame(one_frame)
+
+    def _handle_frame(self, one_frame: Frame) -> None:
+        if one_frame.stream_id == _CONTROL_STREAM_ID:
+            self._handle_control_frame(one_frame)
+            return
+
+        # The carrier opens one stream, so anything else is not ours to read.
         if one_frame.stream_id != _STREAM_ID:
             return
 
+        self._handle_stream_frame(one_frame)
+
+    def _handle_control_frame(self, one_frame: Frame) -> None:
+        if one_frame.type == FrameType.WELCOME:
+            self._welcome_event.set()
+            return
+
+        if one_frame.type == FrameType.PING:
+            self._track_task(self._send_frames([
+                serialize_frame(
+                    FrameType.PONG,
+                    stream_id=_CONTROL_STREAM_ID,
+                    payload=one_frame.payload,
+                ),
+            ]))
+            return
+
+        if one_frame.type == FrameType.BYE:
+            self._track_task(self._fail(WebCarrierError("relay sent BYE")))
+
+    def _handle_stream_frame(self, one_frame: Frame) -> None:
         if one_frame.type == FrameType.DATA:
             self._recv_window_remaining -= len(one_frame.payload)
+
             if self._recv_window_remaining < 0:
-                self._track(self._loop.create_task(
-                    self._fail(WebCarrierError("relay sent DATA beyond granted receive credit"))
+                self._track_task(self._fail(
+                    WebCarrierError("relay sent DATA beyond granted receive credit"),
                 ))
                 return
+
             self._recv_queue.put_nowait(one_frame.payload)
-        elif one_frame.type == FrameType.CLOSE:
-            self._track(self._loop.create_task(self._fail(WebCarrierError("relay closed the stream"))))
-        elif one_frame.type == FrameType.WINDOW:
-            if len(one_frame.payload) != 4:
-                self._track(self._loop.create_task(self._fail(WebCarrierError("malformed WINDOW frame"))))
+            return
+
+        if one_frame.type == FrameType.CLOSE:
+            self._track_task(self._fail(WebCarrierError("relay closed the stream")))
+            return
+
+        if one_frame.type == FrameType.WINDOW:
+            if len(one_frame.payload) != _WINDOW_PAYLOAD_SIZE:
+                self._track_task(self._fail(WebCarrierError("malformed WINDOW frame")))
                 return
+
             self._send_window += int.from_bytes(one_frame.payload, "big")
             self._send_window_event.set()
 
     async def _fail(self, exc: Exception) -> None:
         if self._fail_exc is not None:
             return
+
         self._fail_exc = exc
+
+        # Wake everything that could still be waiting: a failed carrier must
+        #  raise at its callers rather than leave them blocked for good.
         self._welcome_event.set()
         self._send_window_event.set()
         self._recv_queue.put_nowait(None)
+
         if self._poll_task is not None and self._poll_task is not asyncio.current_task():
             self._poll_task.cancel()
