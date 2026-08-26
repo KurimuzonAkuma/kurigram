@@ -744,13 +744,13 @@ class WebProxyCarrier:
         # `FrameParseError` is a `ValueError`, and so is a malformed `x-cursor`.
         except (WebCarrierError, ValueError) as e:
             log.debug("WEB proxy: poll loop stopped: %s", e)
-            await self._fail(e if isinstance(e, WebCarrierError) else WebCarrierError(str(e)))
+            await self._fail(e if isinstance(e, WebCarrierError) else WebCarrierError(e))
 
         # Task boundary: a poll loop that dies silently leaves the carrier alive
         #  and every reader waiting forever.
         except Exception as e:
             log.exception("WEB proxy: poll loop crashed")
-            await self._fail(WebCarrierError(str(e)))
+            await self._fail(WebCarrierError(e))
 
     async def _poll_once(self) -> None:
         # The long poll: the relay holds the request open for `wait`
