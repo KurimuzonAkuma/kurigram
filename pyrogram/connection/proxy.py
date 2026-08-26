@@ -62,9 +62,8 @@ class HttpProxy:
 @dataclass(frozen=True)
 class MtProxy:
     # Classic MTProxy: obfuscated2 straight to (hostname, port), no relay. Not
-    #  connected yet - TCP raises a clear NotImplementedError for it until #325
-    #  lands. The type exists now so that landing doesn't need another round of
-    #  proxy-shape changes.
+    #  implemented yet - TCP raises a clear NotImplementedError for it. The type
+    #  exists now so implementing it needs no further proxy-shape changes.
     scheme: ClassVar[Literal[ProxyScheme.MTPROXY]] = ProxyScheme.MTPROXY
 
     hostname: str

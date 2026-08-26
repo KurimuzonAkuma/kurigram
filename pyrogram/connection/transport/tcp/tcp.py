@@ -322,10 +322,7 @@ class TCP:
             return
 
         if isinstance(self.proxy, MtProxy):
-            msg = (
-                "Classic MTProxy (scheme='mtproxy') has no connection implementation yet; "
-                "use a WEB proxy (scheme='web'), or track upstream PR #325."
-            )
+            msg = "Classic MTProxy (scheme='mtproxy') is not implemented yet."
             raise NotImplementedError(msg)
 
         if self.proxy is not None:
