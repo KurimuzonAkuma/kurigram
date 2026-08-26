@@ -139,9 +139,6 @@ class TCP:
         dc_id: Optional[int] = None,
     ) -> None:
         self.ipv6 = ipv6
-        # Already-normalized: Client.proxy went through
-        #  pyrogram.connection.proxy.normalize_proxy once. TCP never parses
-        #  a dict or a string itself.
         self.proxy = proxy
         # Needed only for the WEB proxy scheme, which routes by relay
         #  hostname rather than DC address and embeds this in its handshake.
@@ -198,7 +195,11 @@ class TCP:
 
         log.info("Connecting to WEB proxy relay %s (dc_id=%s)", web_proxy.hostname, self.dc_id)
 
-        carrier = WebProxyCarrier(web_proxy.hostname, web_proxy.secret, loop=self.loop)
+        carrier = WebProxyCarrier(
+            web_proxy.hostname,
+            secret=web_proxy.secret,
+            loop=self.loop,
+        )
         self._web_carrier = carrier
         try:
             await carrier.start()
@@ -221,6 +222,10 @@ class TCP:
         log.info("WEB proxy carrier established")
 
     async def _build_proxy(self) -> SocksProxy:
+        # Stays `async` because `SocksProxy.__init__` calls
+        #  `asyncio.get_event_loop()`, which raises "There is no current event
+        #  loop" outside a running one.
+        #  https://github.com/romis2012/python-socks/blob/8794dfc734cc6fb98c61099905a9f8de186719b9/python_socks/async_/asyncio/_proxy.py#L38
         proxy = self.proxy
 
         if not isinstance(proxy, (Socks4Proxy, Socks5Proxy, HttpProxy)):
@@ -301,7 +306,7 @@ class TCP:
         log.info("Connection established")
 
     async def _connect(self, destination: Tuple[str, int]) -> None:
-        if isinstance(self.proxy, WebProxy):
+        if self.is_web_proxy:
             await self._connect_via_web_proxy()
             return
 
