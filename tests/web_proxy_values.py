@@ -23,7 +23,9 @@ its own copy."""
 import os
 from dataclasses import dataclass
 
-PLAIN_SECRET_HEX = "cc1405e16163887494a4425d6925f218"
+# A made-up value. Every test using it only parses or re-encodes it, so nothing
+# here needs a secret that belongs to a real deployment.
+PLAIN_SECRET_HEX = "0123456789abcdef0123456789abcdef"
 DD_SECRET_HEX = "dd" + PLAIN_SECRET_HEX
 
 # Normative capability vectors, web-proxy-plan.md §10 - the same two the Go
