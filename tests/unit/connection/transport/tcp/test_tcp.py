@@ -25,45 +25,57 @@ from pyrogram.connection.transport.tcp.tcp import TCP
 from tests.web_proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX
 
 
-def test_tcp_takes_an_already_normalized_proxy_dataclass():
-    web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(PLAIN_SECRET_HEX))
-    t = TCP(proxy=web, dc_id=2)
-    assert t.is_web_proxy
-    assert t.proxy is web
+def _web_proxy(secret_hex: str = PLAIN_SECRET_HEX) -> WebProxy:
+    return WebProxy(hostname="relay.example.com", secret=bytes.fromhex(secret_hex))
 
 
-def test_tcp_is_not_web_proxy_for_a_socks_proxy():
-    t = TCP(proxy=Socks5Proxy(hostname="1.2.3.4", port=1080), dc_id=2)
-    assert not t.is_web_proxy
+def test_tcp_takes_an_already_normalized_proxy_dataclass() -> None:
+    web_proxy = _web_proxy()
+
+    transport = TCP(proxy=web_proxy, dc_id=2)
+
+    assert transport.is_web_proxy
+    assert transport.proxy is web_proxy
 
 
-def test_tcp_is_not_web_proxy_when_no_proxy_is_set():
+def test_tcp_is_not_web_proxy_for_a_socks_proxy() -> None:
+    transport = TCP(proxy=Socks5Proxy(hostname="1.2.3.4", port=1080), dc_id=2)
+
+    assert not transport.is_web_proxy
+
+
+def test_tcp_is_not_web_proxy_when_no_proxy_is_set() -> None:
     assert not TCP(dc_id=2).is_web_proxy
 
 
-async def test_connect_via_web_proxy_requires_dc_id():
-    web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(PLAIN_SECRET_HEX))
-    t = TCPAbridged(proxy=web, dc_id=None)
+async def test_connect_via_web_proxy_requires_dc_id() -> None:
+    transport = TCPAbridged(proxy=_web_proxy(), dc_id=None)
+
     with pytest.raises(ValueError, match="dc_id"):
-        await t._connect_via_web_proxy()
+        await transport._connect_via_web_proxy()
 
 
-async def test_connect_via_web_proxy_requires_an_obfuscate_tag():
-    web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(PLAIN_SECRET_HEX))
-    t = TCP(proxy=web, dc_id=2)  # bare TCP: OBFUSCATE_TAG is None
+async def test_connect_via_web_proxy_requires_an_obfuscate_tag() -> None:
+    # Bare `TCP` leaves `OBFUSCATE_TAG` unset; only its packet-framing
+    #  subclasses define one.
+    transport = TCP(proxy=_web_proxy(), dc_id=2)
+
     with pytest.raises(ValueError, match="OBFUSCATE_TAG"):
-        await t._connect_via_web_proxy()
+        await transport._connect_via_web_proxy()
 
 
-async def test_connect_via_web_proxy_rejects_dd_secret_on_the_wrong_class():
-    web = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(DD_SECRET_HEX))
-    t = TCPAbridged(proxy=web, dc_id=2)  # dd secrets need TCPIntermediatePadded
+async def test_connect_via_web_proxy_rejects_dd_secret_on_the_wrong_class() -> None:
+    # A dd-prefixed secret asks for padded intermediate framing, which only
+    #  `TCPIntermediatePadded` speaks.
+    transport = TCPAbridged(proxy=_web_proxy(DD_SECRET_HEX), dc_id=2)
+
     with pytest.raises(ValueError, match="TCPIntermediatePadded"):
-        await t._connect_via_web_proxy()
+        await transport._connect_via_web_proxy()
 
 
-async def test_connect_rejects_mtproxy_as_not_implemented():
+async def test_connect_rejects_mtproxy_as_not_implemented() -> None:
     mtproxy = MtProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(PLAIN_SECRET_HEX))
-    t = TCPAbridged(proxy=mtproxy, dc_id=2)
+    transport = TCPAbridged(proxy=mtproxy, dc_id=2)
+
     with pytest.raises(NotImplementedError):
-        await t._connect(("unused", 0))
+        await transport._connect(("unused", 0))
