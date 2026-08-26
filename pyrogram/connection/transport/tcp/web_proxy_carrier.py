@@ -163,8 +163,8 @@ class WebCarrierError(ConnectionError):
 
 
 class _HttpConnection:
-    # Minimal HTTP/1.1 client for the relay's small POST/GET/DELETE calls
-    # (Content-Length bodies only, never chunked). Stdlib asyncio/ssl only.
+    # Minimal HTTP/1.1 client for the relay's POST/GET/DELETE calls, over a
+    # single keep-alive connection. Stdlib asyncio/ssl only.
 
     def __init__(self, host: str, port: int, ssl_context: ssl.SSLContext) -> None:
         self._host = host
@@ -237,15 +237,7 @@ class _HttpConnection:
         await self._writer.drain()
 
         status, resp_headers = await self._read_status_and_headers()
-        content_length_header = resp_headers.get("content-length")
-        if content_length_header is None:
-            resp_body = b""
-        else:
-            try:
-                content_length = int(content_length_header)
-            except ValueError as e:
-                raise ConnectionError(f"malformed Content-Length header: {content_length_header!r}") from e
-            resp_body = await self._reader.readexactly(content_length)
+        resp_body = await self._read_body(status, resp_headers)
 
         if resp_headers.get("connection", "").lower() == "close":
             self._writer.close()
@@ -253,6 +245,64 @@ class _HttpConnection:
             self._reader = None
 
         return status, resp_headers, resp_body
+
+    async def _read_body(self, status: int, resp_headers: Dict[str, str]) -> bytes:
+        # A reverse proxy in front of the relay re-frames anything it cannot
+        # buffer whole, so every downlink batch above a few KiB arrives as
+        # `transfer-encoding: chunked` with no `Content-Length`. Reading only
+        # the latter returned an empty body, which `parse_frame_message` then
+        # rejected with "frame: empty message" - the carrier died and every
+        # response larger than about 2 KiB was lost.
+        # https://www.rfc-editor.org/rfc/rfc9112#section-7.1
+        if "chunked" in resp_headers.get("transfer-encoding", "").lower():
+            return await self._read_chunked_body()
+
+        content_length_header = resp_headers.get("content-length")
+
+        if content_length_header is not None:
+            try:
+                content_length = int(content_length_header)
+            except ValueError as e:
+                raise ConnectionError(f"malformed Content-Length header: {content_length_header!r}") from e
+            return await self._reader.readexactly(content_length)
+
+        if status == 204:
+            return b""
+
+        # Anything else would be delimited by the connection closing, which the
+        # relay never does on a keep-alive pool. Treating it as an empty body is
+        # what hid the bug above, so fail loudly instead.
+        raise ConnectionError(f"HTTP {status} response has neither Content-Length nor chunked framing")
+
+    async def _read_chunked_body(self) -> bytes:
+        chunks: List[bytes] = []
+
+        while True:
+            size_line = await self._reader.readline()
+            if not size_line:
+                raise ConnectionError("connection closed inside a chunked body")
+
+            # The chunk size may carry extensions after a semicolon.
+            size_field = size_line.split(b";", 1)[0].strip()
+            try:
+                chunk_size = int(size_field, 16)
+            except ValueError as e:
+                raise ConnectionError(f"malformed chunk size: {size_line!r}") from e
+
+            if chunk_size == 0:
+                break
+
+            chunks.append(await self._reader.readexactly(chunk_size))
+            if await self._reader.readexactly(2) != b"\r\n":
+                raise ConnectionError("malformed chunk terminator")
+
+        # Trailer fields, if any, then the blank line closing the body.
+        while True:
+            line = await self._reader.readline()
+            if line in (b"\r\n", b""):
+                break
+
+        return b"".join(chunks)
 
     async def _read_status_and_headers(self) -> Tuple[int, Dict[str, str]]:
         status_line = await self._reader.readline()

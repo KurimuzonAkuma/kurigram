@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
+
 import pytest
 
 from pyrogram.connection.transport.tcp.web_proxy_carrier import (
@@ -23,6 +25,7 @@ from pyrogram.connection.transport.tcp.web_proxy_carrier import (
     FRAME_MAX_PAYLOAD,
     FrameParseError,
     FrameType,
+    _HttpConnection,
     derive_bridge_capability,
     parse_frame_message,
     parse_frames,
@@ -158,3 +161,80 @@ def test_derive_bridge_capability_is_sensitive_to_host_and_secret():
 # and is covered in tests/unit/connection/test_proxy.py; TCP itself only
 # takes an already-normalized Proxy dataclass, covered in
 # tests/unit/connection/transport/tcp/test_tcp.py.
+
+
+# --- HTTP response body framing ---------------------------------------
+
+
+def _connection_reading(raw: bytes) -> _HttpConnection:
+    reader = asyncio.StreamReader()
+    reader.feed_data(raw)
+    reader.feed_eof()
+
+    connection = _HttpConnection("relay.invalid", 443, ssl_context=None)
+    connection._reader = reader
+
+    return connection
+
+
+async def test_read_body_content_length():
+    connection = _connection_reading(b"downlink batch")
+
+    body = await connection._read_body(200, {"content-length": "14"})
+
+    assert body == b"downlink batch"
+
+
+async def test_read_body_chunked():
+    # A reverse proxy re-frames larger downlink batches this way, and reading
+    # them as an empty body silently dropped every response above a few KiB.
+    connection = _connection_reading(b"5\r\nhello\r\n6\r\n mtprx\r\n0\r\n\r\n")
+
+    body = await connection._read_body(200, {"transfer-encoding": "chunked"})
+
+    assert body == b"hello mtprx"
+
+
+async def test_read_body_chunked_ignores_extensions_and_trailers():
+    raw = b"5;name=value\r\nhello\r\n0\r\nx-checksum: 1\r\n\r\n"
+    connection = _connection_reading(raw)
+
+    body = await connection._read_body(200, {"transfer-encoding": "CHUNKED"})
+
+    assert body == b"hello"
+
+
+async def test_read_body_chunked_leaves_the_connection_at_the_next_response():
+    raw = b"5\r\nhello\r\n0\r\n\r\nHTTP/1.1 204 No Content\r\n"
+    connection = _connection_reading(raw)
+
+    await connection._read_body(200, {"transfer-encoding": "chunked"})
+
+    assert await connection._reader.readline() == b"HTTP/1.1 204 No Content\r\n"
+
+
+async def test_read_body_no_content_length_is_rejected():
+    connection = _connection_reading(b"")
+
+    with pytest.raises(ConnectionError, match="neither Content-Length nor chunked"):
+        await connection._read_body(200, {})
+
+
+async def test_read_body_204_has_no_body():
+    connection = _connection_reading(b"")
+
+    assert await connection._read_body(204, {}) == b""
+
+
+async def test_read_body_rejects_a_malformed_chunk_size():
+    connection = _connection_reading(b"zz\r\n")
+
+    with pytest.raises(ConnectionError, match="malformed chunk size"):
+        await connection._read_body(200, {"transfer-encoding": "chunked"})
+
+
+async def test_read_body_rejects_a_truncated_chunked_body():
+    connection = _connection_reading(b"5\r\nhello\r\n")
+
+    with pytest.raises(ConnectionError, match="closed inside a chunked body"):
+        await connection._read_body(200, {"transfer-encoding": "chunked"})
