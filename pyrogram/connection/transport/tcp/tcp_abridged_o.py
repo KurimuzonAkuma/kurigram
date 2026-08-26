@@ -55,7 +55,7 @@ class TCPAbridgedO(TCP):
         self.encrypt = (nonce[8:40], nonce[40:56], bytearray(1))
         self.decrypt = (temp[0:32], temp[32:48], bytearray(1))
 
-        nonce[56:64] = finalize_obfuscated2_tag(nonce, self.encrypt)
+        nonce[56:64] = finalize_obfuscated2_tag(nonce, encrypt=self.encrypt)
 
         await super().send(nonce, wait_for_marker=False)
         self.marker_event.set()

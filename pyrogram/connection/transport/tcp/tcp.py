@@ -87,7 +87,7 @@ def generate_obfuscated2_nonce(reserved_prefixes: Tuple[bytes, ...] = _OBFUSCATE
             return nonce
 
 
-def finalize_obfuscated2_tag(nonce: bytearray, encrypt: CipherArgs) -> bytes:
+def finalize_obfuscated2_tag(nonce: bytearray, *, encrypt: CipherArgs) -> bytes:
     # Encrypting the whole 64-byte buffer both puts the tag/dc_id bytes
     #  already written at nonce[56:64] onto the wire in obfuscated form and
     #  advances the keystream exactly 64 bytes, so the first real send()
@@ -101,7 +101,7 @@ class Obfuscated2Header(NamedTuple):
     decrypt: CipherArgs
 
 
-def build_obfuscated2_header(secret: bytes, dc_id: int, obfuscate_tag: bytes) -> Obfuscated2Header:
+def build_obfuscated2_header(secret: bytes, *, dc_id: int, obfuscate_tag: bytes) -> Obfuscated2Header:
     # secret is the bare key - callers strip any 0xDD marker first.
     if len(secret) != _OBFUSCATED2_SECRET_SIZE:
         msg = f"obfuscated2: secret must be exactly {_OBFUSCATED2_SECRET_SIZE} bytes, got {len(secret)}"
@@ -126,7 +126,7 @@ def build_obfuscated2_header(secret: bytes, dc_id: int, obfuscate_tag: bytes) ->
 
     nonce[56:60] = obfuscate_tag
     nonce[60:62] = dc_id.to_bytes(2, "little", signed=True)
-    nonce[56:64] = finalize_obfuscated2_tag(nonce, encrypt)
+    nonce[56:64] = finalize_obfuscated2_tag(nonce, encrypt=encrypt)
 
     return Obfuscated2Header(header=bytes(nonce), encrypt=encrypt, decrypt=decrypt)
 
@@ -216,7 +216,7 @@ class TCP:
             await carrier.close()
             raise OSError(e) from e
 
-        built = build_obfuscated2_header(bare_secret, self.dc_id, self.OBFUSCATE_TAG)
+        built = build_obfuscated2_header(bare_secret, dc_id=self.dc_id, obfuscate_tag=self.OBFUSCATE_TAG)
         self._encrypt = built.encrypt
         self._decrypt = built.decrypt
 
