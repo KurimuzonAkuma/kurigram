@@ -18,7 +18,7 @@ BLUE   := \033[0;34m
 BOLD   := \033[1m
 RESET  := \033[0m
 
-.PHONY: venv venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag test test-unit test-integration
+.PHONY: venv venv-dev venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag test test-unit test-integration
 
 venv:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -28,6 +28,15 @@ venv:
 
 	$(PIP) install -U -e .
 	@printf "$(YELLOW)Created venv with %s$(RESET)\n" "$$($(PYTHON) --version)"
+
+venv-dev:
+	@if [ ! -d "$(VENV)" ]; then \
+		python3 -m venv $(VENV); \
+		$(PIP) install -U pip wheel setuptools; \
+	fi
+
+	$(PIP) install -U -e .[dev]
+	@printf "$(YELLOW)Created dev venv with %s$(RESET)\n" "$$($(PYTHON) --version)"
 
 venv-docs:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -68,6 +77,7 @@ docs:
 docs-archive:
 	cd docs/build/html && zip -r ../docs.zip ./
 
+# `make venv` installs the package alone, so the runner needs `make venv-dev` first.
 test:
 	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest
 
