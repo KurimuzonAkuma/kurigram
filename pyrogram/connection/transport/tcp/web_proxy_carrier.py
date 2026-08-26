@@ -25,17 +25,24 @@ import logging
 import ssl
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Dict, List, Optional, Tuple
+from http import HTTPStatus
+from typing import Dict, Final, FrozenSet, List, Optional, Pattern, Tuple
 
 log = logging.getLogger(__name__)
 
 
-# --- wire frame codec ----------------------------------------------------
-# type:u8 | stream_id:u24 (big-endian) | length:u32 (big-endian) | payload
-# Matches tdesktop's web_proxy_frame.cpp and the hosted relay byte for byte.
+# Section numbers throughout this module refer to tdesktop's WEB proxy plan,
+#  which the hosted relay and this carrier both implement.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md
 
-FRAME_HEADER_SIZE = 8
-FRAME_MAX_PAYLOAD = 1024 * 1024  # §6: a payload is capped at 1 MiB
+# type:u8 | stream_id:u24 (big-endian) | length:u32 (big-endian) | payload, laid
+#  out by tdesktop's `SerializeFrame`.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/Telegram/SourceFiles/mtproto/web_proxy/web_proxy_frame.cpp#L33-L55
+FRAME_HEADER_SIZE: Final[int] = 8
+
+# §6: a payload is capped at 1 MiB. Same value as tdesktop's `kMaxFramePayload`.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/Telegram/SourceFiles/mtproto/web_proxy/web_proxy_frame.h#L18-L35
+FRAME_MAX_PAYLOAD: Final[int] = 1024 * 1024
 
 
 class FrameType(IntEnum):
@@ -52,7 +59,7 @@ class FrameType(IntEnum):
     BYE = 0x1F
 
 
-_KNOWN_FRAME_TYPES = frozenset(t.value for t in FrameType)
+_KNOWN_FRAME_TYPES: Final[FrozenSet[int]] = frozenset(frame_type.value for frame_type in FrameType)
 
 
 class FrameParseError(ValueError):
@@ -68,9 +75,11 @@ class Frame:
 
 def serialize_frame(frame_type: FrameType, stream_id: int, payload: bytes = b"") -> bytes:
     if not (0 <= stream_id <= 0x00FFFFFF):
-        raise ValueError(f"frame: stream id {stream_id} out of range")
+        msg = f"frame: stream id {stream_id} out of range"
+        raise ValueError(msg)
     if len(payload) > FRAME_MAX_PAYLOAD:
-        raise ValueError(f"frame: payload too large ({len(payload)} bytes)")
+        msg = f"frame: payload too large ({len(payload)} bytes)"
+        raise ValueError(msg)
 
     header = bytes((
         frame_type & 0xFF,
@@ -81,29 +90,31 @@ def serialize_frame(frame_type: FrameType, stream_id: int, payload: bytes = b"")
     return header + payload
 
 
-def parse_frames(buf: bytes) -> Tuple[List[Frame], int]:
+def parse_frames(wire: bytes) -> Tuple[List[Frame], int]:
     # Returns (frames, bytes_consumed); a trailing partial frame is left unconsumed.
-    # No frame-count cap: the relay may legally batch up to 2 MiB of small frames
-    # (§7.1) into one response, and a count limit would make that a parse error.
+    #  No frame-count cap: the relay may legally batch up to 2 MiB of small frames
+    #  (§7.1) into one response, and a count limit would make that a parse error.
     frames: List[Frame] = []
     offset = 0
-    buf_len = len(buf)
+    wire_len = len(wire)
 
-    while buf_len - offset >= FRAME_HEADER_SIZE:
-        type_byte = buf[offset]
+    while wire_len - offset >= FRAME_HEADER_SIZE:
+        type_byte = wire[offset]
         if type_byte not in _KNOWN_FRAME_TYPES:
-            raise FrameParseError(f"frame: unknown type 0x{type_byte:02x}")
+            msg = f"frame: unknown type 0x{type_byte:02x}"
+            raise FrameParseError(msg)
 
-        stream_id = (buf[offset + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3]
-        size = int.from_bytes(buf[offset + 4:offset + 8], "big")
+        stream_id = (wire[offset + 1] << 16) | (wire[offset + 2] << 8) | wire[offset + 3]
+        size = int.from_bytes(wire[offset + 4:offset + 8], "big")
         if size > FRAME_MAX_PAYLOAD:
-            raise FrameParseError(f"frame: payload too large ({size} bytes)")
+            msg = f"frame: payload too large ({size} bytes)"
+            raise FrameParseError(msg)
 
         full = FRAME_HEADER_SIZE + size
-        if buf_len - offset < full:
+        if wire_len - offset < full:
             break
 
-        payload = bytes(buf[offset + FRAME_HEADER_SIZE:offset + full])
+        payload = bytes(wire[offset + FRAME_HEADER_SIZE:offset + full])
         frames.append(Frame(FrameType(type_byte), stream_id, payload))
         offset += full
 
@@ -113,49 +124,57 @@ def parse_frames(buf: bytes) -> Tuple[List[Frame], int]:
 def parse_frame_message(body: bytes) -> List[Frame]:
     # One HTTP body must be one or more complete frames, nothing more, nothing less.
     if not body:
-        raise FrameParseError("frame: empty message")
+        msg = "frame: empty message"
+        raise FrameParseError(msg)
     frames, consumed = parse_frames(body)
     if consumed != len(body) or not frames:
-        raise FrameParseError("frame: trailing partial frame")
+        msg = "frame: trailing partial frame"
+        raise FrameParseError(msg)
     return frames
 
 
-# --- bridge capability -----------------------------------------------------
-
-_BRIDGE_CONTEXT_PREFIX = b"tdesktop-web-proxy-bridge-v1\n"
+# §10 defines the derivation below and the vectors the tests check it against.
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L439-L449
+_BRIDGE_CONTEXT_PREFIX: Final[bytes] = b"tdesktop-web-proxy-bridge-v1\n"
 
 
 def derive_bridge_capability(hostname: str, secret: bytes) -> str:
     # HMAC-SHA256(secret, "tdesktop-web-proxy-bridge-v1\n" + hostname), base64url, no padding.
-    # secret keeps its leading 0xDD marker byte when present - unlike the
-    # obfuscated2 key derivation, which strips it. hostname must already be
-    # the canonical lowercase ASCII/IDNA form (TCP._canonicalize_web_hostname).
+    #  secret keeps its leading 0xDD marker byte when present - unlike the
+    #  obfuscated2 key derivation, which strips it. hostname must already be
+    #  the canonical lowercase ASCII/IDNA form (TCP._canonicalize_web_hostname).
     context = _BRIDGE_CONTEXT_PREFIX + hostname.encode("utf-8")
     digest = hmac.new(secret, context, hashlib.sha256).digest()
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
-# --- long-poll HTTP carrier ------------------------------------------------
-# The raw byte pipe standing in for a raw TCP socket, talking to the hosted
-# relay's /api/v1/session* API. TCP._connect_via_web_proxy layers the actual
-# MTProxy obfuscation on top of it.
+# The raw byte pipe standing in for a TCP socket, talking to the hosted relay's
+#  /api/v1/session* API. `TCP._connect_via_web_proxy` layers the actual MTProxy
+#  obfuscation on top of it.
 
-_CONNECT_TIMEOUT = 10
-_REQUEST_TIMEOUT = 10
-_LONG_POLL_WAIT = 25
-_WELCOME_TIMEOUT = 30
-_STREAM_ID = 1
+_CONNECT_TIMEOUT: Final[int] = 10
+_REQUEST_TIMEOUT: Final[int] = 10
+_LONG_POLL_WAIT: Final[int] = 25
+_WELCOME_TIMEOUT: Final[int] = 30
+_STREAM_ID: Final[int] = 1
 
-# §7: both directions start with an implicit 4 MiB per-stream window.
-_INITIAL_STREAM_WINDOW = 4 * 1024 * 1024
-# §7: uplink "splits outgoing data into at most 64 KiB frames".
-_UPLINK_FRAME_MAX = 64 * 1024
-# §7/§8: downlink credit is granted back coalesced, once 256 KiB accumulate
-# or 20 ms pass, whichever comes first.
-_DOWNLINK_GRANT_THRESHOLD = 256 * 1024
-_DOWNLINK_GRANT_DELAY = 0.02
+# §7: "Both directions start with an implicit 4 MiB per-stream window."
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L215
+_INITIAL_STREAM_WINDOW: Final[int] = 4 * 1024 * 1024
+
+# §7: the uplink "splits outgoing data into at most 64 KiB frames".
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L226
+_UPLINK_FRAME_MAX: Final[int] = 64 * 1024
+
+# §8: downlink credit is granted back coalesced, "once 256 KiB accumulate or
+#  after 20 ms".
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L338
+_DOWNLINK_GRANT_THRESHOLD: Final[int] = 256 * 1024
+_DOWNLINK_GRANT_DELAY: Final[float] = 0.02
+
 # §7: "no write progress for 30 seconds" fails the carrier.
-_CREDIT_WAIT_TIMEOUT = 30
+#  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md#L237
+_CREDIT_WAIT_TIMEOUT: Final[int] = 30
 
 
 class WebCarrierError(ConnectionError):
@@ -164,7 +183,7 @@ class WebCarrierError(ConnectionError):
 
 class _HttpConnection:
     # Minimal HTTP/1.1 client for the relay's POST/GET/DELETE calls, over a
-    # single keep-alive connection. Stdlib asyncio/ssl only.
+    #  single keep-alive connection. Stdlib asyncio/ssl only.
 
     def __init__(self, host: str, port: int, ssl_context: ssl.SSLContext) -> None:
         self._host = host
@@ -201,7 +220,7 @@ class _HttpConnection:
         headers: Optional[Dict[str, str]] = None, timeout: float = _REQUEST_TIMEOUT,
     ) -> Tuple[int, Dict[str, str], bytes]:
         # Retries once on a fresh connection - the pooled one may have died
-        # silently on the server's idle-keepalive timeout.
+        #  silently on the server's idle-keepalive timeout.
         async with self._lock:
             for attempt in (1, 2):
                 try:
@@ -213,13 +232,16 @@ class _HttpConnection:
                     self._writer = None
                     self._reader = None
                     if attempt == 2:
-                        raise WebCarrierError(f"{method} {path}: {e}") from e
+                        msg = f"{method} {path}: {e}"
+                        raise WebCarrierError(msg) from e
                 except asyncio.TimeoutError as e:
                     self._writer = None
                     self._reader = None
                     if attempt == 2:
-                        raise WebCarrierError(f"{method} {path}: timed out") from e
-            raise AssertionError("unreachable")
+                        msg = f"{method} {path}: timed out"
+                        raise WebCarrierError(msg) from e
+            msg = "unreachable"
+            raise AssertionError(msg)
 
     async def _send_and_read(
         self, method: str, path: str, body: bytes, headers: Optional[Dict[str, str]],
@@ -248,12 +270,12 @@ class _HttpConnection:
 
     async def _read_body(self, status: int, resp_headers: Dict[str, str]) -> bytes:
         # A reverse proxy in front of the relay re-frames anything it cannot
-        # buffer whole, so every downlink batch above a few KiB arrives as
-        # `transfer-encoding: chunked` with no `Content-Length`. Reading only
-        # the latter returned an empty body, which `parse_frame_message` then
-        # rejected with "frame: empty message" - the carrier died and every
-        # response larger than about 2 KiB was lost.
-        # https://www.rfc-editor.org/rfc/rfc9112#section-7.1
+        #  buffer whole, so every downlink batch above a few KiB arrives as
+        #  `transfer-encoding: chunked` with no `Content-Length`. Reading only
+        #  the latter returned an empty body, which `parse_frame_message` then
+        #  rejected with "frame: empty message" - the carrier died and every
+        #  response larger than about 2 KiB was lost.
+        #  https://www.rfc-editor.org/rfc/rfc9112#section-7.1
         if "chunked" in resp_headers.get("transfer-encoding", "").lower():
             return await self._read_chunked_body()
 
@@ -263,16 +285,18 @@ class _HttpConnection:
             try:
                 content_length = int(content_length_header)
             except ValueError as e:
-                raise ConnectionError(f"malformed Content-Length header: {content_length_header!r}") from e
+                msg = f"malformed Content-Length header: {content_length_header!r}"
+                raise ConnectionError(msg) from e
             return await self._reader.readexactly(content_length)
 
-        if status == 204:
+        if status == HTTPStatus.NO_CONTENT:
             return b""
 
         # Anything else would be delimited by the connection closing, which the
-        # relay never does on a keep-alive pool. Treating it as an empty body is
-        # what hid the bug above, so fail loudly instead.
-        raise ConnectionError(f"HTTP {status} response has neither Content-Length nor chunked framing")
+        #  relay never does on a keep-alive pool. Treating it as an empty body is
+        #  what hid the bug above, so fail loudly instead.
+        msg = f"HTTP {status} response has neither Content-Length nor chunked framing"
+        raise ConnectionError(msg)
 
     async def _read_chunked_body(self) -> bytes:
         chunks: List[bytes] = []
@@ -280,21 +304,24 @@ class _HttpConnection:
         while True:
             size_line = await self._reader.readline()
             if not size_line:
-                raise ConnectionError("connection closed inside a chunked body")
+                msg = "connection closed inside a chunked body"
+                raise ConnectionError(msg)
 
             # The chunk size may carry extensions after a semicolon.
             size_field = size_line.split(b";", 1)[0].strip()
             try:
                 chunk_size = int(size_field, 16)
             except ValueError as e:
-                raise ConnectionError(f"malformed chunk size: {size_line!r}") from e
+                msg = f"malformed chunk size: {size_line!r}"
+                raise ConnectionError(msg) from e
 
             if chunk_size == 0:
                 break
 
             chunks.append(await self._reader.readexactly(chunk_size))
             if await self._reader.readexactly(2) != b"\r\n":
-                raise ConnectionError("malformed chunk terminator")
+                msg = "malformed chunk terminator"
+                raise ConnectionError(msg)
 
         # Trailer fields, if any, then the blank line closing the body.
         while True:
@@ -307,11 +334,13 @@ class _HttpConnection:
     async def _read_status_and_headers(self) -> Tuple[int, Dict[str, str]]:
         status_line = await self._reader.readline()
         if not status_line:
-            raise ConnectionError("connection closed before a response arrived")
+            msg = "connection closed before a response arrived"
+            raise ConnectionError(msg)
         try:
             status = int(status_line.decode("latin-1").split(None, 2)[1])
         except (IndexError, ValueError) as e:
-            raise ConnectionError(f"malformed HTTP status line: {status_line!r}") from e
+            msg = f"malformed HTTP status line: {status_line!r}"
+            raise ConnectionError(msg) from e
 
         headers: Dict[str, str] = {}
         while True:
@@ -326,9 +355,9 @@ class _HttpConnection:
 
 class WebProxyCarrier:
     # One relay session, one logical stream (id 1). kurigram opens a fresh
-    # TCP instance per DC/media connection, so - unlike tdesktop, which
-    # multiplexes every account over one process-wide carrier - each gets
-    # its own session; simpler, and keeps failures isolated.
+    #  TCP instance per DC/media connection, so - unlike tdesktop, which
+    #  multiplexes every account over one process-wide carrier - each gets
+    #  its own session; simpler, and keeps failures isolated.
 
     def __init__(
         self, hostname: str, secret: bytes, *,
@@ -371,15 +400,17 @@ class WebProxyCarrier:
         status, _headers, resp_body = await self._up.request(
             "POST", "/api/v1/session", body=body, headers={"Content-Type": "application/json"},
         )
-        if status != 200:
-            raise WebCarrierError(f"session creation rejected: HTTP {status}")
+        if status != HTTPStatus.OK:
+            msg = f"session creation rejected: HTTP {status}"
+            raise WebCarrierError(msg)
 
         try:
             data = json.loads(resp_body)
             self._session_id = data["id"]
             self._down_cursor = int(data.get("cursor", 0))
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
-            raise WebCarrierError(f"malformed session creation response: {e}") from e
+            msg = f"malformed session creation response: {e}"
+            raise WebCarrierError(msg) from e
 
         self._poll_task = self._loop.create_task(self._poll_loop())
 
@@ -409,8 +440,8 @@ class WebProxyCarrier:
             chunk = data[offset:offset + _UPLINK_FRAME_MAX]
             if self._send_window < len(chunk):
                 # Nothing we're waiting on can arrive until the relay sees
-                # what we already have and grants more credit back - flush
-                # before blocking, not after every chunk is queued.
+                #  what we already have and grants more credit back - flush
+                #  before blocking, not after every chunk is queued.
                 if pending:
                     await self._send_frames(pending)
                     pending = []
@@ -428,8 +459,8 @@ class WebProxyCarrier:
 
     async def grant_credit(self, amount: int) -> None:
         # Called by TCP._recv_from_web_proxy once bytes are actually handed
-        # to the caller - the same "drain into the MTProto engine" point §7
-        # ties downlink credit to, not merely arriving off the wire.
+        #  to the caller - the same "drain into the MTProto engine" point §7
+        #  ties downlink credit to, not merely arriving off the wire.
         if amount <= 0 or self._fail_exc is not None:
             return
         self._pending_grant += amount
@@ -474,7 +505,7 @@ class WebProxyCarrier:
             log.debug("WEB proxy: background task ended during close: %s", e)
 
         # Cleanup boundary: a bug in one background task must not stop close()
-        # from tearing the rest down.
+        #  from tearing the rest down.
         except Exception:
             log.exception("WEB proxy: background task crashed during close")
 
@@ -521,7 +552,7 @@ class WebProxyCarrier:
             except WebCarrierError as e:
                 await self._fail(e)
                 raise
-            if status != 200:
+            if status != HTTPStatus.OK:
                 exc = WebCarrierError(f"uplink rejected: HTTP {status}")
                 await self._fail(exc)
                 raise exc
@@ -534,10 +565,11 @@ class WebProxyCarrier:
                     f"?cursor={self._down_cursor}&wait={_LONG_POLL_WAIT * 1000}"
                 )
                 status, headers, body = await self._down.request("GET", path, timeout=_LONG_POLL_WAIT + 10)
-                if status == 204:
+                if status == HTTPStatus.NO_CONTENT:
                     continue
-                if status != 200:
-                    raise WebCarrierError(f"downlink rejected: HTTP {status}")
+                if status != HTTPStatus.OK:
+                    msg = f"downlink rejected: HTTP {status}"
+                    raise WebCarrierError(msg)
 
                 cursor_header = headers.get("x-cursor")
                 if cursor_header is not None:
@@ -554,7 +586,7 @@ class WebProxyCarrier:
             await self._fail(e if isinstance(e, WebCarrierError) else WebCarrierError(str(e)))
 
         # Task boundary: a poll loop that dies silently leaves the carrier alive
-        # and every reader waiting forever.
+        #  and every reader waiting forever.
         except Exception as e:
             log.exception("WEB proxy: poll loop crashed")
             await self._fail(WebCarrierError(str(e)))
