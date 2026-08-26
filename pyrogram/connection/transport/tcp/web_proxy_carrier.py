@@ -156,7 +156,7 @@ def parse_frame_message(body: bytes) -> List[Frame]:
 _BRIDGE_CONTEXT_PREFIX: Final[bytes] = b"tdesktop-web-proxy-bridge-v1\n"
 
 
-def derive_bridge_capability(hostname: str, secret: bytes) -> str:
+def derive_bridge_capability(hostname: str, *, secret: bytes) -> str:
     # HMAC-SHA256(secret, "tdesktop-web-proxy-bridge-v1\n" + hostname), base64url, no padding.
     #  secret keeps its leading 0xDD marker byte when present - unlike the
     #  obfuscated2 key derivation, which strips it. hostname must already be
@@ -516,7 +516,7 @@ class WebProxyCarrier:
     async def start(self) -> None:
         # The relay authenticates the session by the bridge capability alone:
         #  proof we hold the secret for this hostname, never the secret itself.
-        capability = derive_bridge_capability(self._hostname, self._secret)
+        capability = derive_bridge_capability(self._hostname, secret=self._secret)
         body = json.dumps({"bridge": capability}).encode("utf-8")
 
         response = await self._up.request(

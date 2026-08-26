@@ -151,17 +151,17 @@ def test_window_frame_round_trips_as_four_byte_big_endian_delta() -> None:
 def test_derive_bridge_capability_normative_vectors() -> None:
     for host, secret_hex, expected in BRIDGE_CAPABILITY_VECTORS:
         secret = bytes.fromhex(secret_hex)
-        assert derive_bridge_capability(host, secret) == expected
+        assert derive_bridge_capability(host, secret=secret) == expected
 
 
 def test_derive_bridge_capability_is_sensitive_to_host_and_secret() -> None:
     secret = bytes.fromhex("000102030405060708090a0b0c0d0e0f")
-    capability = derive_bridge_capability("proxy.example.com", secret)
-    other_host_capability = derive_bridge_capability("other.example.com", secret)
+    capability = derive_bridge_capability("proxy.example.com", secret=secret)
+    other_host_capability = derive_bridge_capability("other.example.com", secret=secret)
     assert capability != other_host_capability
 
     other_secret = bytes.fromhex("0f0e0d0c0b0a09080706050403020100")
-    other_secret_capability = derive_bridge_capability("proxy.example.com", other_secret)
+    other_secret_capability = derive_bridge_capability("proxy.example.com", secret=other_secret)
     assert capability != other_secret_capability
 
 
