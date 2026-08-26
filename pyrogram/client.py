@@ -37,7 +37,8 @@ from typing import AsyncIterator, Callable, List, Optional, Type, Union
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
-from pyrogram.connection import Proxy, ProxyDict, normalize_proxy
+from pyrogram.connection import Proxy
+from pyrogram.connection.proxy import ProxyDict, normalize_proxy
 from pyrogram.crypto import aes
 from pyrogram.errors import (
     AuthBytesInvalid,
@@ -116,9 +117,9 @@ class Client(Methods):
             after which the server address will be updated (works both ways).
             Defaults to False (IPv4).
 
-        proxy (``str`` | ``dict``, *optional*):
-            The Proxy settings as url, dict, or one of the
-            :obj:`~pyrogram.connection.proxy.Proxy` dataclasses.
+        proxy (``str`` | ``dict`` | :obj:`~pyrogram.connection.Proxy`, *optional*):
+            The Proxy settings as a url, a dict, or one of the
+            :obj:`~pyrogram.connection.Proxy` dataclasses.
             E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*
             or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"* or *"tg://socks?server=11.22.33.44&port=1234"*.
             The *username* and *password* can be omitted if the proxy doesn't require authorization.

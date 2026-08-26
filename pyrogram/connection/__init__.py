@@ -21,9 +21,7 @@ from .proxy import (
     HttpProxy,
     MtProxy,
     Proxy,
-    ProxyDict,
     Socks4Proxy,
     Socks5Proxy,
     WebProxy,
-    normalize_proxy,
 )
