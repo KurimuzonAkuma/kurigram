@@ -128,9 +128,20 @@ def test_normalize_proxy_web_missing_secret_raises() -> None:
         normalize_proxy({"scheme": "web", "hostname": "relay.example.com"})
 
 
-def test_normalize_proxy_ee_secret_is_rejected_with_explanation() -> None:
-    with pytest.raises(ValueError, match="TLS-emulation"):
+def test_normalize_proxy_web_ee_secret_names_the_relay() -> None:
+    with pytest.raises(ValueError, match="the relay would need to add"):
         normalize_proxy({"scheme": "web", "hostname": "relay.example.com", "secret": "ee" + PLAIN_SECRET_HEX})
+
+
+def test_normalize_proxy_mtproxy_ee_secret_does_not_name_the_relay() -> None:
+    # A classic MTProxy user configures no relay, so the WEB explanation would send
+    #  them looking for something they never set up.
+    with pytest.raises(ValueError, match="TLS record layer") as raised:
+        normalize_proxy(
+            {"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": "ee" + PLAIN_SECRET_HEX}
+        )
+
+    assert "relay" not in str(raised.value)
 
 
 def test_normalize_proxy_invalid_secret_length_raises() -> None:

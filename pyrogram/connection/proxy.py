@@ -176,7 +176,25 @@ def canonicalize_web_hostname(hostname: str) -> str:
     return canonical
 
 
-def _decode_mtproxy_secret(secret_hex: str, *, allow_dd: bool) -> bytes:
+# An `ee` secret asks for the fake-TLS record layer tdesktop wraps around the
+#  obfuscated2 stream, and neither kind here can carry it. The reason differs per
+#  kind, so the two messages do too - a WEB user who is told about an unimplemented
+#  record layer will go looking for it in this library, and an MTProxy user who is
+#  told about a relay never configured one.
+_WEB_FAKE_TLS_REJECTION: Final[str] = (
+    "proxy secret uses TLS-emulation ('ee') framing: the relay would need to add the "
+    "inner fake-TLS record stock MTProxy expects, and it deliberately does not "
+    "(web-proxy-plan.md §3). Use a plain 16-byte or dd-prefixed secret instead."
+)
+
+_MTPROXY_FAKE_TLS_REJECTION: Final[str] = (
+    "proxy secret uses TLS-emulation ('ee') framing, which needs a TLS record layer "
+    "under the obfuscated2 stream that this library does not implement. Use a plain "
+    "16-byte or dd-prefixed secret instead."
+)
+
+
+def _decode_mtproxy_secret(secret_hex: str, *, scheme: ProxyScheme) -> bytes:
     try:
         full_secret = bytes.fromhex(secret_hex)
     except ValueError as e:
@@ -184,21 +202,16 @@ def _decode_mtproxy_secret(secret_hex: str, *, allow_dd: bool) -> bytes:
         raise ValueError(msg) from e
 
     if full_secret[:1] == b"\xee":
-        msg = (
-            "proxy secret uses TLS-emulation ('ee') framing: the relay would need to add the "
-            "inner fake-TLS record stock MTProxy expects, and it deliberately does not "
-            "(web-proxy-plan.md §3). Use a plain 16-byte or dd-prefixed secret instead."
-        )
+        msg = _WEB_FAKE_TLS_REJECTION if scheme is ProxyScheme.WEB else _MTPROXY_FAKE_TLS_REJECTION
         raise ValueError(msg)
 
-    if allow_dd and len(full_secret) == 17 and full_secret[0] == 0xDD:
+    if len(full_secret) == 17 and full_secret[0] == 0xDD:
         return full_secret
 
     if len(full_secret) == 16:
         return full_secret
 
-    expected = "16 bytes (plain) or 17 bytes (dd-prefixed)" if allow_dd else "16 bytes"
-    msg = f"proxy secret must decode to {expected}, got {len(full_secret)}"
+    msg = f"proxy secret must decode to 16 bytes (plain) or 17 bytes (dd-prefixed), got {len(full_secret)}"
     raise ValueError(msg)
 
 
@@ -208,7 +221,7 @@ def _decode_mtproxy_secret(secret_hex: str, *, allow_dd: bool) -> bytes:
 def _build_web_proxy(*, hostname: str, secret_hex: str) -> WebProxy:
     return WebProxy(
         hostname=canonicalize_web_hostname(hostname),
-        secret=_decode_mtproxy_secret(secret_hex, allow_dd=True),
+        secret=_decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.WEB),
     )
 
 
@@ -216,7 +229,7 @@ def _build_mtproxy(*, hostname: str, port: Union[int, str], secret_hex: str) -> 
     return MtProxy(
         hostname=hostname,
         port=int(port),
-        secret=_decode_mtproxy_secret(secret_hex, allow_dd=True),
+        secret=_decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.MTPROXY),
     )
 
 
