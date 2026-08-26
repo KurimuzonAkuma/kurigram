@@ -20,12 +20,19 @@ import asyncio
 
 import pytest
 
+from pyrogram.connection.transport.tcp import web_proxy_carrier
 from pyrogram.connection.transport.tcp.web_proxy_carrier import (
     FRAME_HEADER_SIZE,
     FRAME_MAX_PAYLOAD,
+    Frame,
     FrameParseError,
     FrameType,
+    WebCarrierError,
+    WebProxyCarrier,
     _HttpConnection,
+    _INITIAL_STREAM_WINDOW,
+    _STREAM_ID,
+    _UPLINK_FRAME_MAX,
     derive_bridge_capability,
     parse_frame_message,
     parse_frames,
@@ -238,3 +245,122 @@ async def test_read_body_rejects_a_truncated_chunked_body():
 
     with pytest.raises(ConnectionError, match="closed inside a chunked body"):
         await connection._read_body(200, {"transfer-encoding": "chunked"})
+
+
+# --- uplink flow control ----------------------------------------------
+
+
+class _UplinkRecorder:
+    """Stands in for the relay's uplink endpoint, recording every frame the
+    carrier puts on the wire instead of POSTing it."""
+
+    def __init__(self, carrier: WebProxyCarrier) -> None:
+        self.frames = []
+        carrier._send_frames = self._record
+
+    async def _record(self, frames):
+        self.frames.extend(frames)
+
+    @property
+    def payload_sizes(self):
+        return [len(one_frame) - FRAME_HEADER_SIZE for one_frame in self.frames]
+
+    @property
+    def bytes_sent(self) -> int:
+        return sum(self.payload_sizes)
+
+
+def _carrier() -> WebProxyCarrier:
+    carrier = WebProxyCarrier("relay.invalid", bytes(16))
+    carrier._session_id = "test-session"
+
+    return carrier
+
+
+def _window_grant(amount: int) -> Frame:
+    wire = serialize_frame(FrameType.WINDOW, _STREAM_ID, amount.to_bytes(4, "big"))
+    frames, _consumed = parse_frames(wire)
+
+    return frames[0]
+
+
+async def _run_until_blocked(sending) -> None:
+    # `send()` only suspends once it runs out of credit, so a single loop
+    # iteration is enough to drive it up to that point.
+    await asyncio.sleep(0)
+
+    assert not sending.done()
+
+
+async def test_send_splits_the_payload_at_the_uplink_frame_size():
+    carrier = _carrier()
+    recorder = _UplinkRecorder(carrier)
+    payload = b"\x00" * (2 * _UPLINK_FRAME_MAX + 100)
+
+    await carrier.send(payload)
+
+    assert recorder.payload_sizes == [_UPLINK_FRAME_MAX, _UPLINK_FRAME_MAX, 100]
+    assert carrier._send_window == _INITIAL_STREAM_WINDOW - len(payload)
+
+
+async def test_send_blocks_once_the_stream_window_is_exhausted():
+    carrier = _carrier()
+    recorder = _UplinkRecorder(carrier)
+    payload = b"\x00" * (_INITIAL_STREAM_WINDOW + _UPLINK_FRAME_MAX)
+
+    sending = asyncio.ensure_future(carrier.send(payload))
+    await _run_until_blocked(sending)
+
+    assert recorder.bytes_sent == _INITIAL_STREAM_WINDOW
+    assert carrier._send_window == 0
+
+    carrier._handle_frame(_window_grant(_UPLINK_FRAME_MAX))
+    await asyncio.wait_for(sending, timeout=5)
+
+    assert recorder.bytes_sent == len(payload)
+    assert carrier._send_window == 0
+
+
+async def test_send_never_puts_more_on_the_wire_than_the_credit_granted():
+    carrier = _carrier()
+    recorder = _UplinkRecorder(carrier)
+    payload = b"\x00" * (_INITIAL_STREAM_WINDOW + 3 * _UPLINK_FRAME_MAX)
+
+    sending = asyncio.ensure_future(carrier.send(payload))
+    await _run_until_blocked(sending)
+
+    carrier._handle_frame(_window_grant(_UPLINK_FRAME_MAX))
+    await _run_until_blocked(sending)
+
+    assert recorder.bytes_sent == _INITIAL_STREAM_WINDOW + _UPLINK_FRAME_MAX
+
+    carrier._handle_frame(_window_grant(2 * _UPLINK_FRAME_MAX))
+    await asyncio.wait_for(sending, timeout=5)
+
+    assert recorder.bytes_sent == len(payload)
+
+
+async def test_send_fails_the_carrier_when_credit_never_arrives(monkeypatch):
+    monkeypatch.setattr(web_proxy_carrier, "_CREDIT_WAIT_TIMEOUT", 0.05)
+    carrier = _carrier()
+    _UplinkRecorder(carrier)
+    payload = b"\x00" * (_INITIAL_STREAM_WINDOW + _UPLINK_FRAME_MAX)
+
+    with pytest.raises(WebCarrierError, match="timed out waiting for uplink WINDOW credit"):
+        await carrier.send(payload)
+
+    assert carrier._fail_exc is not None
+
+
+async def test_send_raises_when_the_carrier_fails_while_waiting_for_credit():
+    carrier = _carrier()
+    _UplinkRecorder(carrier)
+    payload = b"\x00" * (_INITIAL_STREAM_WINDOW + _UPLINK_FRAME_MAX)
+
+    sending = asyncio.ensure_future(carrier.send(payload))
+    await _run_until_blocked(sending)
+
+    await carrier._fail(WebCarrierError("relay closed the stream"))
+
+    with pytest.raises(WebCarrierError, match="relay closed the stream"):
+        await asyncio.wait_for(sending, timeout=5)
