@@ -21,13 +21,15 @@ import logging
 import os
 import socket
 from concurrent.futures import ThreadPoolExecutor
-from typing import ClassVar, Final, NamedTuple, Optional, Tuple
+from typing import ClassVar, Dict, Final, NamedTuple, Optional, Tuple
 
 import asyncio
+from python_socks import ProxyType
 from python_socks.async_.asyncio import Proxy as SocksProxy
 
 from pyrogram import utils
 from pyrogram.crypto import aes
+from pyrogram.enums import ProxyScheme
 
 from ...proxy import HttpProxy, MtProxy, Proxy, Socks4Proxy, Socks5Proxy, WebProxy
 from .web_proxy_carrier import WebCarrierError, WebProxyCarrier
@@ -61,6 +63,13 @@ _DD_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
 _OBFUSCATE_TAG_SIZE: Final[int] = 4
 
 CipherArgs = Tuple[bytes, bytearray, bytearray]  # (key, iv, state) for aes.ctr256_{en,de}crypt
+
+# The schemes `python_socks` dials for us, and its name for each.
+_PYTHON_SOCKS_TYPES: Final[Dict[ProxyScheme, ProxyType]] = {
+    ProxyScheme.SOCKS4: ProxyType.SOCKS4,
+    ProxyScheme.SOCKS5: ProxyType.SOCKS5,
+    ProxyScheme.HTTP: ProxyType.HTTP,
+}
 
 
 def generate_obfuscated2_nonce(reserved_prefixes: Tuple[bytes, ...] = _OBFUSCATED2_RESERVED_PREFIXES) -> bytearray:
@@ -232,14 +241,17 @@ class TCP:
             msg = f"{type(proxy).__name__} cannot be dialed as a SOCKS/HTTP proxy"
             raise ValueError(msg)
 
-        scheme = proxy.scheme.value
-
-        if proxy.username and proxy.password:
-            url = f"{scheme}://{proxy.username}:{proxy.password}@{proxy.hostname}:{proxy.port}"
-        else:
-            url = f"{scheme}://{proxy.hostname}:{proxy.port}"
-
-        return SocksProxy.from_url(url)
+        # Passing the fields rather than a URL: `parse_proxy_url` drops a
+        #  username that comes without a password, and `unquote()`s both, so a
+        #  credential holding `@`, `:` or `%` does not survive the round trip.
+        #  https://github.com/romis2012/python-socks/blob/8794dfc734cc6fb98c61099905a9f8de186719b9/python_socks/_helpers.py#L76-L79
+        return SocksProxy(
+            proxy_type=_PYTHON_SOCKS_TYPES[proxy.scheme],
+            host=proxy.hostname,
+            port=proxy.port,
+            username=proxy.username,
+            password=proxy.password,
+        )
 
     @staticmethod
     def _enable_keepalive(sock: socket.socket) -> None:

@@ -18,7 +18,9 @@
 
 import pytest
 
-from pyrogram.connection.proxy import MtProxy, Socks5Proxy, WebProxy
+from python_socks import ProxyType
+
+from pyrogram.connection.proxy import HttpProxy, MtProxy, Socks5Proxy, WebProxy
 from pyrogram.connection.transport.tcp import TCPAbridged
 from pyrogram.connection.transport.tcp.tcp import TCP
 
@@ -79,3 +81,48 @@ async def test_connect_rejects_mtproxy_as_not_implemented() -> None:
 
     with pytest.raises(NotImplementedError):
         await transport._connect(("unused", 0))
+
+
+async def test_build_proxy_keeps_a_credential_a_url_would_mangle() -> None:
+    # `SocksProxy.from_url` parses the credentials back out with `unquote()`,
+    #  so a password holding `@`, `:` or `%` came out different from the one
+    #  the caller passed, and the proxy rejected the login.
+    socks_proxy = Socks5Proxy(
+        hostname="1.2.3.4",
+        port=1080,
+        username="user@example.com",
+        password="p:a%40ss",
+    )
+    transport = TCPAbridged(proxy=socks_proxy, dc_id=2)
+
+    dialed = await transport._build_proxy()
+
+    assert dialed._username == socks_proxy.username
+    assert dialed._password == socks_proxy.password
+
+
+async def test_build_proxy_keeps_a_username_that_comes_without_a_password() -> None:
+    # `parse_proxy_url` resets both credentials to `''` when either is missing,
+    #  so a username-only proxy was dialed anonymously.
+    socks_proxy = Socks5Proxy(hostname="1.2.3.4", port=1080, username="user")
+    transport = TCPAbridged(proxy=socks_proxy, dc_id=2)
+
+    dialed = await transport._build_proxy()
+
+    assert dialed._username == "user"
+
+
+async def test_build_proxy_maps_each_scheme_to_its_dial_type() -> None:
+    http_proxy = HttpProxy(hostname="1.2.3.4", port=8080)
+    transport = TCPAbridged(proxy=http_proxy, dc_id=2)
+
+    dialed = await transport._build_proxy()
+
+    assert dialed._proxy_type is ProxyType.HTTP
+
+
+async def test_build_proxy_rejects_a_scheme_it_cannot_dial() -> None:
+    transport = TCPAbridged(proxy=_web_proxy(), dc_id=2)
+
+    with pytest.raises(ValueError, match="WebProxy"):
+        await transport._build_proxy()
