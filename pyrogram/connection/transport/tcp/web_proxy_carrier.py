@@ -26,7 +26,7 @@ import ssl
 from dataclasses import dataclass
 from enum import IntEnum
 from http import HTTPStatus
-from typing import Coroutine, Dict, Final, FrozenSet, List, Optional
+from typing import Coroutine, Dict, Final, FrozenSet, List, Optional, Set
 
 log = logging.getLogger(__name__)
 
@@ -160,7 +160,8 @@ def derive_bridge_capability(hostname: str, *, secret: bytes) -> str:
     # HMAC-SHA256(secret, "tdesktop-web-proxy-bridge-v1\n" + hostname), base64url, no padding.
     #  secret keeps its leading 0xDD marker byte when present - unlike the
     #  obfuscated2 key derivation, which strips it. hostname must already be
-    #  the canonical lowercase ASCII/IDNA form (TCP._canonicalize_web_hostname).
+    #  the canonical lowercase ASCII/IDNA form
+    #  (`pyrogram.connection.proxy.canonicalize_web_hostname`).
     context = _BRIDGE_CONTEXT_PREFIX + hostname.encode("utf-8")
     digest = hmac.new(secret, context, hashlib.sha256).digest()
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
@@ -511,7 +512,7 @@ class WebProxyCarrier:
         self._closed = False
         self._fail_exc: Optional[Exception] = None
         self._poll_task: Optional["asyncio.Task"] = None
-        self._background_tasks: "set" = set()
+        self._background_tasks: Set["asyncio.Task"] = set()
 
     async def start(self) -> None:
         # The relay authenticates the session by the bridge capability alone:
