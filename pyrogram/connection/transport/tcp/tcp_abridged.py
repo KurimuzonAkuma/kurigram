@@ -46,8 +46,8 @@ class TCPAbridged(TCP):
         await super().connect(address)
         if not self.is_web_proxy:
             # Over a WEB proxy the obfuscated2 header TCP._connect_via_web_proxy
-            # already sent embeds this same tag - sending it again here would
-            # corrupt the stream with an extra, unobfuscated byte.
+            #  already sent embeds this same tag - sending it again here would
+            #  corrupt the stream with an extra, unobfuscated byte.
             await super().send(b"\xef", wait_for_marker=False)
         self.marker_event.set()
 
