@@ -20,7 +20,7 @@
 import ipaddress
 import re
 from dataclasses import dataclass
-from typing import ClassVar, Dict, Final, Literal, Optional, Pattern, Tuple, Type, TypedDict, Union
+from typing import ClassVar, Dict, Final, List, Literal, Optional, Pattern, Tuple, Type, TypedDict, Union
 from urllib.parse import parse_qs, urlsplit
 
 from pyrogram.enums import ProxyScheme
@@ -233,7 +233,7 @@ def _build_dialed_proxy(
     return proxy_type(hostname=hostname, port=int(port), username=username, password=password)
 
 
-def _parse_scheme(scheme_value: object) -> ProxyScheme:
+def _parse_scheme(scheme_value: Optional[str]) -> ProxyScheme:
     if not scheme_value:
         msg = "proxy dict must contain 'scheme'"
         raise ValueError(msg)
@@ -253,7 +253,7 @@ _SOCKS_LINK_RE: Final[Pattern[str]] = re.compile(
 )
 
 
-def _query_param(params: Dict[str, list], name: str) -> Optional[str]:
+def _query_param(params: Dict[str, List[str]], name: str) -> Optional[str]:
     values = params.get(name)
 
     return values[0] if values else None
@@ -314,11 +314,13 @@ def _parse_proxy_link(link: str) -> Proxy:
     )
 
 
-def _parse_proxy_dict(proxy: dict) -> Proxy:
+def _parse_proxy_dict(proxy: ProxyDict) -> Proxy:
     scheme = _parse_scheme(proxy.get("scheme"))
     hostname = proxy.get("hostname")
     port = proxy.get("port")
     secret_hex = proxy.get("secret")
+    username = proxy.get("username")
+    password = proxy.get("password")
 
     if scheme is ProxyScheme.WEB:
         if not hostname or not secret_hex:
@@ -342,12 +344,12 @@ def _parse_proxy_dict(proxy: dict) -> Proxy:
         scheme=scheme,
         hostname=hostname,
         port=port,
-        username=proxy.get("username"),
-        password=proxy.get("password"),
+        username=username,
+        password=password,
     )
 
 
-def normalize_proxy(proxy: Union[str, dict, Proxy, None]) -> Optional[Proxy]:
+def normalize_proxy(proxy: Union[str, ProxyDict, Proxy, None]) -> Optional[Proxy]:
     if proxy is None:
         return None
 
@@ -360,5 +362,5 @@ def normalize_proxy(proxy: Union[str, dict, Proxy, None]) -> Optional[Proxy]:
     if isinstance(proxy, dict):
         return _parse_proxy_dict(proxy)
 
-    msg = f"proxy must be a str, dict, or Proxy, got {type(proxy).__name__}"
+    msg = f"proxy must be a `str`, `dict`, or `Proxy`, got: `{proxy!r}`"
     raise TypeError(msg)
