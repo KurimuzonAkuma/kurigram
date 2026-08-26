@@ -172,7 +172,6 @@ class TCP:
             self.loop = utils.get_event_loop()
 
         self._web_carrier: Optional[WebProxyCarrier] = None
-        self._web_recv_buffer = bytearray()
         self._encrypt: Optional[CipherArgs] = None
         self._decrypt: Optional[CipherArgs] = None
 
@@ -402,7 +401,7 @@ class TCP:
 
     async def recv(self, length: int = 0) -> Optional[bytes]:
         if self._web_carrier is not None:
-            data = await self._recv_from_web_proxy(length)
+            data = await self._web_carrier.recv(length)
         else:
             data = await self._recv_from_socket(length)
 
@@ -412,21 +411,6 @@ class TCP:
             )
 
         return data
-
-    async def _recv_from_web_proxy(self, length: int) -> Optional[bytes]:
-        # Buffers arbitrary-sized carrier chunks into the exact count the caller wants.
-        while len(self._web_recv_buffer) < length:
-            chunk = await self._web_carrier.recv()
-            if chunk is None:
-                return None
-            self._web_recv_buffer.extend(chunk)
-
-        result = bytes(self._web_recv_buffer[:length])
-        del self._web_recv_buffer[:length]
-        # Grant downlink credit back only now, once bytes actually leave the
-        #  carrier for the framing/MTProto layer above (§7).
-        await self._web_carrier.grant_credit(length)
-        return result
 
     async def _recv_from_socket(self, length: int) -> Optional[bytes]:
         if not self.reader:

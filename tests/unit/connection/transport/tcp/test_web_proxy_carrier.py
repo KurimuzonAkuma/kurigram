@@ -31,10 +31,12 @@ from pyrogram.connection.transport.tcp.web_proxy_carrier import (
     FrameType,
     WebCarrierError,
     WebProxyCarrier,
+    _DOWNLINK_GRANT_THRESHOLD,
     _HttpConnection,
     _INITIAL_STREAM_WINDOW,
     _STREAM_ID,
     _UPLINK_FRAME_MAX,
+    _WINDOW_PAYLOAD_SIZE,
     derive_bridge_capability,
     parse_frame_message,
     parse_frames,
@@ -360,3 +362,47 @@ async def test_send_raises_when_the_carrier_fails_while_waiting_for_credit() -> 
 
     with pytest.raises(WebCarrierError, match="relay closed the stream"):
         await asyncio.wait_for(sending, timeout=5)
+
+
+async def test_recv_joins_relay_frames_into_the_requested_length() -> None:
+    carrier = _carrier()
+    _UplinkRecorder(carrier)
+
+    for chunk in (b"abc", b"defg", b"hi"):
+        carrier._recv_queue.put_nowait(chunk)
+
+    assert await carrier.recv(5) == b"abcde"
+    assert await carrier.recv(4) == b"fghi"
+
+
+async def test_recv_returns_none_when_the_stream_ends_mid_read() -> None:
+    carrier = _carrier()
+    _UplinkRecorder(carrier)
+
+    carrier._recv_queue.put_nowait(b"abc")
+    carrier._recv_queue.put_nowait(None)
+
+    assert await carrier.recv(8) is None
+
+
+async def test_recv_grants_downlink_credit_once_the_threshold_is_reached() -> None:
+    carrier = _carrier()
+    recorder = _UplinkRecorder(carrier)
+    carrier._recv_queue.put_nowait(b"\x00" * _DOWNLINK_GRANT_THRESHOLD)
+
+    await carrier.recv(_DOWNLINK_GRANT_THRESHOLD)
+
+    assert recorder.payload_sizes == [_WINDOW_PAYLOAD_SIZE]
+    assert carrier._pending_grant == 0
+    assert carrier._recv_window_remaining == _INITIAL_STREAM_WINDOW + _DOWNLINK_GRANT_THRESHOLD
+
+
+async def test_recv_holds_a_grant_below_the_threshold() -> None:
+    carrier = _carrier()
+    recorder = _UplinkRecorder(carrier)
+    carrier._recv_queue.put_nowait(b"\x00" * 16)
+
+    await carrier.recv(16)
+
+    assert recorder.frames == []
+    assert carrier._pending_grant == 16

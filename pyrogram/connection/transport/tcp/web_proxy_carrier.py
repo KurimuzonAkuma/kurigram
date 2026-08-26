@@ -504,6 +504,7 @@ class WebProxyCarrier:
         self._send_window_event.set()
 
         self._recv_window_remaining = _INITIAL_STREAM_WINDOW
+        self._recv_buffer = bytearray()
         self._pending_grant = 0
         self._grant_flush_task: Optional["asyncio.Task"] = None
 
@@ -597,13 +598,28 @@ class WebProxyCarrier:
         if pending:
             await self._send_frames(pending)
 
-    async def recv(self) -> Optional[bytes]:
-        return await self._recv_queue.get()
+    async def recv(self, length: int) -> Optional[bytes]:
+        # The relay hands over frames of its own choosing, so the buffer is what
+        #  turns them into the exact count the caller asked for.
+        while len(self._recv_buffer) < length:
+            chunk = await self._recv_queue.get()
 
-    async def grant_credit(self, amount: int) -> None:
-        # Called by `TCP._recv_from_web_proxy` once bytes are actually handed to
-        #  the caller - the same "drain into the MTProto engine" point §7 ties
-        #  downlink credit to, not merely arriving off the wire.
+            if chunk is None:
+                return None
+
+            self._recv_buffer.extend(chunk)
+
+        data = bytes(self._recv_buffer[:length])
+        del self._recv_buffer[:length]
+
+        await self._grant_credit(length)
+
+        return data
+
+    async def _grant_credit(self, amount: int) -> None:
+        # Granted where the bytes leave for the MTProto engine above, which is
+        #  the drain point §7 ties downlink credit to - not where they arrive
+        #  off the wire.
         if amount <= 0 or self._fail_exc is not None:
             return
 
