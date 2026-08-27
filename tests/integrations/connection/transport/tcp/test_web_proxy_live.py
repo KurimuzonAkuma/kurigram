@@ -38,9 +38,9 @@ three ways:
    which is the only one of the three that exercises a fully encrypted MTProto
    session with its own salt, acknowledgements and update loop on top.
 
-Both run through TCPAbridged (plain secrets) or TCPIntermediatePadded
-(dd-prefixed secrets) unmodified - proxy={"scheme": "web", ...} is all that
-changes; see tcp.py's TCP._connect_via_web_proxy.
+All three run the stock transports unmodified - proxy={"scheme": "web", ...} is
+all that changes, and the secret picks the framing; see tcp.py's
+TCP._connect_via_web_proxy.
 
 Skipped unless the environment carries a relay to run against, which nobody
 but its operator has. Fill in .env.test from .env.test.example, then::

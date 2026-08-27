@@ -129,10 +129,9 @@ class Client(Methods):
             secret is read as hex, base64url or base64. The mtproxy scheme also takes an ee-prefixed
             secret, which appends the domain the connection then imitates a TLS session with;
             the web scheme cannot, because the relay speaks obfuscated2 to its own MTProxy and
-            never adds the TLS record layer. Any secret longer than 16 bytes - dd-prefixed or
-            ee-prefixed - means random padding, so pass
-            ``protocol_factory=TCPIntermediatePadded`` for those and leave the default
-            ``TCPAbridged`` in place for a plain 16-byte one.
+            never adds the TLS record layer. A secret longer than 16 bytes - dd-prefixed or
+            ee-prefixed - asks for random padding, and the transport that sends it is picked
+            from the secret, so *proxy* is the only argument either scheme needs.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.

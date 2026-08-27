@@ -73,6 +73,11 @@ class HTTPProxy:
     password: Optional[str] = None
 
 
+# The obfuscated2 key is 16 bytes, and a dd or ee marker prefixes it with one more.
+_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
+_MARKED_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
+
+
 @dataclass(frozen=True)
 class MTProxy:
     # Classic MTProxy: obfuscated2 straight to (hostname, port), no relay.
@@ -118,6 +123,25 @@ def client_proxy_address(proxy: Optional[Proxy]) -> Optional[ProxyAddress]:
         return ProxyAddress(hostname=proxy.hostname, port=proxy.port)
 
     return None
+
+
+def uses_random_padding(proxy: Optional[Proxy]) -> bool:
+    """Whether a proxy's secret asks for random padding on every packet.
+
+    TDLib reads the same answer off the encoded secret's length, before the
+    marker byte comes off: 17 bytes or more means padding.
+    https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.h#L44-L46
+    """
+    if not isinstance(proxy, (MTProxy, WebProxy)):
+        return False
+
+    # An ee secret is longer still, and `sni_hostname` is what survives its
+    #  marker and domain coming off - the remaining key is a bare 16 bytes.
+    if isinstance(proxy, MTProxy) and proxy.sni_hostname is not None:
+        return True
+
+    return len(proxy.secret) == _MARKED_SECRET_SIZE
+
 
 _PROXY_TYPES: Final[Tuple[type, ...]] = (SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy)
 
@@ -220,9 +244,6 @@ def canonicalize_web_hostname(hostname: str) -> str:
 #  https://core.telegram.org/mtproto/mtproto-transports#transport-obfuscation
 _PADDED_MARKER: Final[int] = 0xDD
 _FAKE_TLS_MARKER: Final[int] = 0xEE
-
-_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
-_MARKED_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
 
 # An ee secret is shared base64url-encoded, the others as hex - but every client
 #  accepts any of the three, so the alphabet does not identify the flavour.
