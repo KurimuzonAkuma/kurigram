@@ -20,6 +20,7 @@ import hashlib
 import logging
 import os
 import socket
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import ClassVar, Dict, Final, NamedTuple, Optional, Tuple
 
@@ -29,8 +30,13 @@ from python_socks.async_.asyncio import Proxy as SocksProxy
 
 from pyrogram import utils
 from pyrogram.connection.proxy import HTTPProxy, MTProxy, Proxy, SOCKS4Proxy, SOCKS5Proxy, WebProxy
+from pyrogram.connection.transport.tcp.faketls_records import (
+    GREETING_RESPONSE_PREFIXES,
+    RECORD_LENGTH_SIZE,
+    FakeTlsRecords,
+)
 from pyrogram.connection.transport.tcp.web_proxy_carrier import WebCarrierError, WebProxyCarrier
-from pyrogram.crypto import aes
+from pyrogram.crypto import aes, faketls
 from pyrogram.enums import ProxyScheme
 
 log = logging.getLogger(__name__)
@@ -171,6 +177,7 @@ class TCP:
             self.loop = utils.get_event_loop()
 
         self._web_carrier: Optional[WebProxyCarrier] = None
+        self._records: Optional[FakeTlsRecords] = None
         self._encrypt: Optional[CipherArgs] = None
         self._decrypt: Optional[CipherArgs] = None
 
@@ -336,24 +343,67 @@ class TCP:
 
         bare_secret = self._obfuscated2_secret(mtproxy.secret)
 
-        if mtproxy.sni_hostname is not None:
-            msg = "fake-TLS ('ee') MTProxy secrets are not wired up yet."
-            raise NotImplementedError(msg)
-
         # The proxy sits at its own address, unrelated to the DC address self.ipv6
         #  was derived from, so let getaddrinfo pick the family it actually has.
         await self._connect_via_direct((mtproxy.hostname, mtproxy.port), family=socket.AF_UNSPEC)
 
         built = build_obfuscated2_header(bare_secret, dc_id=self.dc_id, obfuscate_tag=self.OBFUSCATE_TAG)
 
-        # Written straight to the socket: self.send() is the framing subclass's
-        #  override, and TCP.send() would encrypt the header under the very keys
-        #  the header is delivering.
-        self.writer.write(built.header)
-        await self.writer.drain()
+        if mtproxy.sni_hostname is None:
+            # Written straight to the socket: self.send() is the framing subclass's
+            #  override, and TCP.send() would encrypt the header under the very keys
+            #  the header is delivering.
+            self.writer.write(built.header)
+            await self.writer.drain()
+        else:
+            await self._greet_fake_tls_proxy(domain=mtproxy.sni_hostname, secret=bare_secret)
+            self._records = FakeTlsRecords(self._recv_from_socket, prologue=built.header)
 
         self._encrypt = built.encrypt
         self._decrypt = built.decrypt
+
+    async def _greet_fake_tls_proxy(self, *, domain: str, secret: bytes) -> None:
+        # The local clock, where TDLib uses one corrected against the server: the
+        #  correction lives in Session, which does not exist yet at connect time.
+        #  A proxy accepts a skew of hours, so this only matters on a broken clock.
+        hello = faketls.build_client_hello(domain=domain, secret=secret, unix_time=int(time.time()))
+
+        log.info("Greeting the fake-TLS MTProxy as %s", domain)
+
+        self.writer.write(hello.record)
+        await self.writer.drain()
+
+        response = await self._read_greeting_response()
+
+        # Without this a censor could answer with any plausible ServerHello and
+        #  watch what the client does next.
+        if not faketls.server_hello_is_authentic(response, secret=secret, client_random=hello.random):
+            msg = f"fake-TLS: {domain} answered the greeting without knowing the proxy secret"
+            raise OSError(msg)
+
+        log.info("Fake-TLS greeting answered")
+
+    async def _read_greeting_response(self) -> bytes:
+        response = bytearray()
+
+        for prefix in GREETING_RESPONSE_PREFIXES:
+            head = await self._recv_from_socket(len(prefix) + RECORD_LENGTH_SIZE)
+
+            if head is None or head[: len(prefix)] != prefix:
+                msg = "fake-TLS: the greeting was not answered with a ServerHello"
+                raise OSError(msg)
+
+            body = await self._recv_from_socket(int.from_bytes(head[-RECORD_LENGTH_SIZE:], "big"))
+
+            if body is None:
+                msg = "fake-TLS: the connection closed inside the ServerHello"
+                raise OSError(msg)
+
+            response += head + body
+
+        # Hashed exactly as it arrived, both segments together, the way TDLib
+        #  hashes the span it consumed.
+        return bytes(response)
 
     async def _connect(self, destination: Tuple[str, int]) -> None:
         if self.is_web_proxy:
@@ -428,6 +478,9 @@ class TCP:
                 if self._web_carrier is not None:
                     await self._web_carrier.send(data)
                 else:
+                    if self._records is not None:
+                        data = self._records.wrap(data)
+
                     self.writer.write(data)
                     await self.writer.drain()
                 log.debug("Send complete")
@@ -438,6 +491,8 @@ class TCP:
     async def recv(self, length: int = 0) -> Optional[bytes]:
         if self._web_carrier is not None:
             data = await self._web_carrier.recv(length)
+        elif self._records is not None:
+            data = await self._records.recv(length)
         else:
             data = await self._recv_from_socket(length)
 

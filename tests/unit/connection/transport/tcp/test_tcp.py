@@ -18,6 +18,8 @@
 
 import asyncio
 import hashlib
+import hmac
+import time
 from typing import Final, NamedTuple, Tuple, Type
 
 import pytest
@@ -26,6 +28,12 @@ from python_socks import ProxyType
 
 from pyrogram.connection.proxy import HTTPProxy, MTProxy, SOCKS5Proxy, WebProxy
 from pyrogram.connection.transport.tcp import TCPAbridged, TCPIntermediatePadded
+from pyrogram.connection.transport.tcp.faketls_records import (
+    APPLICATION_DATA_PREFIX,
+    CHANGE_CIPHER_SPEC,
+    RECORD_HEADER_SIZE,
+    RECORD_LENGTH_SIZE,
+)
 from pyrogram.connection.transport.tcp.tcp import (
     ABRIDGED_OBFUSCATE_TAG,
     INTERMEDIATE_PADDED_OBFUSCATE_TAG,
@@ -45,9 +53,26 @@ _UNREACHABLE_DC_ADDRESS: Final[Tuple[str, int]] = ("198.51.100.1", 443)
 
 _DC_ID: Final[int] = 2
 
+_SNI_DOMAIN: Final[str] = "www.example.com"
+
+# The ClientHello record header, and the offset of the random field both sides
+#  authenticate - 5 bytes of record header, 4 of handshake header, 2 of version.
+_CLIENT_HELLO_PREFIX: Final[bytes] = b"\x16\x03\x01"
+_RANDOM_OFFSET: Final[int] = 11
+_RANDOM_SIZE: Final[int] = 32
+
+# The last four bytes of the greeting's random carry the clock. How far the value
+#  read back may sit from this machine's own clock before the test calls it wrong.
+_TIMESTAMP_SIZE: Final[int] = 4
+_CLOCK_SKEW_ALLOWANCE: Final[int] = 60
+
 
 def _web_proxy(secret_hex: str = PLAIN_SECRET_HEX) -> WebProxy:
     return WebProxy(hostname="relay.example.com", secret=bytes.fromhex(secret_hex))
+
+
+# Every `serve` below is an `asyncio.start_server` handler, which the stdlib calls
+#  with two positional arguments - so those signatures are its shape, not ours.
 
 
 class _ProxyStub(NamedTuple):
@@ -60,8 +85,6 @@ async def _start_proxy_stub(*, read_bytes: int) -> _ProxyStub:
     """A local server standing in for an MTProxy: reads `read_bytes` and stops."""
     received: "asyncio.Future[bytes]" = asyncio.get_running_loop().create_future()
 
-    # `asyncio.start_server` calls its handler with two positional arguments, so
-    #  this signature is the stdlib's rather than ours.
     async def serve(reader: asyncio.StreamReader, _writer: asyncio.StreamWriter) -> None:
         received.set_result(await reader.readexactly(read_bytes))
 
@@ -123,17 +146,229 @@ async def test_connect_via_mtproxy_rejects_a_dd_secret_on_the_wrong_class() -> N
         await transport._connect_via_mtproxy()
 
 
-async def test_connect_via_mtproxy_rejects_a_fake_tls_secret_for_now() -> None:
-    mtproxy = MTProxy(
-        hostname="1.2.3.4",
-        port=443,
-        secret=bytes.fromhex(PLAIN_SECRET_HEX),
-        sni_hostname="www.example.com",
-    )
-    transport = TCPAbridged(proxy=mtproxy, dc_id=_DC_ID)
+class _FakeTlsStub(NamedTuple):
+    server: asyncio.AbstractServer
+    port: int
+    hello: "asyncio.Future[bytes]"
+    received: "asyncio.Future[bytes]"
 
-    with pytest.raises(NotImplementedError):
-        await transport._connect_via_mtproxy()
+
+def _server_hello(client_random: bytes, *, secret: bytes) -> bytes:
+    """The two segments a real proxy answers a greeting with, signed with `secret`."""
+    # A ServerHello of the shape TDLib expects, then a change-cipher-spec glued
+    #  to an empty application record.
+    body = b"\x02\x00\x00\x4c\x03\x03" + bytes(_RANDOM_SIZE) + bytes(42)
+    response = (
+        b"\x16\x03\x03"
+        + len(body).to_bytes(RECORD_LENGTH_SIZE, "big")
+        + body
+        + CHANGE_CIPHER_SPEC
+        + APPLICATION_DATA_PREFIX
+        + bytes(RECORD_LENGTH_SIZE)
+    )
+    digest = hmac.new(secret, client_random + response, hashlib.sha256).digest()
+
+    return response[:_RANDOM_OFFSET] + digest + response[_RANDOM_OFFSET + _RANDOM_SIZE :]
+
+
+def _client_decrypt_args(header: bytes, *, secret: bytes) -> Tuple[bytes, bytearray, bytearray]:
+    # The proxy sends under the client's receive keys, which `build_obfuscated2_header`
+    #  derives from the same nonce read backwards.
+    tail = bytes(bytearray(header)[55:7:-1])
+
+    return hashlib.sha256(tail[:32] + secret).digest(), bytearray(tail[32:48]), bytearray(1)
+
+
+def _as_records(payload: bytes, *, record_size: int) -> bytes:
+    wire = bytearray()
+
+    for start in range(0, len(payload), record_size):
+        piece = payload[start : start + record_size]
+        wire += APPLICATION_DATA_PREFIX + len(piece).to_bytes(RECORD_LENGTH_SIZE, "big") + piece
+
+    return bytes(wire)
+
+
+async def _start_fake_tls_stub(
+    *,
+    secret: bytes,
+    read_bytes: int = 0,
+    reply: bytes = b"",
+    reply_record_size: int = 1,
+) -> _FakeTlsStub:
+    """A local server standing in for a fake-TLS MTProxy that knows `secret`."""
+    loop = asyncio.get_running_loop()
+    hello: "asyncio.Future[bytes]" = loop.create_future()
+    received: "asyncio.Future[bytes]" = loop.create_future()
+
+    async def serve(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        head = await reader.readexactly(RECORD_HEADER_SIZE)
+        greeting = head + await reader.readexactly(int.from_bytes(head[3:5], "big"))
+        hello.set_result(greeting)
+
+        writer.write(_server_hello(greeting[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE], secret=secret))
+        await writer.drain()
+
+        stream = await reader.readexactly(read_bytes)
+        received.set_result(stream)
+
+        if not reply:
+            return
+
+        header = stream[len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE :][:_OBFUSCATED2_HEADER_SIZE]
+        encrypted = aes.ctr256_encrypt(reply, *_client_decrypt_args(header, secret=secret))
+
+        writer.write(_as_records(encrypted, record_size=reply_record_size))
+        await writer.drain()
+
+    server = await asyncio.start_server(serve, host="127.0.0.1", port=0)
+
+    return _FakeTlsStub(
+        server=server,
+        port=server.sockets[0].getsockname()[1],
+        hello=hello,
+        received=received,
+    )
+
+
+def _fake_tls_mtproxy(port: int, *, secret: bytes) -> MTProxy:
+    return MTProxy(hostname="127.0.0.1", port=port, secret=secret, sni_hostname=_SNI_DOMAIN)
+
+
+async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_hello() -> None:
+    secret = bytes.fromhex(PLAIN_SECRET_HEX)
+    stub = await _start_fake_tls_stub(secret=secret)
+    transport = TCPAbridged(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
+
+    try:
+        await transport.connect(_UNREACHABLE_DC_ADDRESS)
+        greeting = await asyncio.wait_for(stub.hello, timeout=TCP.TIMEOUT)
+    finally:
+        await transport.close()
+        stub.server.close()
+        await stub.server.wait_closed()
+
+    assert greeting[:3] == _CLIENT_HELLO_PREFIX
+    assert _SNI_DOMAIN.encode("ascii") in greeting
+
+    # The proxy authenticates the greeting exactly this way before answering it.
+    zeroed = (
+        greeting[:_RANDOM_OFFSET] + bytes(_RANDOM_SIZE) + greeting[_RANDOM_OFFSET + _RANDOM_SIZE :]
+    )
+    digest = bytearray(hmac.new(secret, zeroed, hashlib.sha256).digest())
+    stamped = greeting[_RANDOM_OFFSET + _RANDOM_SIZE - _TIMESTAMP_SIZE : _RANDOM_OFFSET + _RANDOM_SIZE]
+    stamp = int.from_bytes(bytes(digest[-_TIMESTAMP_SIZE:]), "little") ^ int.from_bytes(stamped, "little")
+
+    assert greeting[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE - _TIMESTAMP_SIZE] == bytes(
+        digest[:-_TIMESTAMP_SIZE]
+    )
+    assert abs(stamp - int(time.time())) < _CLOCK_SKEW_ALLOWANCE
+
+
+async def test_connect_via_mtproxy_wraps_the_handshake_in_application_records() -> None:
+    payload: Final[bytes] = b"\x01\x02\x03\x04"
+
+    # The change-cipher-spec, then one record holding the obfuscated2 header, the
+    #  abridged length byte and the payload - the header rides with the first
+    #  packet rather than in a record of its own.
+    framed_size: Final[int] = _OBFUSCATED2_HEADER_SIZE + 1 + len(payload)
+    secret = bytes.fromhex(PLAIN_SECRET_HEX)
+
+    stub = await _start_fake_tls_stub(
+        secret=secret,
+        read_bytes=len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE + framed_size,
+    )
+    transport = TCPAbridged(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
+
+    try:
+        await transport.connect(_UNREACHABLE_DC_ADDRESS)
+        await transport.send(payload)
+        stream = await asyncio.wait_for(stub.received, timeout=TCP.TIMEOUT)
+    finally:
+        await transport.close()
+        stub.server.close()
+        await stub.server.wait_closed()
+
+    assert stream[: len(CHANGE_CIPHER_SPEC)] == CHANGE_CIPHER_SPEC
+
+    record = stream[len(CHANGE_CIPHER_SPEC) :]
+
+    assert record[: len(APPLICATION_DATA_PREFIX)] == APPLICATION_DATA_PREFIX
+    assert int.from_bytes(record[len(APPLICATION_DATA_PREFIX) : RECORD_HEADER_SIZE], "big") == framed_size
+
+    framed = record[RECORD_HEADER_SIZE:]
+    key = hashlib.sha256(framed[8:40] + secret).digest()
+    decrypted = aes.ctr256_decrypt(framed, key, bytearray(framed[40:56]), bytearray(1))
+
+    assert decrypted[56:60] == ABRIDGED_OBFUSCATE_TAG
+    assert int.from_bytes(decrypted[60:62], "little", signed=True) == _DC_ID
+    assert decrypted[_OBFUSCATED2_HEADER_SIZE:] == bytes([len(payload) // 4]) + payload
+
+
+async def test_connect_via_mtproxy_reads_a_reply_split_across_several_records() -> None:
+    # A record boundary has nothing to do with a packet boundary, so a reply the
+    #  proxy cut up must still arrive as the byte stream the transport asked for.
+    payload: Final[bytes] = b"\x01\x02\x03\x04"
+    reply: Final[bytes] = bytes(range(8))
+    secret = bytes.fromhex(PLAIN_SECRET_HEX)
+
+    stub = await _start_fake_tls_stub(
+        secret=secret,
+        read_bytes=len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE + _OBFUSCATED2_HEADER_SIZE + 1 + len(payload),
+        reply=bytes([len(reply) // 4]) + reply,
+        reply_record_size=3,
+    )
+    transport = TCPAbridged(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
+
+    try:
+        await transport.connect(_UNREACHABLE_DC_ADDRESS)
+        await transport.send(payload)
+        received = await asyncio.wait_for(transport.recv(), timeout=TCP.TIMEOUT)
+    finally:
+        await transport.close()
+        stub.server.close()
+        await stub.server.wait_closed()
+
+    assert received == reply
+
+
+async def test_connect_via_mtproxy_rejects_a_fake_tls_reply_signed_with_another_secret() -> None:
+    # Without this check a censor could answer with any plausible ServerHello and
+    #  watch what the client does next.
+    stub = await _start_fake_tls_stub(secret=bytes(16))
+    transport = TCPAbridged(
+        proxy=_fake_tls_mtproxy(stub.port, secret=bytes.fromhex(PLAIN_SECRET_HEX)),
+        dc_id=_DC_ID,
+    )
+
+    try:
+        with pytest.raises(OSError, match="without knowing the proxy secret"):
+            await transport.connect(_UNREACHABLE_DC_ADDRESS)
+    finally:
+        await transport.close()
+        stub.server.close()
+        await stub.server.wait_closed()
+
+
+async def test_connect_via_mtproxy_rejects_a_fake_tls_reply_that_is_not_a_server_hello() -> None:
+    # What a plain web server on the configured port answers with.
+    async def serve(_reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        writer.write(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+        await writer.drain()
+
+    server = await asyncio.start_server(serve, host="127.0.0.1", port=0)
+    transport = TCPAbridged(
+        proxy=_fake_tls_mtproxy(server.sockets[0].getsockname()[1], secret=bytes.fromhex(PLAIN_SECRET_HEX)),
+        dc_id=_DC_ID,
+    )
+
+    try:
+        with pytest.raises(OSError, match="not answered with a ServerHello"):
+            await transport.connect(_UNREACHABLE_DC_ADDRESS)
+    finally:
+        await transport.close()
+        server.close()
+        await server.wait_closed()
 
 
 @pytest.mark.parametrize(
