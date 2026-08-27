@@ -115,4 +115,6 @@ class FakeTlsRecords:
             msg = f"fake-TLS: expected an application-data record, got {header.hex()}"
             raise OSError(msg)
 
-        return await self._read_exactly(int.from_bytes(header[-RECORD_LENGTH_SIZE:], "big"))
+        length = int.from_bytes(header[-RECORD_LENGTH_SIZE:], "big")
+
+        return await self._read_exactly(length)
