@@ -266,23 +266,7 @@ class _DecodedSecret(NamedTuple):
 
 
 def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
-    secret = full_secret[1:_MARKED_SECRET_SIZE]
-
-    if len(secret) != _OBFUSCATED2_SECRET_SIZE:
-        msg = (
-            "ee-prefixed proxy secret must carry a 16-byte key after the marker, "
-            f"got {len(secret)}"
-        )
-        raise ValueError(msg)
-
     domain = full_secret[_MARKED_SECRET_SIZE:]
-
-    # TDLib refuses to build a ClientHello without one, so an ee secret that
-    #  carries no domain is unusable rather than merely odd.
-    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L579
-    if not domain:
-        msg = "ee-prefixed proxy secret must append the SNI domain after the 16-byte key"
-        raise ValueError(msg)
 
     try:
         sni_hostname = domain.decode("ascii")
@@ -290,7 +274,7 @@ def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
         msg = f"ee-prefixed proxy secret carries a non-ASCII SNI domain: {e}"
         raise ValueError(msg) from e
 
-    return _DecodedSecret(secret=secret, sni_hostname=sni_hostname)
+    return _DecodedSecret(secret=full_secret[1:_MARKED_SECRET_SIZE], sni_hostname=sni_hostname)
 
 
 def _base64_decoded(encoded_secret: str, *, altchars: bytes) -> Optional[bytes]:
@@ -328,19 +312,30 @@ def _decode_proxy_secret(encoded_secret: str) -> bytes:
 def _decode_mtproxy_secret(encoded_secret: str, *, scheme: ProxyScheme) -> _DecodedSecret:
     full_secret = _decode_proxy_secret(encoded_secret)
 
-    if full_secret[:1] == bytes([_FAKE_TLS_MARKER]):
+    # The length decides the flavour and is tested first, the order TDLib tests
+    #  it in: 16 bytes is a bare key whatever its first byte happens to be, so a
+    #  plain secret that starts with dd or ee is still plain.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.cpp#L37-L39
+    if len(full_secret) == _OBFUSCATED2_SECRET_SIZE:
+        return _DecodedSecret(secret=full_secret, sni_hostname=None)
+
+    if len(full_secret) == _MARKED_SECRET_SIZE and full_secret[0] == _PADDED_MARKER:
+        return _DecodedSecret(secret=full_secret, sni_hostname=None)
+
+    # Strictly longer than a dd secret, because the domain that follows the key
+    #  may not be empty: TDLib refuses to build a ClientHello without one, so an
+    #  ee secret carrying no domain is unusable rather than merely odd.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L579
+    if len(full_secret) > _MARKED_SECRET_SIZE and full_secret[0] == _FAKE_TLS_MARKER:
         if scheme is ProxyScheme.WEB:
             raise ValueError(_WEB_FAKE_TLS_REJECTION)
 
         return _decode_fake_tls_secret(full_secret)
 
-    if len(full_secret) == _MARKED_SECRET_SIZE and full_secret[0] == _PADDED_MARKER:
-        return _DecodedSecret(secret=full_secret, sni_hostname=None)
-
-    if len(full_secret) == _OBFUSCATED2_SECRET_SIZE:
-        return _DecodedSecret(secret=full_secret, sni_hostname=None)
-
-    msg = f"proxy secret must decode to 16 bytes (plain) or 17 bytes (dd-prefixed), got {len(full_secret)}"
+    msg = (
+        "proxy secret must decode to 16 bytes (plain), 17 with a dd marker, or an ee "
+        f"marker followed by a 16-byte key and a domain, got {len(full_secret)} bytes"
+    )
     raise ValueError(msg)
 
 

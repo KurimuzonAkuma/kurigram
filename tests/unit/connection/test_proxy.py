@@ -140,7 +140,13 @@ def test_normalize_proxy_web_missing_secret_raises() -> None:
 
 def test_normalize_proxy_web_ee_secret_names_the_relay() -> None:
     with pytest.raises(ValueError, match="the relay would need to add"):
-        normalize_proxy({"scheme": "web", "hostname": "relay.example.com", "secret": "ee" + PLAIN_SECRET_HEX})
+        normalize_proxy(
+            {
+                "scheme": "web",
+                "hostname": "relay.example.com",
+                "secret": "ee" + PLAIN_SECRET_HEX + _SNI_DOMAIN.encode("ascii").hex(),
+            }
+        )
 
 
 def test_normalize_proxy_mtproxy_ee_secret_splits_key_from_sni_domain() -> None:
@@ -161,15 +167,26 @@ def test_normalize_proxy_mtproxy_ee_secret_splits_key_from_sni_domain() -> None:
     )
 
 
+def test_normalize_proxy_mtproxy_sixteen_byte_secret_is_plain_whatever_its_first_byte() -> None:
+    # A marker byte only marks anything at 17 bytes and up, so roughly one plain
+    #  secret in 256 opens with a byte that would otherwise read as one.
+    secret_hex = "ee" + PLAIN_SECRET_HEX[:-2]
+
+    proxy = normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": secret_hex})
+
+    assert proxy.secret == bytes.fromhex(secret_hex)
+    assert proxy.sni_hostname is None
+
+
 @pytest.mark.parametrize(
     "secret_hex",
     [
-        pytest.param("ee" + PLAIN_SECRET_HEX, id="no-domain"),
-        pytest.param("ee" + PLAIN_SECRET_HEX[:-2], id="short-key"),
-        pytest.param("ee" + PLAIN_SECRET_HEX + "ff", id="non-ascii-domain"),
+        pytest.param("ee" + PLAIN_SECRET_HEX, id="ee-no-domain"),
+        pytest.param("ee" + PLAIN_SECRET_HEX + "ff", id="ee-non-ascii-domain"),
+        pytest.param("dd" + PLAIN_SECRET_HEX + "61", id="dd-with-a-trailing-domain"),
     ],
 )
-def test_normalize_proxy_mtproxy_malformed_ee_secret_raises(secret_hex: str) -> None:
+def test_normalize_proxy_mtproxy_malformed_secret_raises(secret_hex: str) -> None:
     with pytest.raises(ValueError):
         normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": secret_hex})
 
