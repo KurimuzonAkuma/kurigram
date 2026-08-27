@@ -227,6 +227,10 @@ def _client_hello_ops() -> Tuple[_Op, ...]:
 
 
 def _generate_grease() -> bytes:
+    """One `Grease::init` call: high nibble kept, low nibble forced to `a`.
+
+    https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L28-L38
+    """
     grease = bytearray(secrets.token_bytes(_GREASE_SIZE))
 
     for index in range(_GREASE_SIZE):

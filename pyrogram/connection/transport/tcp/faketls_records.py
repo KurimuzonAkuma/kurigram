@@ -37,6 +37,7 @@ RECORD_HEADER_SIZE: Final[int] = len(APPLICATION_DATA_PREFIX) + RECORD_LENGTH_SI
 CHANGE_CIPHER_SPEC: Final[bytes] = b"\x14\x03\x03\x00\x01\x01"
 
 # TDLib's `MAX_TLS_PACKET_LENGTH`, counting whatever is prepended to the payload.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.h#L162
 _MAX_RECORD_PAYLOAD: Final[int] = 2878
 
 # The two segments a proxy answers the greeting with, each followed by its own
