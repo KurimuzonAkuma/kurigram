@@ -48,6 +48,7 @@ _ML_KEM_768_SEED_SIZE: Final[int] = 32
 
 # The ClientHello is padded out to this offset, so its length carries no
 #  information about the domain it names.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L495-L504
 _PADDING_TARGET_OFFSET: Final[int] = 513
 
 # The encrypted-client-hello payload's length: one of four, and drawn once for
@@ -60,6 +61,8 @@ _ECH_PAYLOAD_SIZE: Final[int] = secrets.choice((144, 176, 208, 240))
 
 # The greeting's 32-byte random field, which carries the HMAC rather than random
 #  bytes: 5 bytes of record header, 4 of handshake header, 2 of client version.
+#  TDLib slices the same window out by hand, offset and size spelled as literals.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L510-L517
 _RANDOM_OFFSET: Final[int] = 11
 _RANDOM_SIZE: Final[int] = 32
 
@@ -247,11 +250,13 @@ def _generate_grease() -> bytes:
 
 def _curve25519_y_squared(x: int) -> int:
     # y^2 = x^3 + 486662*x^2 + x, evaluated the way TDLib's `get_y2` does.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L524-L534
     return ((x + _CURVE25519_A) * x + 1) * x % _CURVE25519_PRIME
 
 
 def _curve25519_double_x(x: int) -> int:
     # x_2 = (x^2 - 1)^2 / (4*y^2), the u-coordinate of twice the point at x.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L536-L556
     denominator = _curve25519_y_squared(x) * 4 % _CURVE25519_PRIME
     numerator = pow(x * x - 1, 2, _CURVE25519_PRIME)
 
@@ -259,6 +264,10 @@ def _curve25519_double_x(x: int) -> int:
 
 
 def _generate_curve25519_key() -> bytes:
+    """One `Type::Key` op: a public key drawn until it lands on the curve.
+
+    https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L420-L440
+    """
     residue_exponent = (_CURVE25519_PRIME - 1) // 2
 
     while True:
@@ -267,7 +276,9 @@ def _generate_curve25519_key() -> bytes:
         x = int.from_bytes(bytes(candidate), "big")
 
         # Only half of all x are on the curve rather than its twist, and a point
-        #  on the twist is what a fingerprinter would notice.
+        #  on the twist is what a fingerprinter would notice. TDLib tests the same
+        #  Legendre symbol in `is_quadratic_residue`.
+        #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L558-L569
         if pow(_curve25519_y_squared(x), residue_exponent, _CURVE25519_PRIME) == 1:
             break
 
@@ -278,6 +289,10 @@ def _generate_curve25519_key() -> bytes:
 
 
 def _generate_ml_kem_768_key() -> bytes:
+    """One `Type::MlKem768Key` op: 384 coefficient pairs, then a 32-byte seed.
+
+    https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L441-L451
+    """
     key = bytearray()
 
     for _ in range(_ML_KEM_768_COEFFICIENT_PAIRS):
@@ -289,6 +304,7 @@ def _generate_ml_kem_768_key() -> bytes:
         key.append((first >> 8) | ((second & 0x0F) << 4))
         key.append(second >> 4)
 
+    # The seed is a plain `Op::random(32)` TDLib appends to the same op.
     return bytes(key) + secrets.token_bytes(_ML_KEM_768_SEED_SIZE)
 
 
@@ -374,6 +390,7 @@ class _HelloWriter:
     def _write_permutation(self, parts: Tuple[Tuple[_Op, ...], ...]) -> None:
         # Each extension is rendered on its own, then the finished blocks are
         #  shuffled - so no scope ever spans two of them.
+        #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L467-L489
         rendered = [
             bytes(_HelloWriter(grease=self._grease, domain=self._domain).render(part)) for part in parts
         ]
@@ -404,6 +421,7 @@ def build_client_hello(*, domain: str, secret: bytes, unix_time: int) -> FakeTls
 
     # The digest covers the greeting with its random field still zeroed; the last
     #  four bytes then carry the clock, so a proxy can reject a replayed greeting.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L510-L517
     digest = bytearray(hmac.new(secret, bytes(hello), hashlib.sha256).digest())
     timestamp = (unix_time & 0xFFFFFFFF).to_bytes(_TIMESTAMP_SIZE, "little")
 
