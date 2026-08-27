@@ -668,6 +668,29 @@ class WebProxyCarrier:
     def _track(self, task: "asyncio.Task") -> None:
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
+        task.add_done_callback(self._log_task_exception)
+
+    def _log_task_exception(self, task: "asyncio.Task") -> None:
+        # Nothing awaits a tracked task, so asyncio would print its traceback at
+        #  collection. Retrieving it here silences that, which makes this the
+        #  only report the failure gets - so the level has to say whether
+        #  anything else will carry it.
+        if task.cancelled():
+            return
+
+        exception = task.exception()
+
+        if exception is None:
+            return
+
+        # `_fail_exc` set means the carrier recorded this and the next `send()`
+        #  or `recv()` raises it at the caller; anything the task raised past
+        #  that never reached `_fail`, so this line is all there will ever be.
+        if self._fail_exc is None:
+            log.error("WEB proxy: background task failed with nothing to report it: %s", exception)
+            return
+
+        log.debug("WEB proxy: background task failed: %s", exception)
 
     def _track_task(self, coroutine: "Coroutine[None, None, None]") -> None:
         self._track(self._loop.create_task(coroutine))

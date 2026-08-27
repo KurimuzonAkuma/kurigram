@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import logging
 from http import HTTPStatus
 from typing import List
 
@@ -406,3 +407,74 @@ async def test_recv_holds_a_grant_below_the_threshold() -> None:
 
     assert recorder.frames == []
     assert carrier._pending_grant == 16
+
+
+async def _run_failing_tracked_task(carrier: WebProxyCarrier) -> None:
+    """Track a task that raises, and let its done callbacks run.
+
+    Nothing awaits a tracked task, so an unretrieved exception reaches asyncio's
+    "Task exception was never retrieved" handler and prints a full traceback.
+    `asyncio.wait` does not retrieve it the way `gather` would, so this leaves
+    the task in exactly the state the callback has to handle.
+    """
+
+    async def _fails() -> None:
+        raise WebCarrierError("uplink rejected: HTTP 409")
+
+    carrier._track_task(_fails())
+    task = next(iter(carrier._background_tasks))
+
+    await asyncio.wait({task})
+    # The done callbacks run a loop iteration after the task itself finishes.
+    await asyncio.sleep(0)
+
+    assert carrier._background_tasks == set(), "a finished task must not stay in the tracking set"
+
+
+async def test_a_failed_background_task_the_carrier_recorded_is_reported_at_debug(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    carrier = _carrier()
+    carrier._fail_exc = WebCarrierError("uplink rejected: HTTP 409")
+
+    with caplog.at_level(logging.DEBUG, logger=web_proxy_carrier.log.name):
+        await _run_failing_tracked_task(carrier)
+
+    # The next `send()` raises `_fail_exc` at the caller, so this is the second
+    #  report of an error that already has an owner.
+    assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+        (logging.DEBUG, "WEB proxy: background task failed: uplink rejected: HTTP 409"),
+    ]
+
+
+async def test_a_failed_background_task_nothing_recorded_is_reported_at_error(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    carrier = _carrier()
+
+    with caplog.at_level(logging.DEBUG, logger=web_proxy_carrier.log.name):
+        await _run_failing_tracked_task(carrier)
+
+    # `_fail_exc` is unset, so no caller will ever be handed this failure and
+    #  swallowing it at debug would lose it outright.
+    assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+        (
+            logging.ERROR,
+            "WEB proxy: background task failed with nothing to report it: uplink rejected: HTTP 409",
+        ),
+    ]
+
+
+async def test_a_cancelled_background_task_is_not_reported(caplog: pytest.LogCaptureFixture) -> None:
+    carrier = _carrier()
+
+    async def _waits() -> None:
+        await asyncio.sleep(60)
+
+    with caplog.at_level(logging.DEBUG, logger=web_proxy_carrier.log.name):
+        carrier._track_task(_waits())
+        task = next(iter(carrier._background_tasks))
+
+        await carrier._cancel_tracked(task)
+
+    assert caplog.records == []
