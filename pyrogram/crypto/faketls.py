@@ -16,206 +16,414 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import struct
-import random
+"""The fake-TLS greeting an ee-prefixed MTProxy secret asks for.
+
+Ported from TDLib's `TlsInit.cpp`, which is normative here: the point of the
+greeting is that a censor cannot tell it from the ClientHello a current Chrome
+sends, so every byte string, extension and random length below is that file's
+and not a choice of ours. `_client_hello_ops` mirrors its non-Apple op list
+one entry at a time so the two stay comparable.
+https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L189-L235
+"""
+
+import hashlib
+import hmac
+import secrets
+from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Final, List, NamedTuple, Sequence, Tuple
+
+# GREASE values are drawn once per greeting and referenced by index, because the
+#  same value has to appear in more than one extension.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L253
+_GREASE_SIZE: Final[int] = 7
+
+_CURVE25519_PRIME: Final[int] = 2**255 - 19
+_CURVE25519_A: Final[int] = 486662
+_CURVE25519_KEY_SIZE: Final[int] = 32
+
+_ML_KEM_768_MODULUS: Final[int] = 3329
+_ML_KEM_768_COEFFICIENT_PAIRS: Final[int] = 384
+_ML_KEM_768_SEED_SIZE: Final[int] = 32
+
+# The ClientHello is padded out to this offset, so its length carries no
+#  information about the domain it names.
+_PADDING_TARGET_OFFSET: Final[int] = 513
+
+# The four lengths TDLib picks between for the encrypted-client-hello payload.
+_ECH_PAYLOAD_SIZES: Final[Tuple[int, ...]] = (144, 176, 208, 240)
+
+# The greeting's 32-byte random field, which carries the HMAC rather than random
+#  bytes: 5 bytes of record header, 4 of handshake header, 2 of client version.
+_RANDOM_OFFSET: Final[int] = 11
+_RANDOM_SIZE: Final[int] = 32
+
+_TIMESTAMP_SIZE: Final[int] = 4
+
+# A scope writes its own length into two bytes it reserves up front.
+_SCOPE_LENGTH_SIZE: Final[int] = 2
 
 
-MAX_GREASE = 8
-P25519 = 2 ** 255 - 19
+class _OpKind(Enum):
+    STRING = auto()
+    RANDOM = auto()
+    ZERO = auto()
+    DOMAIN = auto()
+    GREASE = auto()
+    BEGIN_SCOPE = auto()
+    END_SCOPE = auto()
+    KEY = auto()
+    ML_KEM_768_KEY = auto()
+    ECH_PAYLOAD = auto()
+    PERMUTATION = auto()
+    PADDING = auto()
 
 
-def _get_y2(x, mod):
-    y = (x + 486662) % mod
-    y = (y * x) % mod
-    y = (y + 1) % mod
-    y = (y * x) % mod
-    return y
+@dataclass(frozen=True)
+class _Op:
+    kind: _OpKind
+    data: bytes = b""
+    length: int = 0
+    seed: int = 0
+    parts: Tuple[Tuple["_Op", ...], ...] = ()
 
 
-def _get_double_x(x, mod):
-    denominator = (_get_y2(x, mod) * 4) % mod
-    numerator = (x * x - 1) % mod
-    numerator = (numerator * numerator) % mod
-    denominator_inv = pow(denominator, mod - 2, mod)
-    return (numerator * denominator_inv) % mod
+def _string(data: bytes) -> _Op:
+    return _Op(kind=_OpKind.STRING, data=data)
 
 
-def generate_public_key():
-    mod = P25519
-    pw = (mod - 1) // 2
+def _random(length: int) -> _Op:
+    return _Op(kind=_OpKind.RANDOM, length=length)
+
+
+def _zero(length: int) -> _Op:
+    return _Op(kind=_OpKind.ZERO, length=length)
+
+
+def _domain() -> _Op:
+    return _Op(kind=_OpKind.DOMAIN)
+
+
+def _grease(seed: int) -> _Op:
+    return _Op(kind=_OpKind.GREASE, seed=seed)
+
+
+def _begin_scope() -> _Op:
+    return _Op(kind=_OpKind.BEGIN_SCOPE)
+
+
+def _end_scope() -> _Op:
+    return _Op(kind=_OpKind.END_SCOPE)
+
+
+def _key() -> _Op:
+    return _Op(kind=_OpKind.KEY)
+
+
+def _ml_kem_768_key() -> _Op:
+    return _Op(kind=_OpKind.ML_KEM_768_KEY)
+
+
+def _ech_payload() -> _Op:
+    return _Op(kind=_OpKind.ECH_PAYLOAD)
+
+
+def _permutation(parts: Sequence[Sequence[_Op]]) -> _Op:
+    return _Op(kind=_OpKind.PERMUTATION, parts=tuple(tuple(part) for part in parts))
+
+
+def _padding() -> _Op:
+    return _Op(kind=_OpKind.PADDING)
+
+
+def _client_hello_ops() -> Tuple[_Op, ...]:
+    return (
+        _string(b"\x16\x03\x01"),
+        _begin_scope(),
+        _string(b"\x01\x00"),
+        _begin_scope(),
+        _string(b"\x03\x03"),
+        _zero(_RANDOM_SIZE),
+        _string(b"\x20"),
+        _random(32),
+        _string(b"\x00\x20"),
+        _grease(0),
+        _string(
+            b"\x13\x01\x13\x02\x13\x03\xc0\x2b\xc0\x2f\xc0\x2c\xc0\x30\xcc\xa9\xcc\xa8"
+            b"\xc0\x13\xc0\x14\x00\x9c\x00\x9d\x00\x2f\x00\x35\x01\x00"
+        ),
+        _begin_scope(),
+        _grease(2),
+        _string(b"\x00\x00"),
+        _permutation(
+            (
+                (
+                    _string(b"\x00\x00"),
+                    _begin_scope(),
+                    _begin_scope(),
+                    _string(b"\x00"),
+                    _begin_scope(),
+                    _domain(),
+                    _end_scope(),
+                    _end_scope(),
+                    _end_scope(),
+                ),
+                (_string(b"\x00\x05\x00\x05\x01\x00\x00\x00\x00"),),
+                (
+                    _string(b"\x00\x0a\x00\x0c\x00\x0a"),
+                    _grease(4),
+                    _string(b"\x11\xec\x00\x1d\x00\x17\x00\x18"),
+                ),
+                (_string(b"\x00\x0b\x00\x02\x01\x00"),),
+                (
+                    _string(
+                        b"\x00\x0d\x00\x18\x00\x16\x09\x04\x09\x05\x09\x06\x04\x03\x08\x04"
+                        b"\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01"
+                    ),
+                ),
+                (_string(b"\x00\x10\x00\x0e\x00\x0c\x02\x68\x32\x08\x68\x74\x74\x70\x2f\x31\x2e\x31"),),
+                (_string(b"\x00\x12\x00\x00"),),
+                (_string(b"\x00\x17\x00\x00"),),
+                (_string(b"\x00\x1b\x00\x03\x02\x00\x02"),),
+                (_string(b"\x00\x23\x00\x00"),),
+                (_string(b"\x00\x2b\x00\x07\x06"), _grease(6), _string(b"\x03\x04\x03\x03")),
+                (_string(b"\x00\x2d\x00\x02\x01\x01"),),
+                (
+                    _string(b"\x00\x33\x04\xef\x04\xed"),
+                    _grease(4),
+                    _string(b"\x00\x01\x00\x11\xec\x04\xc0"),
+                    _ml_kem_768_key(),
+                    _key(),
+                    _string(b"\x00\x1d\x00\x20"),
+                    _key(),
+                ),
+                (_string(b"\x44\xcd\x00\x05\x00\x03\x02\x68\x32"),),
+                (
+                    _string(b"\xfe\x0d"),
+                    _begin_scope(),
+                    _string(b"\x00\x00\x01\x00\x01"),
+                    _random(1),
+                    _string(b"\x00\x20"),
+                    _key(),
+                    _begin_scope(),
+                    _ech_payload(),
+                    _end_scope(),
+                    _end_scope(),
+                ),
+                (_string(b"\xff\x01\x00\x01\x00"),),
+            )
+        ),
+        _grease(3),
+        _string(b"\x00\x01\x00"),
+        _padding(),
+        _end_scope(),
+        _end_scope(),
+        _end_scope(),
+    )
+
+
+def _generate_grease() -> bytes:
+    grease = bytearray(secrets.token_bytes(_GREASE_SIZE))
+
+    for index in range(_GREASE_SIZE):
+        grease[index] = (grease[index] & 0xF0) + 0x0A
+
+    # Neighbouring GREASE values must differ; a repeated pair is not something
+    #  the browser being imitated ever emits.
+    for index in range(1, _GREASE_SIZE, 2):
+        if grease[index] == grease[index - 1]:
+            grease[index] ^= 0x10
+
+    return bytes(grease)
+
+
+def _curve25519_y_squared(x: int) -> int:
+    # y^2 = x^3 + 486662*x^2 + x, evaluated the way TDLib's `get_y2` does.
+    return ((x + _CURVE25519_A) * x + 1) * x % _CURVE25519_PRIME
+
+
+def _curve25519_double_x(x: int) -> int:
+    # x_2 = (x^2 - 1)^2 / (4*y^2), the u-coordinate of twice the point at x.
+    denominator = _curve25519_y_squared(x) * 4 % _CURVE25519_PRIME
+    numerator = pow(x * x - 1, 2, _CURVE25519_PRIME)
+
+    return numerator * pow(denominator, _CURVE25519_PRIME - 2, _CURVE25519_PRIME) % _CURVE25519_PRIME
+
+
+def _generate_curve25519_key() -> bytes:
+    residue_exponent = (_CURVE25519_PRIME - 1) // 2
+
     while True:
-        key = bytearray(os.urandom(32))
-        key[31] &= 127
-        x = int.from_bytes(key, "big")
-        x = (x * x) % mod
-        if pow(_get_y2(x, mod), pw, mod) == 1:
+        candidate = bytearray(secrets.token_bytes(_CURVE25519_KEY_SIZE))
+        candidate[31] &= 0x7F
+        x = int.from_bytes(bytes(candidate), "big")
+
+        # Only half of all x are on the curve rather than its twist, and a point
+        #  on the twist is what a fingerprinter would notice.
+        if pow(_curve25519_y_squared(x), residue_exponent, _CURVE25519_PRIME) == 1:
             break
+
     for _ in range(3):
-        x = _get_double_x(x, mod)
-    return x.to_bytes(32, "big")[::-1]
+        x = _curve25519_double_x(x)
+
+    return x.to_bytes(_CURVE25519_KEY_SIZE, "little")
 
 
-def generate_key_ml_kem_768():
-    Q = 3329
-    N = 384
-    key = bytearray(1184)
-    values = struct.unpack("<%dI" % (N * 2), os.urandom(N * 2 * 4))
-    for i in range(N):
-        a = values[i * 2] % Q
-        b = values[i * 2 + 1] % Q
-        key[i * 3 + 0] = a & 0xFF
-        key[i * 3 + 1] = ((a >> 8) | ((b & 0x0F) << 4)) & 0xFF
-        key[i * 3 + 2] = (b >> 4) & 0xFF
-    key[1152:1184] = os.urandom(32)
-    return bytes(key)
+def _generate_ml_kem_768_key() -> bytes:
+    key = bytearray()
+
+    for _ in range(_ML_KEM_768_COEFFICIENT_PAIRS):
+        first = secrets.randbits(32) % _ML_KEM_768_MODULUS
+        second = secrets.randbits(32) % _ML_KEM_768_MODULUS
+
+        # Two 12-bit coefficients packed little-endian into three bytes.
+        key.append(first & 0xFF)
+        key.append((first >> 8) | ((second & 0x0F) << 4))
+        key.append(second >> 4)
+
+    return bytes(key) + secrets.token_bytes(_ML_KEM_768_SEED_SIZE)
 
 
-def _gen_grease():
-    g = bytearray(os.urandom(MAX_GREASE))
-    for a in range(MAX_GREASE):
-        g[a] = (g[a] & 0xf0) + 0x0A
-    for i in range(1, MAX_GREASE, 2):
-        if i + 1 < MAX_GREASE and g[i] == g[i + 1]:
-            g[i] ^= 0x10
-    return g
+def _shuffled(parts: List[bytes]) -> List[bytes]:
+    shuffled = list(parts)
+
+    for index in range(len(shuffled) - 1):
+        target = index + secrets.randbelow(len(shuffled) - index)
+        shuffled[index], shuffled[target] = shuffled[target], shuffled[index]
+
+    return shuffled
 
 
-def _write_op(op, out, scopes, grease, domain):
-    t = op[0]
-    if t == 'str':
-        out += op[1]
-    elif t == 'rand':
-        out += os.urandom(op[1])
-    elif t == 'K':
-        out += generate_public_key()
-    elif t == 'M':
-        out += generate_key_ml_kem_768()
-    elif t == 'zero':
-        out += b"\x00" * op[1]
-    elif t == 'domain':
-        d = domain.encode("ascii", "ignore")[:253]
-        out += d
-    elif t == 'grease':
-        g = grease[op[1]]
-        out += bytes([g, g])
-    elif t == 'begin':
-        scopes.append(len(out))
-        out += b"\x00\x00"
-    elif t == 'end':
-        begin = scopes.pop()
-        size = len(out) - begin - 2
-        out[begin] = (size >> 8) & 0xFF
-        out[begin + 1] = size & 0xFF
-    elif t == 'E':
-        length = (144, 176, 208, 240)[random.randrange(4)]
-        out += os.urandom(length)
-    elif t == 'P':
-        length = len(out)
-        if length <= 513:
-            _write_op(('str', b"\x00\x15"), out, scopes, grease, domain)
-            _write_op(('begin',), out, scopes, grease, domain)
-            _write_op(('zero', 513 - length), out, scopes, grease, domain)
-            _write_op(('end',), out, scopes, grease, domain)
-    elif t == 'perm':
-        parts = list(op[1])
-        n = len(parts)
-        for i in range(n - 1):
-            j = i + random.randrange(n - i)
-            if i != j:
-                parts[i], parts[j] = parts[j], parts[i]
-        for part in parts:
-            for o in part:
-                _write_op(o, out, scopes, grease, domain)
-    else:
-        raise ValueError("unknown op %r" % (t,))
+class _HelloWriter:
+    def __init__(self, *, grease: bytes, domain: bytes) -> None:
+        self._grease = grease
+        self._domain = domain
+
+        self._out = bytearray()
+        self._scopes: List[int] = []
+
+    def render(self, ops: Sequence[_Op]) -> bytearray:
+        for op in ops:
+            self._write(op)
+
+        return self._out
+
+    def _write(self, op: _Op) -> None:
+        if op.kind is _OpKind.STRING:
+            self._out += op.data
+            return
+
+        if op.kind is _OpKind.RANDOM:
+            self._out += secrets.token_bytes(op.length)
+            return
+
+        if op.kind is _OpKind.ZERO:
+            self._out += bytes(op.length)
+            return
+
+        if op.kind is _OpKind.DOMAIN:
+            self._out += self._domain
+            return
+
+        if op.kind is _OpKind.GREASE:
+            self._out += bytes((self._grease[op.seed],)) * 2
+            return
+
+        if op.kind is _OpKind.BEGIN_SCOPE:
+            self._scopes.append(len(self._out))
+            self._out += bytes(_SCOPE_LENGTH_SIZE)
+            return
+
+        if op.kind is _OpKind.END_SCOPE:
+            self._close_scope()
+            return
+
+        if op.kind is _OpKind.KEY:
+            self._out += _generate_curve25519_key()
+            return
+
+        if op.kind is _OpKind.ML_KEM_768_KEY:
+            self._out += _generate_ml_kem_768_key()
+            return
+
+        if op.kind is _OpKind.ECH_PAYLOAD:
+            self._out += secrets.token_bytes(secrets.choice(_ECH_PAYLOAD_SIZES))
+            return
+
+        if op.kind is _OpKind.PERMUTATION:
+            self._write_permutation(op.parts)
+            return
+
+        if op.kind is _OpKind.PADDING:
+            self._write_padding()
+            return
+
+        msg = f"fake-TLS: unhandled op kind {op.kind}"
+        raise ValueError(msg)
+
+    def _close_scope(self) -> None:
+        begin = self._scopes.pop()
+        size = len(self._out) - begin - _SCOPE_LENGTH_SIZE
+
+        self._out[begin : begin + _SCOPE_LENGTH_SIZE] = size.to_bytes(_SCOPE_LENGTH_SIZE, "big")
+
+    def _write_permutation(self, parts: Tuple[Tuple[_Op, ...], ...]) -> None:
+        # Each extension is rendered on its own, then the finished blocks are
+        #  shuffled - so no scope ever spans two of them.
+        rendered = [
+            bytes(_HelloWriter(grease=self._grease, domain=self._domain).render(part)) for part in parts
+        ]
+
+        for part in _shuffled(rendered):
+            self._out += part
+
+    def _write_padding(self) -> None:
+        size = _PADDING_TARGET_OFFSET - len(self._out)
+
+        if size <= 0:
+            return
+
+        self._write(_string(b"\x00\x15"))
+        self._write(_begin_scope())
+        self._write(_zero(size))
+        self._write(_end_scope())
 
 
-def _default_ops():
-    s = lambda b: ('str', b)
-    return [
-        s(b"\x16\x03\x01"),
-        ('begin',),
-        s(b"\x01\x00"),
-        ('begin',),
-        s(b"\x03\x03"),
-        ('zero', 32),
-        s(b"\x20"),
-        ('rand', 32),
-        s(b"\x00\x20"),
-        ('grease', 0),
-        s(b"\x13\x01\x13\x02\x13\x03\xc0\x2b\xc0\x2f\xc0\x2c\xc0\x30\xcc\xa9\xcc\xa8\xc0\x13\xc0\x14\x00\x9c\x00\x9d\x00\x2f\x00\x35\x01\x00"),
-        ('begin',),
-        ('grease', 2),
-        s(b"\x00\x00"),
-        ('perm', [
-            [
-                s(b"\x00\x00"),
-                ('begin',),
-                ('begin',),
-                s(b"\x00"),
-                ('begin',),
-                ('domain',),
-                ('end',),
-                ('end',),
-                ('end',),
-            ],
-            [s(b"\x00\x05\x00\x05\x01\x00\x00\x00\x00")],
-            [
-                s(b"\x00\x0a\x00\x0c\x00\x0a"),
-                ('grease', 4),
-                s(b"\x11\xec\x00\x1d\x00\x17\x00\x18"),
-            ],
-            [s(b"\x00\x0b\x00\x02\x01\x00")],
-            [s(b"\x00\x0d\x00\x12\x00\x10\x04\x03\x08\x04\x04\x01\x05\x03\x08\x05\x05\x01\x08\x06\x06\x01")],
-            [s(b"\x00\x10\x00\x0e\x00\x0c\x02\x68\x32\x08\x68\x74\x74\x70\x2f\x31\x2e\x31")],
-            [s(b"\x00\x12\x00\x00")],
-            [s(b"\x00\x17\x00\x00")],
-            [s(b"\x00\x1b\x00\x03\x02\x00\x02")],
-            [s(b"\x00\x23\x00\x00")],
-            [
-                s(b"\x00\x2b\x00\x07\x06"),
-                ('grease', 6),
-                s(b"\x03\x04\x03\x03"),
-            ],
-            [s(b"\x00\x2d\x00\x02\x01\x01")],
-            [
-                s(b"\x00\x33\x04\xef\x04\xed"),
-                ('grease', 4),
-                s(b"\x00\x01\x00\x11\xec\x04\xc0"),
-                ('M',),
-                ('K',),
-                s(b"\x00\x1d\x00\x20"),
-                ('K',),
-            ],
-            [s(b"\x44\xcd\x00\x05\x00\x03\x02\x68\x32")],
-            [
-                s(b"\xfe\x0d"),
-                ('begin',),
-                s(b"\x00\x00\x01\x00\x01"),
-                ('rand', 1),
-                s(b"\x00\x20"),
-                ('rand', 32),
-                ('begin',),
-                ('E',),
-                ('end',),
-                ('end',),
-            ],
-            [s(b"\xff\x01\x00\x01\x00")],
-        ]),
-        ('grease', 3),
-        s(b"\x00\x01\x00"),
-        ('P',),
-        ('end',),
-        ('end',),
-        ('end',),
-    ]
+class FakeTlsHello(NamedTuple):
+    record: bytes  # the ClientHello TLS record, ready to go on the wire
+    random: bytes  # its random field, which the server's reply is checked against
 
 
-def build_fake_tls_client_hello(domain: str) -> bytearray:
-    grease = _gen_grease()
-    out = bytearray()
-    scopes = []
-    for op in _default_ops():
-        _write_op(op, out, scopes, grease, domain)
-    return out
+def build_client_hello(*, domain: str, secret: bytes, unix_time: int) -> FakeTlsHello:
+    """The greeting for `domain`, authenticated with the proxy's 16-byte secret."""
+    hello = _HelloWriter(grease=_generate_grease(), domain=domain.encode("ascii")).render(_client_hello_ops())
+
+    # The digest covers the greeting with its random field still zeroed; the last
+    #  four bytes then carry the clock, so a proxy can reject a replayed greeting.
+    digest = bytearray(hmac.new(secret, bytes(hello), hashlib.sha256).digest())
+    timestamp = (unix_time & 0xFFFFFFFF).to_bytes(_TIMESTAMP_SIZE, "little")
+
+    for index in range(_TIMESTAMP_SIZE):
+        digest[_RANDOM_SIZE - _TIMESTAMP_SIZE + index] ^= timestamp[index]
+
+    hello[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE] = digest
+
+    return FakeTlsHello(record=bytes(hello), random=bytes(digest))
+
+
+def server_hello_is_authentic(response: bytes, *, secret: bytes, client_random: bytes) -> bool:
+    """Whether `response` came from a proxy that knows the secret.
+
+    Without this a censor could answer the greeting with a plausible ServerHello
+    and watch what the client does next.
+    """
+    end = _RANDOM_OFFSET + _RANDOM_SIZE
+
+    if len(response) < end:
+        return False
+
+    server_random = response[_RANDOM_OFFSET:end]
+    zeroed = response[:_RANDOM_OFFSET] + bytes(_RANDOM_SIZE) + response[end:]
+    digest = hmac.new(secret, client_random + zeroed, hashlib.sha256).digest()
+
+    return hmac.compare_digest(digest, server_random)
