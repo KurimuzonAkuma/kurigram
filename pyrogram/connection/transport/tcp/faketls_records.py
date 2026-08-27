@@ -28,12 +28,19 @@ https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtp
 
 from typing import Final, Optional, Protocol, Tuple
 
+# The five bytes every record opens with: content type 0x17 for application data
+#  and the legacy version 0x0303, then a 2-byte big-endian length. TDLib writes
+#  them from a literal and reads them back the same way.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.cpp#L201-L204
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsReaderByteFlow.cpp#L16-L28
 APPLICATION_DATA_PREFIX: Final[bytes] = b"\x17\x03\x03"
 RECORD_LENGTH_SIZE: Final[int] = 2
 RECORD_HEADER_SIZE: Final[int] = len(APPLICATION_DATA_PREFIX) + RECORD_LENGTH_SIZE
 
 # A real client sends one of these between its handshake and its first
 #  application record, so the emulation sends one too - once, and never again.
+#  TDLib prepends the same six bytes behind an `is_first_tls_packet_` flag.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.cpp#L206-L210
 CHANGE_CIPHER_SPEC: Final[bytes] = b"\x14\x03\x03\x00\x01\x01"
 
 # TDLib's `MAX_TLS_PACKET_LENGTH`, counting whatever is prepended to the payload.
