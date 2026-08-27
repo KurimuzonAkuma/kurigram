@@ -75,6 +75,9 @@ class HTTPProxy:
 
 # The obfuscated2 key is 16 bytes, and a dd or ee marker prefixes it with one
 #  more. The transport reads both from here, so the two sizes have one home.
+#  TDLib accepts exactly these shapes: 16 bare, 17 behind `dd`, 18 or more
+#  behind `ee`.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.cpp#L37-L39
 OBFUSCATED2_SECRET_SIZE: Final[int] = 16
 MARKED_SECRET_SIZE: Final[int] = OBFUSCATED2_SECRET_SIZE + 1
 

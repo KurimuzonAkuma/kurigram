@@ -38,10 +38,18 @@ from typing import Final, List, NamedTuple, Sequence, Tuple
 #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L253-L264
 _GREASE_SIZE: Final[int] = 7
 
+# The curve TDLib draws its x25519 key share on: the field it works modulo,
+#  written out as the hex `BigNum` it builds, the `A` its `get_y2` multiplies by,
+#  and the 32 bytes a key occupies.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L420-L440
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L524-L534
 _CURVE25519_PRIME: Final[int] = 2**255 - 19
 _CURVE25519_A: Final[int] = 486662
 _CURVE25519_KEY_SIZE: Final[int] = 32
 
+# One ML-KEM-768 key share: 384 coefficient pairs drawn modulo 3329, then a
+#  32-byte seed from the `Op::random(32)` TDLib appends to the same op.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L441-L451
 _ML_KEM_768_MODULUS: Final[int] = 3329
 _ML_KEM_768_COEFFICIENT_PAIRS: Final[int] = 384
 _ML_KEM_768_SEED_SIZE: Final[int] = 32
@@ -413,6 +421,9 @@ class _HelloWriter:
         if size <= 0:
             return
 
+        # Extension type 21, TLS's own padding extension. TDLib writes the same
+        #  four ops in the same order once it knows the size.
+        #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L495-L501
         self._write(_string(b"\x00\x15"))
         self._write(_begin_scope())
         self._write(_zero(size))
