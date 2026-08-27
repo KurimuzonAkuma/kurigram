@@ -28,6 +28,8 @@ from enum import IntEnum
 from http import HTTPStatus
 from typing import Coroutine, Dict, Final, FrozenSet, List, Optional, Set
 
+from pyrogram.connection.proxy import HTTPS_PORT
+
 log = logging.getLogger(__name__)
 
 
@@ -171,7 +173,6 @@ def derive_bridge_capability(hostname: str, *, secret: bytes) -> str:
 #  /api/v1/session* API. `TCP._connect_via_web_proxy` layers the actual MTProxy
 #  obfuscation on top of it.
 
-_HTTPS_PORT: Final[int] = 443
 _CONNECT_TIMEOUT: Final[int] = 10
 _REQUEST_TIMEOUT: Final[int] = 10
 _LONG_POLL_WAIT: Final[int] = 25
@@ -480,7 +481,7 @@ class WebProxyCarrier:
         hostname: str,
         *,
         secret: bytes,
-        port: int = _HTTPS_PORT,
+        port: int = HTTPS_PORT,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         self._hostname = hostname

@@ -85,15 +85,38 @@ class MTProxy:
     sni_hostname: Optional[str] = None
 
 
+# The relay is always reached over HTTPS, so a WEB proxy carries no port field.
+HTTPS_PORT: Final[int] = 443
+
+
 @dataclass(frozen=True)
 class WebProxy:
     scheme: ClassVar[Literal[ProxyScheme.WEB]] = ProxyScheme.WEB
+    port: ClassVar[int] = HTTPS_PORT
 
     hostname: str  # canonical lowercase ASCII/IDNA A-label
     secret: bytes  # decoded, dd marker kept when present
 
 
 Proxy = Union[SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy]
+
+
+class ProxyAddress(NamedTuple):
+    hostname: str
+    port: int
+
+
+def client_proxy_address(proxy: Optional[Proxy]) -> Optional[ProxyAddress]:
+    """The address `initConnection` reports, or None when there is nothing to report.
+
+    tdesktop reports one for the MTProxy and WEB schemes and for no other, since a
+    SOCKS or HTTP proxy is not one of Telegram's own.
+    https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/Telegram/SourceFiles/mtproto/session_private.cpp#L689-L700
+    """
+    if isinstance(proxy, (MTProxy, WebProxy)):
+        return ProxyAddress(hostname=proxy.hostname, port=proxy.port)
+
+    return None
 
 _PROXY_TYPES: Final[Tuple[type, ...]] = (SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy)
 

@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Set
 import pyrogram
 from pyrogram import raw, utils
 from pyrogram.connection import Connection
+from pyrogram.connection.proxy import client_proxy_address
 from pyrogram.crypto import mtproto
 from pyrogram.errors import (
     AuthKeyDuplicated,
@@ -181,12 +182,14 @@ class Session:
 
             init_connection_params = self.client.init_connection_params
 
-            proxy = None
-            
-            if isinstance(proxy, dict) and proxy.get("scheme", "").lower() == "mtproxy":
-                proxy = raw.types.InputClientProxy(
-                    address=proxy.get("hostname", ""),
-                    port=proxy.get("port", 0)
+            # Telegram wants to know which proxy a client sits behind.
+            proxy_address = client_proxy_address(self.client.proxy)
+            client_proxy = None
+
+            if proxy_address is not None:
+                client_proxy = raw.types.InputClientProxy(
+                    address=proxy_address.hostname,
+                    port=proxy_address.port,
                 )
 
             if isinstance(init_connection_params, dict):
@@ -206,7 +209,7 @@ class Session:
                             lang_code=self.client.lang_code,
                             query=raw.functions.help.GetConfig(),
                             params=init_connection_params,
-                            proxy=proxy
+                            proxy=client_proxy
                         )
                     ),
                     timeout=self.START_TIMEOUT

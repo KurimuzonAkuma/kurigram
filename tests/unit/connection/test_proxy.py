@@ -16,17 +16,21 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Final
+from typing import Final, Optional
 
 import pytest
 
 from pyrogram.connection.proxy import (
+    HTTPS_PORT,
     HTTPProxy,
     MTProxy,
+    Proxy,
+    ProxyAddress,
     SOCKS4Proxy,
     SOCKS5Proxy,
     WebProxy,
     canonicalize_web_hostname,
+    client_proxy_address,
     normalize_proxy,
 )
 from pyrogram.enums import ProxyScheme
@@ -227,3 +231,28 @@ def test_normalize_proxy_generic_url_form() -> None:
 def test_normalize_proxy_generic_url_form_without_port_raises() -> None:
     with pytest.raises(ValueError):
         normalize_proxy("socks5://1.2.3.4")
+
+
+def test_client_proxy_address_reports_an_mtproxy() -> None:
+    mtproxy = MTProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(PLAIN_SECRET_HEX))
+
+    assert client_proxy_address(mtproxy) == ProxyAddress(hostname="1.2.3.4", port=443)
+
+
+def test_client_proxy_address_reports_a_web_proxy_on_the_https_port() -> None:
+    web_proxy = WebProxy(hostname="relay.example.com", secret=bytes.fromhex(PLAIN_SECRET_HEX))
+
+    assert client_proxy_address(web_proxy) == ProxyAddress(hostname="relay.example.com", port=HTTPS_PORT)
+
+
+@pytest.mark.parametrize(
+    "proxy",
+    [
+        None,
+        SOCKS4Proxy(hostname="1.2.3.4", port=1080),
+        SOCKS5Proxy(hostname="1.2.3.4", port=1080),
+        HTTPProxy(hostname="1.2.3.4", port=8080),
+    ],
+)
+def test_client_proxy_address_reports_nothing_for_a_proxy_telegram_does_not_own(proxy: Optional[Proxy]) -> None:
+    assert client_proxy_address(proxy) is None
