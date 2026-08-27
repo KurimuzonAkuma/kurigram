@@ -48,21 +48,19 @@ but its operator has. Fill in .env.test from .env.test.example, then::
     make test-integration
 """
 
-from typing import Final, Type
+from typing import Type
 
 from pyrogram import Client
 from pyrogram.connection.proxy import WebProxy, normalize_proxy
 from pyrogram.connection.transport.tcp import TCP
 from pyrogram.session.auth import Auth
 
-from tests.integrations.connection.transport.tcp.conftest import RelayConfig, round_trip_req_pq_multi
-
-# The address `Auth` is handed is never dialed - the carrier reaches the DC
-#  through the relay - but the signature still requires a port.
-_MTPROTO_PORT: Final[int] = 443
-
-# An MTProto auth key is 2048 bits.
-_AUTH_KEY_SIZE: Final[int] = 256
+from tests.integrations.connection.transport.tcp.conftest import (
+    AUTH_KEY_SIZE,
+    MTPROTO_PORT,
+    RelayConfig,
+    round_trip_req_pq_multi,
+)
 
 
 async def test_req_pq_multi_round_trip_through_live_relay(
@@ -109,12 +107,12 @@ async def test_full_auth_key_exchange_through_live_relay(
         unauthorized_client,
         dc_id=relay_config.dc_id,
         server_address="unused",
-        port=_MTPROTO_PORT,
+        port=MTPROTO_PORT,
         test_mode=False,
     ).create()
 
     assert isinstance(auth_key, bytes)
-    assert len(auth_key) == _AUTH_KEY_SIZE
+    assert len(auth_key) == AUTH_KEY_SIZE
 
 
 async def test_high_level_api_call_through_live_relay(client: Client) -> None:

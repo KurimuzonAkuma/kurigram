@@ -45,6 +45,13 @@ _SESSION_NAME: Final[str] = "test_client"
 # Session file suffix `Client` appends to its `name`.
 _SESSION_SUFFIX: Final[str] = ".session"
 
+# The port a DC speaks MTProto on. Neither live test dials it - the proxy is
+#  what gets dialed - but `Auth` still has to be handed an address.
+MTPROTO_PORT: Final[int] = 443
+
+# An MTProto auth key is 2048 bits.
+AUTH_KEY_SIZE: Final[int] = 256
+
 
 @dataclass(frozen=True)
 class RelayConfig:

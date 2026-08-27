@@ -20,19 +20,13 @@
 """End-to-end smoke test for the classic MTProxy scheme against a real,
 already-deployed proxy and a real Telegram datacenter.
 
-The proxy comes from one environment variable holding an ordinary
-``tg://proxy?server=...&port=...&secret=...`` link, so the same three tests
-cover all three secret flavours without a line changing here:
-
-* a plain 16-byte secret, which is obfuscated2 and nothing else;
-* a ``dd``-prefixed 17-byte one, which adds random padding;
-* an ``ee``-prefixed one, which additionally wraps the whole connection in the
-  fake-TLS record layer and presents the domain the secret carries as SNI.
-
-Which of the three is under test is therefore a property of the environment,
-not of the code - run it once per link to cover them all. The layers exercised
-are the same three the WEB proxy test drives, for the same reasons; see
-``test_web_proxy_live.py`` for what each of them proves.
+The proxy comes from the environment as an ordinary
+``tg://proxy?server=...&port=...&secret=...`` link, so which secret flavour is
+under test is a property of the environment rather than of the code; the
+``_MTPROXY_LINK_PARAMETERS`` comment in ``conftest.py`` says why it is one
+variable. The layers exercised are the same three the WEB proxy test drives,
+for the same reasons; see ``test_web_proxy_live.py`` for what each of them
+proves.
 
 Skipped unless the environment carries a proxy to run against. Fill in
 .env.test from .env.test.example, then::
@@ -47,15 +41,15 @@ from pyrogram.connection.proxy import MTProxy
 from pyrogram.connection.transport.tcp import TCP
 from pyrogram.session.auth import Auth
 
-from tests.integrations.connection.transport.tcp.conftest import round_trip_req_pq_multi
+from tests.integrations.connection.transport.tcp.conftest import (
+    AUTH_KEY_SIZE,
+    MTPROTO_PORT,
+    round_trip_req_pq_multi,
+)
 
 # `Auth` dials the proxy rather than this address, but the signature still
 #  requires both halves.
 _UNUSED_DC_ADDRESS: Final[str] = "unused"
-_MTPROTO_PORT: Final[int] = 443
-
-# An MTProto auth key is 2048 bits.
-_AUTH_KEY_SIZE: Final[int] = 256
 
 
 async def test_req_pq_multi_round_trip_through_live_mtproxy(
@@ -66,7 +60,7 @@ async def test_req_pq_multi_round_trip_through_live_mtproxy(
     transport = mtproxy_transport_class(ipv6=False, proxy=mtproxy_proxy, dc_id=mtproxy_dc_id)
 
     try:
-        await transport.connect((_UNUSED_DC_ADDRESS, _MTPROTO_PORT))
+        await transport.connect((_UNUSED_DC_ADDRESS, MTPROTO_PORT))
         await round_trip_req_pq_multi(transport)
     finally:
         await transport.close()
@@ -80,12 +74,12 @@ async def test_full_auth_key_exchange_through_live_mtproxy(
         unauthorized_mtproxy_client,
         dc_id=mtproxy_dc_id,
         server_address=_UNUSED_DC_ADDRESS,
-        port=_MTPROTO_PORT,
+        port=MTPROTO_PORT,
         test_mode=False,
     ).create()
 
     assert isinstance(auth_key, bytes)
-    assert len(auth_key) == _AUTH_KEY_SIZE
+    assert len(auth_key) == AUTH_KEY_SIZE
 
 
 async def test_high_level_api_call_through_live_mtproxy(mtproxy_client: Client) -> None:
