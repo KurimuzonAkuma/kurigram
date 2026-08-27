@@ -625,7 +625,10 @@ class WebProxyCarrier:
         # Granted where the bytes leave for the MTProto engine above, which is
         #  the drain point §7 ties downlink credit to - not where they arrive
         #  off the wire.
-        if amount <= 0 or self._fail_exc is not None:
+        #  `_closed` is checked because `recv()` still serves whatever the buffer
+        #  holds after `close()`, and a grant task started then is never
+        #  cancelled: `close()` has already walked `_background_tasks`.
+        if amount <= 0 or self._closed or self._fail_exc is not None:
             return
 
         self._pending_grant += amount

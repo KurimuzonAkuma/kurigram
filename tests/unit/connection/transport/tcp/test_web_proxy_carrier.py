@@ -478,3 +478,21 @@ async def test_a_cancelled_background_task_is_not_reported(caplog: pytest.LogCap
         await carrier._cancel_tracked(task)
 
     assert caplog.records == []
+
+
+async def test_recv_after_close_does_not_start_a_grant_task() -> None:
+    carrier = _carrier()
+    # No session left to `DELETE`, so `close()` needs no network.
+    carrier._session_id = None
+    carrier._recv_buffer.extend(b"leftover")
+
+    await carrier.close()
+
+    assert await carrier.recv(len(b"leftover")) == b"leftover"
+
+    # `close()` walks `_background_tasks` once and returns, so a grant task
+    #  started after it is never cancelled: it sleeps on and then posts a WINDOW
+    #  frame down an uplink that is already gone.
+    assert carrier._pending_grant == 0
+    assert carrier._grant_flush_task is None
+    assert carrier._background_tasks == set()
