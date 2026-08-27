@@ -39,6 +39,11 @@ _CURVE25519_A: Final[int] = 486662
 _CURVE25519_KEY_SIZE: Final[int] = 32
 _ML_KEM_768_KEY_SIZE: Final[int] = 1184
 
+# The four lengths TDLib's `Op::ech_payload()` picks between, written out as
+#  `Random::fast(0, 3) * 32 + 144` gives them.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L126-L131
+_ECH_PAYLOAD_SIZES: Final[FrozenSet[int]] = frozenset({144, 176, 208, 240})
+
 # The prime order of the Curve25519 base point, and the constant its ladder
 #  needs. The full curve is eight times that order.
 #  https://www.rfc-editor.org/rfc/rfc7748#section-4.1
@@ -148,6 +153,19 @@ def test_client_hello_extension_order_actually_varies() -> None:
     orders = {tuple(_parse_extensions(_build_client_hello().record)) for _ in range(16)}
 
     assert len(orders) > 1
+
+
+def test_ech_payload_length_is_one_of_the_four_tdlib_draws_between() -> None:
+    assert faketls._ECH_PAYLOAD_SIZE in _ECH_PAYLOAD_SIZES
+
+
+def test_client_hello_length_is_the_same_for_every_greeting() -> None:
+    # The ECH payload is the only part of the hello whose length is drawn at all,
+    #  and TDLib draws it once for the process - so a length that changed from one
+    #  connection to the next would be a fingerprint no browser produces.
+    lengths = {len(_build_client_hello().record) for _ in range(16)}
+
+    assert len(lengths) == 1
 
 
 def test_client_hello_random_is_the_secret_hmac_with_the_clock_folded_in() -> None:

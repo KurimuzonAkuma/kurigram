@@ -50,8 +50,13 @@ _ML_KEM_768_SEED_SIZE: Final[int] = 32
 #  information about the domain it names.
 _PADDING_TARGET_OFFSET: Final[int] = 513
 
-# The four lengths TDLib picks between for the encrypted-client-hello payload.
-_ECH_PAYLOAD_SIZES: Final[Tuple[int, ...]] = (144, 176, 208, 240)
+# The encrypted-client-hello payload's length: one of four, and drawn once for
+#  the process rather than once per greeting. TDLib draws it inside
+#  `Op::ech_payload()`, which runs while its op list's function-local static is
+#  being initialised, so every hello a TDLib process sends carries the same one.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L126-L131
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L139-L141
+_ECH_PAYLOAD_SIZE: Final[int] = secrets.choice((144, 176, 208, 240))
 
 # The greeting's 32-byte random field, which carries the HMAC rather than random
 #  bytes: 5 bytes of record header, 4 of handshake header, 2 of client version.
@@ -74,7 +79,6 @@ class _OpKind(Enum):
     END_SCOPE = auto()
     KEY = auto()
     ML_KEM_768_KEY = auto()
-    ECH_PAYLOAD = auto()
     PERMUTATION = auto()
     PADDING = auto()
 
@@ -125,7 +129,7 @@ def _ml_kem_768_key() -> _Op:
 
 
 def _ech_payload() -> _Op:
-    return _Op(kind=_OpKind.ECH_PAYLOAD)
+    return _random(_ECH_PAYLOAD_SIZE)
 
 
 def _permutation(parts: Sequence[Sequence[_Op]]) -> _Op:
@@ -344,10 +348,6 @@ class _HelloWriter:
 
         if op.kind is _OpKind.ML_KEM_768_KEY:
             self._out += _generate_ml_kem_768_key()
-            return
-
-        if op.kind is _OpKind.ECH_PAYLOAD:
-            self._out += secrets.token_bytes(secrets.choice(_ECH_PAYLOAD_SIZES))
             return
 
         if op.kind is _OpKind.PERMUTATION:
