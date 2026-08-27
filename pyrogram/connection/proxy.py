@@ -246,7 +246,8 @@ def canonicalize_web_hostname(hostname: str) -> str:
 _PADDED_MARKER: Final[int] = 0xDD
 _FAKE_TLS_MARKER: Final[int] = 0xEE
 
-# TDLib's `MAX_DOMAIN_LENGTH`.
+# TDLib's `MAX_DOMAIN_LENGTH`, whose own comment reads "must be small enough to
+#  not overflow TLS-hello length".
 #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.h#L18
 _MAX_SNI_DOMAIN_SIZE: Final[int] = 182
 
@@ -273,15 +274,12 @@ class _DecodedSecret(NamedTuple):
 def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
     domain = full_secret[MARKED_SECRET_SIZE:]
 
-    # The domain goes into the ClientHello's SNI extension, whose length field
-    #  the hello cannot outgrow, so TDLib caps it and rejects a longer secret
-    #  outright. Without the cap a long domain builds a hello no relay answers.
-    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.h#L18
+    # TDLib rejects a longer secret outright rather than greeting with it.
     #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.cpp#L29-L36
     if len(domain) > _MAX_SNI_DOMAIN_SIZE:
         msg = (
             f"ee-prefixed proxy secret carries a {len(domain)}-byte SNI domain, over the "
-            f"{_MAX_SNI_DOMAIN_SIZE} bytes a TLS hello can hold"
+            f"{_MAX_SNI_DOMAIN_SIZE}-byte maximum"
         )
         raise ValueError(msg)
 
