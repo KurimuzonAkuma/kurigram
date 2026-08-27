@@ -178,27 +178,41 @@ class TCP:
     def is_web_proxy(self) -> bool:
         return isinstance(self.proxy, WebProxy)
 
-    async def _connect_via_web_proxy(self) -> None:
-        web_proxy: WebProxy = self.proxy
+    @property
+    def opens_with_obfuscated2_header(self) -> bool:
+        # Both schemes open the stream with a 64-byte obfuscated2 header that
+        #  already carries OBFUSCATE_TAG, so a framing subclass must not send the
+        #  bare tag on top of it.
+        return isinstance(self.proxy, (WebProxy, MTProxy))
 
+    def _obfuscated2_secret(self, secret: bytes) -> bytes:
+        # Returns the bare key, and first checks the three things every
+        #  obfuscated2 handshake needs from the transport. Shared by both schemes
+        #  that speak it, so neither can drift from the other on what it accepts.
         if self.dc_id is None:
-            msg = "The WEB proxy scheme requires a dc_id, passed through by Connection"
+            msg = "An obfuscated2 proxy scheme requires a dc_id, passed through by Connection"
             raise ValueError(msg)
 
         if not self.OBFUSCATE_TAG:
             msg = (
-                f"{type(self).__name__} has no OBFUSCATE_TAG and cannot be used over a WEB "
-                f"proxy; use e.g. TCPAbridged for a plain secret, TCPIntermediatePadded for dd"
+                f"{type(self).__name__} has no OBFUSCATE_TAG and cannot speak obfuscated2; use "
+                f"e.g. TCPAbridged for a plain secret, TCPIntermediatePadded for dd"
             )
             raise ValueError(msg)
 
-        is_dd_secret = len(web_proxy.secret) == _DD_SECRET_SIZE
+        if len(secret) != _DD_SECRET_SIZE:
+            return secret
 
-        if is_dd_secret and self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
+        if self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
             msg = f"dd-prefixed secrets require TCPIntermediatePadded, not {type(self).__name__}"
             raise ValueError(msg)
 
-        bare_secret = web_proxy.secret[1:] if is_dd_secret else web_proxy.secret
+        return secret[1:]
+
+    async def _connect_via_web_proxy(self) -> None:
+        web_proxy: WebProxy = self.proxy
+
+        bare_secret = self._obfuscated2_secret(web_proxy.secret)
 
         log.info("Connecting to WEB proxy relay %s (dc_id=%s)", web_proxy.hostname, self.dc_id)
 
@@ -292,9 +306,11 @@ class TCP:
 
         self.reader, self.writer = await asyncio.open_connection(sock=sock)
 
-    async def _connect_via_direct(self, destination: Tuple[str, int]) -> None:
+    async def _connect_via_direct(self, destination: Tuple[str, int], *, family: Optional[int] = None) -> None:
         host, port = destination
-        family = socket.AF_INET6 if self.ipv6 else socket.AF_INET
+
+        if family is None:
+            family = socket.AF_INET6 if self.ipv6 else socket.AF_INET
 
         log.info("Connecting to %s:%s", host, port)
 
@@ -315,14 +331,38 @@ class TCP:
 
         log.info("Connection established")
 
+    async def _connect_via_mtproxy(self) -> None:
+        mtproxy: MTProxy = self.proxy
+
+        bare_secret = self._obfuscated2_secret(mtproxy.secret)
+
+        if mtproxy.sni_hostname is not None:
+            msg = "fake-TLS ('ee') MTProxy secrets are not wired up yet."
+            raise NotImplementedError(msg)
+
+        # The proxy sits at its own address, unrelated to the DC address self.ipv6
+        #  was derived from, so let getaddrinfo pick the family it actually has.
+        await self._connect_via_direct((mtproxy.hostname, mtproxy.port), family=socket.AF_UNSPEC)
+
+        built = build_obfuscated2_header(bare_secret, dc_id=self.dc_id, obfuscate_tag=self.OBFUSCATE_TAG)
+
+        # Written straight to the socket: self.send() is the framing subclass's
+        #  override, and TCP.send() would encrypt the header under the very keys
+        #  the header is delivering.
+        self.writer.write(built.header)
+        await self.writer.drain()
+
+        self._encrypt = built.encrypt
+        self._decrypt = built.decrypt
+
     async def _connect(self, destination: Tuple[str, int]) -> None:
         if self.is_web_proxy:
             await self._connect_via_web_proxy()
             return
 
         if isinstance(self.proxy, MTProxy):
-            msg = "Classic MTProxy (scheme='mtproxy') is not implemented yet."
-            raise NotImplementedError(msg)
+            await self._connect_via_mtproxy()
+            return
 
         if self.proxy is not None:
             await self._connect_via_proxy(destination)

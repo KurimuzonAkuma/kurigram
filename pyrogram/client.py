@@ -123,9 +123,11 @@ class Client(Methods):
             E.g.: *dict(scheme="socks5", hostname="11.22.33.44", port=1234, username="user", password="pass")*
             or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"* or *"tg://socks?server=11.22.33.44&port=1234"*.
             The *username* and *password* can be omitted if the proxy doesn't require authorization.
-            A WEB proxy takes *dict(scheme="web", hostname="relay.example.com", secret="...")*, a plain
-            16-byte or dd-prefixed 17-byte MTProxy secret as hex - pass ``protocol_factory=TCPAbridged``
-            for a plain secret or ``protocol_factory=TCPIntermediatePadded`` for a dd-prefixed one.
+            A WEB proxy takes *dict(scheme="web", hostname="relay.example.com", secret="...")* and a
+            classic MTProxy *dict(scheme="mtproxy", hostname="11.22.33.44", port=443, secret="...")*,
+            both with a plain 16-byte or dd-prefixed 17-byte MTProxy secret as hex - pass
+            ``protocol_factory=TCPAbridged`` for a plain secret or
+            ``protocol_factory=TCPIntermediatePadded`` for a dd-prefixed one.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.
