@@ -22,10 +22,9 @@ import os
 from struct import pack, unpack
 from typing import Optional, Tuple
 
+from pyrogram.connection.proxy import Proxy
+from pyrogram.connection.transport.tcp.tcp import TCP
 from pyrogram.crypto import aes
-
-from ...proxy import Proxy
-from .tcp import TCP
 
 log = logging.getLogger(__name__)
 

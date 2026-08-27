@@ -20,8 +20,8 @@ import asyncio
 import logging
 from typing import Optional, Tuple
 
-from ...proxy import Proxy
-from .tcp import ABRIDGED_OBFUSCATE_TAG, TCP
+from pyrogram.connection.proxy import Proxy
+from pyrogram.connection.transport.tcp.tcp import ABRIDGED_OBFUSCATE_TAG, TCP
 
 log = logging.getLogger(__name__)
 

@@ -21,10 +21,14 @@ import logging
 from typing import Optional, Tuple
 
 import pyrogram
+from pyrogram.connection.proxy import Proxy
+from pyrogram.connection.transport.tcp.tcp import (
+    ABRIDGED_OBFUSCATE_TAG,
+    TCP,
+    finalize_obfuscated2_tag,
+    generate_obfuscated2_nonce,
+)
 from pyrogram.crypto import aes
-
-from ...proxy import Proxy
-from .tcp import ABRIDGED_OBFUSCATE_TAG, TCP, finalize_obfuscated2_tag, generate_obfuscated2_nonce
 
 log = logging.getLogger(__name__)
 

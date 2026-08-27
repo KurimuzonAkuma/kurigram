@@ -28,11 +28,10 @@ from python_socks import ProxyType
 from python_socks.async_.asyncio import Proxy as SocksProxy
 
 from pyrogram import utils
+from pyrogram.connection.proxy import HTTPProxy, MTProxy, Proxy, SOCKS4Proxy, SOCKS5Proxy, WebProxy
+from pyrogram.connection.transport.tcp.web_proxy_carrier import WebCarrierError, WebProxyCarrier
 from pyrogram.crypto import aes
 from pyrogram.enums import ProxyScheme
-
-from ...proxy import HTTPProxy, MTProxy, Proxy, SOCKS4Proxy, SOCKS5Proxy, WebProxy
-from .web_proxy_carrier import WebCarrierError, WebProxyCarrier
 
 log = logging.getLogger(__name__)
 

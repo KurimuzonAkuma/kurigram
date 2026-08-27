@@ -21,9 +21,8 @@ import logging
 from typing import Final, Optional, Type
 
 from pyrogram import utils
-
-from .proxy import Proxy
-from .transport import TCP, TCPAbridged
+from pyrogram.connection.proxy import Proxy
+from pyrogram.connection.transport import TCP, TCPAbridged
 
 log = logging.getLogger(__name__)
 
