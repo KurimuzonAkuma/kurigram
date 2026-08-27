@@ -66,6 +66,13 @@ _RANDOM_SIZE: Final[int] = 32
 _TIMESTAMP_SIZE: Final[int] = 4
 _CLOCK_SKEW_ALLOWANCE: Final[int] = 60
 
+# The intermediate framing: a little-endian length, then up to 15 random bytes
+#  of padding after the payload. A frame under 24 bytes is read as a quick ack
+#  or an error code instead of a packet.
+_LENGTH_PREFIX_SIZE: Final[int] = 4
+_MAX_INTERMEDIATE_PADDING: Final[int] = 15
+_MIN_INTERMEDIATE_PACKET_SIZE: Final[int] = 24
+
 
 def _web_proxy(secret_hex: str = PLAIN_SECRET_HEX) -> WebProxy:
     return WebProxy(hostname="relay.example.com", secret=bytes.fromhex(secret_hex))
@@ -146,6 +153,21 @@ async def test_connect_via_mtproxy_rejects_a_dd_secret_on_the_wrong_class() -> N
         await transport._connect_via_mtproxy()
 
 
+async def test_connect_via_mtproxy_rejects_an_ee_secret_on_the_wrong_class() -> None:
+    # An ee secret is 18 bytes or more before its marker and domain come off, so
+    #  it asks for random padding the same way a dd one does.
+    mtproxy = MTProxy(
+        hostname="1.2.3.4",
+        port=443,
+        secret=bytes.fromhex(PLAIN_SECRET_HEX),
+        sni_hostname=_SNI_DOMAIN,
+    )
+    transport = TCPAbridged(proxy=mtproxy, dc_id=_DC_ID)
+
+    with pytest.raises(ValueError, match="TCPIntermediatePadded"):
+        await transport._connect_via_mtproxy()
+
+
 class _FakeTlsStub(NamedTuple):
     server: asyncio.AbstractServer
     port: int
@@ -192,7 +214,7 @@ def _as_records(payload: bytes, *, record_size: int) -> bytes:
 async def _start_fake_tls_stub(
     *,
     secret: bytes,
-    read_bytes: int = 0,
+    expects_packet: bool = False,
     reply: bytes = b"",
     reply_record_size: int = 1,
 ) -> _FakeTlsStub:
@@ -209,14 +231,22 @@ async def _start_fake_tls_stub(
         writer.write(_server_hello(greeting[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE], secret=secret))
         await writer.drain()
 
-        stream = await reader.readexactly(read_bytes)
-        received.set_result(stream)
+        if not expects_packet:
+            return
+
+        # Read what a real proxy reads - the change-cipher-spec and then one whole
+        #  application record - rather than a byte count the random padding decides.
+        prologue = await reader.readexactly(len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE)
+        body = await reader.readexactly(int.from_bytes(prologue[-RECORD_LENGTH_SIZE:], "big"))
+        received.set_result(prologue + body)
 
         if not reply:
             return
 
-        header = stream[len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE :][:_OBFUSCATED2_HEADER_SIZE]
-        encrypted = aes.ctr256_encrypt(reply, *_client_decrypt_args(header, secret=secret))
+        encrypted = aes.ctr256_encrypt(
+            reply,
+            *_client_decrypt_args(body[:_OBFUSCATED2_HEADER_SIZE], secret=secret),
+        )
 
         writer.write(_as_records(encrypted, record_size=reply_record_size))
         await writer.drain()
@@ -238,7 +268,7 @@ def _fake_tls_mtproxy(port: int, *, secret: bytes) -> MTProxy:
 async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_hello() -> None:
     secret = bytes.fromhex(PLAIN_SECRET_HEX)
     stub = await _start_fake_tls_stub(secret=secret)
-    transport = TCPAbridged(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
+    transport = TCPIntermediatePadded(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
 
     try:
         await transport.connect(_UNREACHABLE_DC_ADDRESS)
@@ -266,19 +296,14 @@ async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_
 
 
 async def test_connect_via_mtproxy_wraps_the_handshake_in_application_records() -> None:
+    # The change-cipher-spec, then one record holding the obfuscated2 header and
+    #  the first framed packet - the header rides with that packet rather than in
+    #  a record of its own.
     payload: Final[bytes] = b"\x01\x02\x03\x04"
-
-    # The change-cipher-spec, then one record holding the obfuscated2 header, the
-    #  abridged length byte and the payload - the header rides with the first
-    #  packet rather than in a record of its own.
-    framed_size: Final[int] = _OBFUSCATED2_HEADER_SIZE + 1 + len(payload)
     secret = bytes.fromhex(PLAIN_SECRET_HEX)
 
-    stub = await _start_fake_tls_stub(
-        secret=secret,
-        read_bytes=len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE + framed_size,
-    )
-    transport = TCPAbridged(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
+    stub = await _start_fake_tls_stub(secret=secret, expects_packet=True)
+    transport = TCPIntermediatePadded(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
 
     try:
         await transport.connect(_UNREACHABLE_DC_ADDRESS)
@@ -294,31 +319,42 @@ async def test_connect_via_mtproxy_wraps_the_handshake_in_application_records() 
     record = stream[len(CHANGE_CIPHER_SPEC) :]
 
     assert record[: len(APPLICATION_DATA_PREFIX)] == APPLICATION_DATA_PREFIX
-    assert int.from_bytes(record[len(APPLICATION_DATA_PREFIX) : RECORD_HEADER_SIZE], "big") == framed_size
+    assert int.from_bytes(record[len(APPLICATION_DATA_PREFIX) : RECORD_HEADER_SIZE], "big") == len(
+        record
+    ) - RECORD_HEADER_SIZE
 
     framed = record[RECORD_HEADER_SIZE:]
     key = hashlib.sha256(framed[8:40] + secret).digest()
     decrypted = aes.ctr256_decrypt(framed, key, bytearray(framed[40:56]), bytearray(1))
 
-    assert decrypted[56:60] == ABRIDGED_OBFUSCATE_TAG
+    assert decrypted[56:60] == INTERMEDIATE_PADDED_OBFUSCATE_TAG
     assert int.from_bytes(decrypted[60:62], "little", signed=True) == _DC_ID
-    assert decrypted[_OBFUSCATED2_HEADER_SIZE:] == bytes([len(payload) // 4]) + payload
+
+    packet = decrypted[_OBFUSCATED2_HEADER_SIZE:]
+    framed_length = int.from_bytes(packet[:_LENGTH_PREFIX_SIZE], "little", signed=True)
+
+    assert len(packet) == _LENGTH_PREFIX_SIZE + framed_length
+    assert packet[_LENGTH_PREFIX_SIZE : _LENGTH_PREFIX_SIZE + len(payload)] == payload
+    assert 0 <= framed_length - len(payload) <= _MAX_INTERMEDIATE_PADDING
 
 
 async def test_connect_via_mtproxy_reads_a_reply_split_across_several_records() -> None:
     # A record boundary has nothing to do with a packet boundary, so a reply the
     #  proxy cut up must still arrive as the byte stream the transport asked for.
     payload: Final[bytes] = b"\x01\x02\x03\x04"
-    reply: Final[bytes] = bytes(range(8))
+
+    # Shorter than 24 bytes and the padded transport reads the frame as a quick
+    #  ack or an error code rather than as a packet.
+    reply: Final[bytes] = bytes(range(_MIN_INTERMEDIATE_PACKET_SIZE))
     secret = bytes.fromhex(PLAIN_SECRET_HEX)
 
     stub = await _start_fake_tls_stub(
         secret=secret,
-        read_bytes=len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE + _OBFUSCATED2_HEADER_SIZE + 1 + len(payload),
-        reply=bytes([len(reply) // 4]) + reply,
+        expects_packet=True,
+        reply=len(reply).to_bytes(_LENGTH_PREFIX_SIZE, "little", signed=True) + reply,
         reply_record_size=3,
     )
-    transport = TCPAbridged(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
+    transport = TCPIntermediatePadded(proxy=_fake_tls_mtproxy(stub.port, secret=secret), dc_id=_DC_ID)
 
     try:
         await transport.connect(_UNREACHABLE_DC_ADDRESS)
@@ -336,7 +372,7 @@ async def test_connect_via_mtproxy_rejects_a_fake_tls_reply_signed_with_another_
     # Without this check a censor could answer with any plausible ServerHello and
     #  watch what the client does next.
     stub = await _start_fake_tls_stub(secret=bytes(16))
-    transport = TCPAbridged(
+    transport = TCPIntermediatePadded(
         proxy=_fake_tls_mtproxy(stub.port, secret=bytes.fromhex(PLAIN_SECRET_HEX)),
         dc_id=_DC_ID,
     )
@@ -357,7 +393,7 @@ async def test_connect_via_mtproxy_rejects_a_fake_tls_reply_that_is_not_a_server
         await writer.drain()
 
     server = await asyncio.start_server(serve, host="127.0.0.1", port=0)
-    transport = TCPAbridged(
+    transport = TCPIntermediatePadded(
         proxy=_fake_tls_mtproxy(server.sockets[0].getsockname()[1], secret=bytes.fromhex(PLAIN_SECRET_HEX)),
         dc_id=_DC_ID,
     )

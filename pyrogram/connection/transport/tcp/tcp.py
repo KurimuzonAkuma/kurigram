@@ -210,11 +210,17 @@ class TCP:
         if len(secret) != _DD_SECRET_SIZE:
             return secret
 
-        if self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
-            msg = f"dd-prefixed secrets require TCPIntermediatePadded, not {type(self).__name__}"
-            raise ValueError(msg)
+        self._require_padded_framing("dd-prefixed")
 
         return secret[1:]
+
+    def _require_padded_framing(self, marker: str) -> None:
+        # A proxy asks for random padding through the marker its secret carries,
+        #  and only the padded intermediate transport sends any.
+        #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.h#L44-L46
+        if self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
+            msg = f"{marker} secrets require TCPIntermediatePadded, not {type(self).__name__}"
+            raise ValueError(msg)
 
     async def _connect_via_web_proxy(self) -> None:
         web_proxy: WebProxy = self.proxy
@@ -342,6 +348,12 @@ class TCP:
         mtproxy: MTProxy = self.proxy
 
         bare_secret = self._obfuscated2_secret(mtproxy.secret)
+
+        if mtproxy.sni_hostname is not None:
+            # An ee secret is 18 bytes or more before its marker and domain come
+            #  off, so it asks for padding just as a dd one does - and by then
+            #  the length no longer says so.
+            self._require_padded_framing("ee-prefixed")
 
         # The proxy sits at its own address, unrelated to the DC address self.ipv6
         #  was derived from, so let getaddrinfo pick the family it actually has.
