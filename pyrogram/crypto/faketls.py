@@ -23,7 +23,7 @@ greeting is that a censor cannot tell it from the ClientHello a current Chrome
 sends, so every byte string, extension and random length below is that file's
 and not a choice of ours. `_client_hello_ops` mirrors its non-Apple op list
 one entry at a time so the two stay comparable.
-https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L189-L235
+https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L194-L236
 """
 
 import hashlib
@@ -35,7 +35,7 @@ from typing import Final, List, NamedTuple, Sequence, Tuple
 
 # GREASE values are drawn once per greeting and referenced by index, because the
 #  same value has to appear in more than one extension.
-#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L253
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L253-L264
 _GREASE_SIZE: Final[int] = 7
 
 _CURVE25519_PRIME: Final[int] = 2**255 - 19
