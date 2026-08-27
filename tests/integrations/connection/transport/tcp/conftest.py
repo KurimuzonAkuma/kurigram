@@ -95,8 +95,10 @@ class _LinkParams(NamedTuple):
 def _mtproxy_link_parameters() -> _LinkParams:
     """One parameter per configured link, or one that skips when none is.
 
-    Read at import time because `params` has to exist before collection, and an
-    empty list would collect no tests at all rather than skipping them.
+    Read at import time because `params` has to exist before collection. The
+    skipping parameter is what carries the reason: an empty list skips as well,
+    but with pytest's own "got empty parameter set", which names no variable to
+    go and set.
     """
     links = os.environ.get("MTPROXY_TEST_LINKS", "").split()
 
@@ -183,8 +185,9 @@ def _unauthorized_client(proxy: Proxy) -> Client:
 
 @asynccontextmanager
 async def _started_client(session_copy: Path, *, proxy: Proxy) -> AsyncIterator[Client]:
-    # No api_id/api_hash: both are read only when a new authorization has to be
-    #  created, and this session already exists (`pyrogram/client.py:928`).
+    # No api_id/api_hash: `Client.load_session` reads them only when the stored
+    #  session is empty and a new authorization has to be created, and this one
+    #  is not.
     client = Client(
         _SESSION_NAME,
         workdir=str(session_copy.parent),

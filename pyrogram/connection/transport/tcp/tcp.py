@@ -167,8 +167,8 @@ class TCP:
     ) -> None:
         self.ipv6 = ipv6
         self.proxy = proxy
-        # Needed only for the WEB proxy scheme, which routes by relay
-        #  hostname rather than DC address and embeds this in its handshake.
+        # Required by every obfuscated2 scheme - classic MTProxy as much as WEB -
+        #  because the dc id is one of the fields the obfuscated2 header carries.
         #  Connection passes the already-shifted protocol dc id (media/test
         #  mode folded in), not the bare logical one.
         self.dc_id = dc_id

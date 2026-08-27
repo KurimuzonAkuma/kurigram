@@ -29,10 +29,10 @@ log = logging.getLogger(__name__)
 
 
 class TCPIntermediatePadded(TCP):
-    # Lets TCP._connect_via_web_proxy use this class over a WEB proxy
-    #  (proxy={"scheme": "web", ...}) unmodified - Telegram's protocol requires
-    #  this exact tag/framing for dd-prefixed (random-padding) secrets
-    #  specifically, which TCP._connect_via_web_proxy checks.
+    # The tag Telegram's protocol requires for a dd-prefixed (random-padding)
+    #  secret. `TCP._obfuscated2_secret` refuses to build a header for such a
+    #  secret with any other tag, so this is what makes the class usable over
+    #  both obfuscated2 schemes - classic MTProxy and WEB.
     OBFUSCATE_TAG = INTERMEDIATE_PADDED_OBFUSCATE_TAG
 
     def __init__(
