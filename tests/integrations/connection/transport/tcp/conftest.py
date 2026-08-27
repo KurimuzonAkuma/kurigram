@@ -42,9 +42,6 @@ from pyrogram.connection.transport.tcp import TCP
 #  behind by a crashed run is always the same one.
 _SESSION_NAME: Final[str] = "test_client"
 
-# Session file suffix `Client` appends to its `name`.
-_SESSION_SUFFIX: Final[str] = ".session"
-
 # The port a DC speaks MTProto on. Neither live test dials it - the proxy is
 #  what gets dialed - but `Auth` still has to be handed an address.
 MTPROTO_PORT: Final[int] = 443
@@ -166,7 +163,7 @@ def session_path() -> Path:
 def session_copy(session_path: Path, tmp_path: Path) -> Path:
     # The run works on a copy: `Client` writes update state and peer cache back
     #  into whatever session it opens, and `SESSION_PATH` is not ours to modify.
-    copy = tmp_path / (_SESSION_NAME + _SESSION_SUFFIX)
+    copy = tmp_path / (_SESSION_NAME + ".session")
     shutil.copy(session_path, copy)
 
     return copy
@@ -225,12 +222,8 @@ async def mtproxy_client(session_copy: Path, mtproxy_proxy: MTProxy) -> AsyncIte
         yield client
 
 
-_REQ_PQ_MULTI: Final[int] = 0xBE7E8EF1
 _RES_PQ: Final[int] = 0x05162463
 _RESPONSE_HEADER: Final[struct.Struct] = struct.Struct("<qQi")
-
-# How long a real DC gets to answer the first handshake step.
-_RES_PQ_TIMEOUT: Final[float] = 15.0
 
 
 @dataclass(frozen=True)
@@ -246,7 +239,7 @@ def _build_req_pq_multi() -> _ReqPqMulti:
     transport.
     """
     nonce = os.urandom(16)
-    body = struct.pack("<I", _REQ_PQ_MULTI) + nonce
+    body = struct.pack("<I", 0xBE7E8EF1) + nonce  # req_pq_multi
 
     message_id = int(time.time() * 2 ** 32)
     message_id -= message_id % 4  # low bits must be clear for a client message
@@ -261,7 +254,8 @@ async def round_trip_req_pq_multi(transport: TCP) -> None:
     query = _build_req_pq_multi()
     await transport.send(query.packet)
 
-    response = await asyncio.wait_for(transport.recv(), timeout=_RES_PQ_TIMEOUT)
+    # How long a real DC gets to answer the first handshake step.
+    response = await asyncio.wait_for(transport.recv(), timeout=15.0)
     assert response is not None, "no response from the real DC through the proxy"
 
     auth_key_id, _message_id, length = _RESPONSE_HEADER.unpack(response[:_RESPONSE_HEADER.size])

@@ -33,10 +33,6 @@ from pyrogram.connection.transport.tcp.faketls_records import (
 #  the prologue.
 _PROLOGUE: Final[bytes] = bytes(range(64))
 
-# One byte past what a single 2-byte length field can describe. The whole payload
-#  used to go into one record, so anything this size raised `struct.error`.
-_OVER_ONE_LENGTH_FIELD: Final[int] = 0x10000 + 1
-
 
 class _Wire:
     """Serves `read_exactly` out of a fixed buffer, then reports the end as `None`."""
@@ -98,7 +94,9 @@ def test_wrap_puts_the_prologue_in_front_of_the_first_payload_only() -> None:
 
 
 def test_wrap_cuts_a_payload_no_single_record_can_hold() -> None:
-    payload = bytes(_OVER_ONE_LENGTH_FIELD)
+    # One byte past what a single 2-byte length field can describe. The whole
+    #  payload used to go into one record, so this size raised `struct.error`.
+    payload = bytes(0x10000 + 1)
     records = _records(b"")
 
     payloads = _record_payloads(records.wrap(payload)[len(CHANGE_CIPHER_SPEC) :])

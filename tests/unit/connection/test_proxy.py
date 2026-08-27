@@ -298,9 +298,6 @@ def test_client_proxy_address_reports_nothing_for_a_proxy_telegram_does_not_own(
     assert client_proxy_address(proxy) is None
 
 
-_EE_SECRET_HEX: Final[str] = "ee" + PLAIN_SECRET_HEX + SNI_DOMAIN.encode("ascii").hex()
-
-
 def _base64url(secret_hex: str) -> str:
     # Telegram's own links drop the padding, so the tests carry the same shape.
     return base64.urlsafe_b64encode(bytes.fromhex(secret_hex)).decode("ascii").rstrip("=")
@@ -329,7 +326,8 @@ def test_normalize_proxy_mtproxy_link_carries_a_dd_secret_whole() -> None:
 
 def test_normalize_proxy_mtproxy_link_splits_a_base64url_ee_secret() -> None:
     # The form an ee proxy is actually shared in: base64url, no padding.
-    proxy = normalize_proxy("tg://proxy?server=1.2.3.4&port=443&secret=" + _base64url(_EE_SECRET_HEX))
+    ee_secret_hex = "ee" + PLAIN_SECRET_HEX + SNI_DOMAIN.encode("ascii").hex()
+    proxy = normalize_proxy("tg://proxy?server=1.2.3.4&port=443&secret=" + _base64url(ee_secret_hex))
 
     assert proxy == MTProxy(
         hostname="1.2.3.4",

@@ -56,23 +56,16 @@ _UNREACHABLE_DC_ADDRESS: Final[Tuple[str, int]] = ("198.51.100.1", 443)
 _DC_ID: Final[int] = 2
 
 
-# The ClientHello record header, and the offset of the random field both sides
-#  authenticate - 5 bytes of record header, 4 of handshake header, 2 of version.
-_CLIENT_HELLO_PREFIX: Final[bytes] = b"\x16\x03\x01"
+# The offset of the greeting's random field, which both sides authenticate -
+#  5 bytes of record header, 4 of handshake header, 2 of version.
 _RANDOM_OFFSET: Final[int] = 11
 _RANDOM_SIZE: Final[int] = 32
 
-# The last four bytes of the greeting's random carry the clock. How far the value
-#  read back may sit from this machine's own clock before the test calls it wrong.
+# The last four bytes of the greeting's random carry the clock.
 _TIMESTAMP_SIZE: Final[int] = 4
-_CLOCK_SKEW_ALLOWANCE: Final[int] = 60
 
-# The intermediate framing: a little-endian length, then up to 15 random bytes
-#  of padding after the payload. A frame under 24 bytes is read as a quick ack
-#  or an error code instead of a packet.
+# The intermediate framing opens with a little-endian length.
 _LENGTH_PREFIX_SIZE: Final[int] = 4
-_MAX_INTERMEDIATE_PADDING: Final[int] = 15
-_MIN_INTERMEDIATE_PACKET_SIZE: Final[int] = 24
 
 
 def _web_proxy(secret_hex: str = PLAIN_SECRET_HEX) -> WebProxy:
@@ -279,7 +272,7 @@ async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_
         stub.server.close()
         await stub.server.wait_closed()
 
-    assert greeting[:3] == _CLIENT_HELLO_PREFIX
+    assert greeting[:3] == b"\x16\x03\x01"  # the ClientHello record header
     assert SNI_DOMAIN.encode("ascii") in greeting
 
     # The proxy authenticates the greeting exactly this way before answering it.
@@ -293,7 +286,9 @@ async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_
     assert greeting[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE - _TIMESTAMP_SIZE] == bytes(
         digest[:-_TIMESTAMP_SIZE]
     )
-    assert abs(stamp - int(time.time())) < _CLOCK_SKEW_ALLOWANCE
+    # How far the value read back may sit from this machine's own clock before
+    #  the test calls it wrong.
+    assert abs(stamp - int(time.time())) < 60
 
 
 async def test_connect_via_mtproxy_wraps_the_handshake_in_application_records() -> None:
@@ -336,7 +331,8 @@ async def test_connect_via_mtproxy_wraps_the_handshake_in_application_records() 
 
     assert len(packet) == _LENGTH_PREFIX_SIZE + framed_length
     assert packet[_LENGTH_PREFIX_SIZE : _LENGTH_PREFIX_SIZE + len(payload)] == payload
-    assert 0 <= framed_length - len(payload) <= _MAX_INTERMEDIATE_PADDING
+    # The padded transport appends up to 15 random bytes after the payload.
+    assert 0 <= framed_length - len(payload) <= 15
 
 
 async def test_connect_via_mtproxy_reads_a_reply_split_across_several_records() -> None:
@@ -346,7 +342,7 @@ async def test_connect_via_mtproxy_reads_a_reply_split_across_several_records() 
 
     # Shorter than 24 bytes and the padded transport reads the frame as a quick
     #  ack or an error code rather than as a packet.
-    reply: Final[bytes] = bytes(range(_MIN_INTERMEDIATE_PACKET_SIZE))
+    reply: Final[bytes] = bytes(range(24))
     secret = bytes.fromhex(PLAIN_SECRET_HEX)
 
     stub = await _start_fake_tls_stub(
@@ -540,9 +536,6 @@ _TDLIB_RESERVED_FIRST_INTS: Final[Tuple[int, ...]] = (
     0x02010316,
 )
 
-_NONCE_SIZE: Final[int] = 64
-_NONCE_DRAWS: Final[int] = 256
-
 
 def test_obfuscated2_reserved_prefixes_are_the_ones_tdlib_refuses() -> None:
     # A dropped entry is invisible at runtime - it costs one connection in four
@@ -553,10 +546,10 @@ def test_obfuscated2_reserved_prefixes_are_the_ones_tdlib_refuses() -> None:
 
 
 def test_generate_obfuscated2_nonce_avoids_every_fingerprintable_opening() -> None:
-    for _ in range(_NONCE_DRAWS):
+    for _ in range(256):
         nonce = generate_obfuscated2_nonce()
 
-        assert len(nonce) == _NONCE_SIZE
+        assert len(nonce) == 64
         assert nonce[0] != ABRIDGED_OBFUSCATE_TAG[0]
         assert bytes(nonce[:4]) not in _OBFUSCATED2_RESERVED_PREFIXES
         assert nonce[4:8] != bytes(4)

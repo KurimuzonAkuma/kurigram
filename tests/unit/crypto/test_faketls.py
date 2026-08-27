@@ -31,25 +31,16 @@ _RANDOM_OFFSET: Final[int] = 11
 _RANDOM_SIZE: Final[int] = 32
 _TIMESTAMP_SIZE: Final[int] = 4
 
-_KEY_SHARE_EXTENSION: Final[int] = 0x0033
 _X25519_GROUP: Final[int] = 0x001D
 _ML_KEM_768_X25519_GROUP: Final[int] = 0x11EC
 
 _CURVE25519_PRIME: Final[int] = 2**255 - 19
-_CURVE25519_A: Final[int] = 486662
 _CURVE25519_KEY_SIZE: Final[int] = 32
 _ML_KEM_768_KEY_SIZE: Final[int] = 1184
 
-# The four lengths TDLib's `Op::ech_payload()` picks between, written out as
-#  `Random::fast(0, 3) * 32 + 144` gives them.
-#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L126-L131
-_ECH_PAYLOAD_SIZES: Final[FrozenSet[int]] = frozenset({144, 176, 208, 240})
-
-# The prime order of the Curve25519 base point, and the constant its ladder
-#  needs. The full curve is eight times that order.
+# The prime order of the Curve25519 base point. The full curve is eight times it.
 #  https://www.rfc-editor.org/rfc/rfc7748#section-4.1
 _CURVE25519_ORDER: Final[int] = 2**252 + 27742317777372353535851937790883648493
-_CURVE25519_A24: Final[int] = 121665
 
 # The extension types the ClientHello carries, whatever order the permutation
 #  puts them in. Read off TDLib's op list, so a dropped extension shows up here.
@@ -74,10 +65,6 @@ _EXPECTED_EXTENSIONS: Final[FrozenSet[int]] = frozenset(
         0xFF01,
     }
 )
-
-# Two more extensions carry a GREASE value as their type, so their number is not
-#  fixed and they are counted rather than named.
-_GREASE_EXTENSION_COUNT: Final[int] = 2
 
 
 def _is_grease(extension_type: int) -> bool:
@@ -146,7 +133,9 @@ def test_client_hello_carries_every_extension_whatever_the_permutation_does() ->
         present = _parse_extensions(_build_client_hello().record)
         grease = {extension for extension in present if _is_grease(extension)}
 
-        assert len(grease) == _GREASE_EXTENSION_COUNT
+        # Two more extensions carry a GREASE value as their type, so their number
+        #  is not fixed and they are counted rather than named.
+        assert len(grease) == 2
         assert frozenset(present) - grease == _EXPECTED_EXTENSIONS
 
 
@@ -157,7 +146,10 @@ def test_client_hello_extension_order_actually_varies() -> None:
 
 
 def test_ech_payload_length_is_one_of_the_four_tdlib_draws_between() -> None:
-    assert faketls._ECH_PAYLOAD_SIZE in _ECH_PAYLOAD_SIZES
+    # The four lengths TDLib's `Op::ech_payload()` picks between, written out as
+    #  `Random::fast(0, 3) * 32 + 144` gives them.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L126-L131
+    assert faketls._ECH_PAYLOAD_SIZE in {144, 176, 208, 240}
 
 
 def test_client_hello_length_is_the_same_for_every_greeting() -> None:
@@ -219,7 +211,7 @@ class _KeyShareEntry(NamedTuple):
 
 
 def _key_share_entries(record: bytes) -> List[_KeyShareEntry]:
-    body = _parse_extensions(record)[_KEY_SHARE_EXTENSION]
+    body = _parse_extensions(record)[0x0033]  # the key_share extension
     assert int.from_bytes(body[:2], "big") == len(body) - 2
 
     entries: List[_KeyShareEntry] = []
@@ -240,7 +232,8 @@ def _key_share_entries(record: bytes) -> List[_KeyShareEntry]:
 
 def _is_on_curve25519(key: bytes) -> bool:
     x = int.from_bytes(key, "little")
-    y_squared = ((x + _CURVE25519_A) * x + 1) * x % _CURVE25519_PRIME
+    # 486662 is the curve's `A`.
+    y_squared = ((x + 486662) * x + 1) * x % _CURVE25519_PRIME
 
     return pow(y_squared, (_CURVE25519_PRIME - 1) // 2, _CURVE25519_PRIME) == 1
 
@@ -277,7 +270,8 @@ def _is_in_prime_order_subgroup(key: bytes) -> bool:
         x_3 = pow(da + cb, 2, prime)
         z_3 = x_1 * pow(da - cb, 2, prime) % prime
         x_2 = a_squared * b_squared % prime
-        z_2 = e_difference * (a_squared + _CURVE25519_A24 * e_difference) % prime
+        # 121665 is `a24`, the ladder constant of RFC 7748 section 4.1.
+        z_2 = e_difference * (a_squared + 121665 * e_difference) % prime
 
     if swap:
         z_2 = z_3
