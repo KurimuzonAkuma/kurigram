@@ -41,6 +41,12 @@ from tests.web_proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX
 # A made-up domain. The tests only round-trip it through the secret encoding.
 _SNI_DOMAIN: Final[str] = "www.example.com"
 
+# TDLib's `MAX_DOMAIN_LENGTH`, written out rather than imported: what the two
+#  tests below pin is the number TDLib publishes, and importing ours would only
+#  make them agree with whatever it happens to say.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.h#L18
+_MAX_SNI_DOMAIN_SIZE: Final[int] = 182
+
 
 def test_hostname_canonicalization_matches_normative_vector_host() -> None:
     # §2.4/§10: different normalizations of the same host derive different
@@ -167,6 +173,21 @@ def test_normalize_proxy_mtproxy_ee_secret_splits_key_from_sni_domain() -> None:
     )
 
 
+def test_normalize_proxy_mtproxy_ee_secret_takes_a_domain_of_the_maximum_length() -> None:
+    domain = "a" * _MAX_SNI_DOMAIN_SIZE
+
+    proxy = normalize_proxy(
+        {
+            "scheme": "mtproxy",
+            "hostname": "1.2.3.4",
+            "port": 443,
+            "secret": "ee" + PLAIN_SECRET_HEX + domain.encode("ascii").hex(),
+        }
+    )
+
+    assert proxy.sni_hostname == domain
+
+
 def test_normalize_proxy_mtproxy_sixteen_byte_secret_is_plain_whatever_its_first_byte() -> None:
     # A marker byte only marks anything at 17 bytes and up, so roughly one plain
     #  secret in 256 opens with a byte that would otherwise read as one.
@@ -183,6 +204,10 @@ def test_normalize_proxy_mtproxy_sixteen_byte_secret_is_plain_whatever_its_first
     [
         pytest.param("ee" + PLAIN_SECRET_HEX, id="ee-no-domain"),
         pytest.param("ee" + PLAIN_SECRET_HEX + "ff", id="ee-non-ascii-domain"),
+        pytest.param(
+            "ee" + PLAIN_SECRET_HEX + ("a" * (_MAX_SNI_DOMAIN_SIZE + 1)).encode("ascii").hex(),
+            id="ee-over-long-domain",
+        ),
         pytest.param("dd" + PLAIN_SECRET_HEX + "61", id="dd-with-a-trailing-domain"),
     ],
 )
