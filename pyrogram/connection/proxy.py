@@ -257,7 +257,6 @@ _MAX_SNI_DOMAIN_SIZE: Final[int] = 182
 # An ee secret is shared base64url-encoded, the others as hex - but every client
 #  accepts any of the three, so the alphabet does not identify the flavour.
 _BASE64URL_ALTCHARS: Final[bytes] = b"-_"
-_BASE64_ALTCHARS: Final[bytes] = b"+/"
 
 # The WEB scheme cannot carry an ee secret whatever this library implements: the
 #  relay speaks to a stock MTProxy over a plain obfuscated2 stream and never adds
@@ -308,7 +307,7 @@ def _base64_decoded(encoded_secret: str, *, altchars: bytes) -> Optional[bytes]:
 
 
 def _decode_proxy_secret(encoded_secret: str) -> bytes:
-    """Hex, then base64url, then base64 - the order TDLib tries them in.
+    """Hex, then base64 in either alphabet - the encodings TDLib accepts.
 
     https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.cpp#L15-L27
     """
@@ -317,11 +316,14 @@ def _decode_proxy_secret(encoded_secret: str) -> bytes:
     except ValueError:
         pass
 
-    for altchars in (_BASE64URL_ALTCHARS, _BASE64_ALTCHARS):
-        decoded = _base64_decoded(encoded_secret, altchars=altchars)
+    # One call covers both alphabets, unlike TDLib, which needs two: `altchars`
+    #  only rewrites `-_` into `+/` before validating, so a standard-base64
+    #  secret passes through it untouched. A second pass over `b"+/"` would
+    #  therefore never decode anything this one rejects.
+    decoded = _base64_decoded(encoded_secret, altchars=_BASE64URL_ALTCHARS)
 
-        if decoded is not None:
-            return decoded
+    if decoded is not None:
+        return decoded
 
     msg = f"proxy 'secret' must be hex, base64url or base64: {encoded_secret!r}"
     raise ValueError(msg)

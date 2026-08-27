@@ -357,19 +357,26 @@ def test_normalize_proxy_webproxy_link_is_not_read_as_an_mtproxy_one() -> None:
     assert isinstance(proxy, WebProxy)
 
 
+# Not `PLAIN_SECRET_HEX`: its base64 and base64url forms come out byte-identical,
+#  so two of the three vectors below would be the same string and only one
+#  alphabet would ever be exercised. This one ends `/w` under base64 and `_w`
+#  under base64url.
+_ALPHABET_SENSITIVE_SECRET_HEX: Final[str] = "00112233445566778899aabbccddeeff"
+
+
 @pytest.mark.parametrize(
     "encoded_secret",
     [
-        PLAIN_SECRET_HEX,
-        _base64url(PLAIN_SECRET_HEX),
-        base64.b64encode(bytes.fromhex(PLAIN_SECRET_HEX)).decode("ascii"),
+        _ALPHABET_SENSITIVE_SECRET_HEX,
+        _base64url(_ALPHABET_SENSITIVE_SECRET_HEX),
+        base64.b64encode(bytes.fromhex(_ALPHABET_SENSITIVE_SECRET_HEX)).decode("ascii"),
     ],
 )
 def test_normalize_proxy_mtproxy_accepts_every_encoding_tdlib_accepts(encoded_secret: str) -> None:
     proxy = normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": encoded_secret})
 
     assert isinstance(proxy, MTProxy)
-    assert proxy.secret == bytes.fromhex(PLAIN_SECRET_HEX)
+    assert proxy.secret == bytes.fromhex(_ALPHABET_SENSITIVE_SECRET_HEX)
 
 
 def test_normalize_proxy_mtproxy_rejects_a_secret_in_no_known_encoding() -> None:
