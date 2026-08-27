@@ -93,40 +93,40 @@ _DIALED_PROXY_TYPES: Final[Dict[ProxyScheme, Type[Union[SOCKS4Proxy, SOCKS5Proxy
 
 # The dict form accepted at the public boundary, Client(proxy={...}).
 
-class _Socks4ProxyDictRequired(TypedDict):
+class _SOCKS4ProxyDictRequired(TypedDict):
     scheme: Literal["socks4"]
     hostname: str
     port: int
 
 
-class Socks4ProxyDict(_Socks4ProxyDictRequired, total=False):
+class SOCKS4ProxyDict(_SOCKS4ProxyDictRequired, total=False):
     username: str
     password: str
 
 
-class _Socks5ProxyDictRequired(TypedDict):
+class _SOCKS5ProxyDictRequired(TypedDict):
     scheme: Literal["socks5"]
     hostname: str
     port: int
 
 
-class Socks5ProxyDict(_Socks5ProxyDictRequired, total=False):
+class SOCKS5ProxyDict(_SOCKS5ProxyDictRequired, total=False):
     username: str
     password: str
 
 
-class _HttpProxyDictRequired(TypedDict):
+class _HTTPProxyDictRequired(TypedDict):
     scheme: Literal["http"]
     hostname: str
     port: int
 
 
-class HttpProxyDict(_HttpProxyDictRequired, total=False):
+class HTTPProxyDict(_HTTPProxyDictRequired, total=False):
     username: str
     password: str
 
 
-class MtProxyDict(TypedDict):
+class MTProxyDict(TypedDict):
     scheme: Literal["mtproxy"]
     hostname: str
     port: int
@@ -139,7 +139,7 @@ class WebProxyDict(TypedDict):
     secret: str
 
 
-ProxyDict = Union[Socks4ProxyDict, Socks5ProxyDict, HttpProxyDict, MtProxyDict, WebProxyDict]
+ProxyDict = Union[SOCKS4ProxyDict, SOCKS5ProxyDict, HTTPProxyDict, MTProxyDict, WebProxyDict]
 
 
 def canonicalize_web_hostname(hostname: str) -> str:
