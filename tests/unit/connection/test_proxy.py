@@ -36,10 +36,7 @@ from pyrogram.connection.proxy import (
 )
 from pyrogram.enums import ProxyScheme
 
-from tests.web_proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX
-
-# A made-up domain. The tests only round-trip it through the secret encoding.
-_SNI_DOMAIN: Final[str] = "www.example.com"
+from tests.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
 
 # TDLib's `MAX_DOMAIN_LENGTH`, written out rather than imported: what the two
 #  tests below pin is the number TDLib publishes, and importing ours would only
@@ -150,7 +147,7 @@ def test_normalize_proxy_web_ee_secret_names_the_relay() -> None:
             {
                 "scheme": "web",
                 "hostname": "relay.example.com",
-                "secret": "ee" + PLAIN_SECRET_HEX + _SNI_DOMAIN.encode("ascii").hex(),
+                "secret": "ee" + PLAIN_SECRET_HEX + SNI_DOMAIN.encode("ascii").hex(),
             }
         )
 
@@ -161,7 +158,7 @@ def test_normalize_proxy_mtproxy_ee_secret_splits_key_from_sni_domain() -> None:
             "scheme": "mtproxy",
             "hostname": "1.2.3.4",
             "port": 443,
-            "secret": "ee" + PLAIN_SECRET_HEX + _SNI_DOMAIN.encode("ascii").hex(),
+            "secret": "ee" + PLAIN_SECRET_HEX + SNI_DOMAIN.encode("ascii").hex(),
         }
     )
 
@@ -169,7 +166,7 @@ def test_normalize_proxy_mtproxy_ee_secret_splits_key_from_sni_domain() -> None:
         hostname="1.2.3.4",
         port=443,
         secret=bytes.fromhex(PLAIN_SECRET_HEX),
-        sni_hostname=_SNI_DOMAIN,
+        sni_hostname=SNI_DOMAIN,
     )
 
 
@@ -301,7 +298,7 @@ def test_client_proxy_address_reports_nothing_for_a_proxy_telegram_does_not_own(
     assert client_proxy_address(proxy) is None
 
 
-_EE_SECRET_HEX: Final[str] = "ee" + PLAIN_SECRET_HEX + _SNI_DOMAIN.encode("ascii").hex()
+_EE_SECRET_HEX: Final[str] = "ee" + PLAIN_SECRET_HEX + SNI_DOMAIN.encode("ascii").hex()
 
 
 def _base64url(secret_hex: str) -> str:
@@ -338,7 +335,7 @@ def test_normalize_proxy_mtproxy_link_splits_a_base64url_ee_secret() -> None:
         hostname="1.2.3.4",
         port=443,
         secret=bytes.fromhex(PLAIN_SECRET_HEX),
-        sni_hostname=_SNI_DOMAIN,
+        sni_hostname=SNI_DOMAIN,
     )
 
 

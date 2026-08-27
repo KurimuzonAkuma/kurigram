@@ -24,10 +24,7 @@ from pyrogram.connection.connection import Connection, _protocol_dc_id, transpor
 from pyrogram.connection.proxy import MTProxy, Proxy, SOCKS5Proxy, WebProxy
 from pyrogram.connection.transport import TCP, TCPAbridged, TCPFull, TCPIntermediatePadded
 
-from tests.web_proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX
-
-# A made-up domain, only ever carried around as an ee secret's SNI field.
-_SNI_DOMAIN: Final[str] = "www.example.com"
+from tests.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
 
 _PLAIN_MTPROXY: Final[MTProxy] = MTProxy(
     hostname="11.22.33.44",
@@ -45,7 +42,7 @@ _EE_MTPROXY: Final[MTProxy] = MTProxy(
     hostname="11.22.33.44",
     port=443,
     secret=bytes.fromhex(PLAIN_SECRET_HEX),
-    sni_hostname=_SNI_DOMAIN,
+    sni_hostname=SNI_DOMAIN,
 )
 
 

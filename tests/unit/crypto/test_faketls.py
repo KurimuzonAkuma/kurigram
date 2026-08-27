@@ -22,7 +22,8 @@ from typing import Dict, Final, FrozenSet, List, NamedTuple
 
 from pyrogram.crypto import faketls
 
-_DOMAIN: Final[str] = "www.example.com"
+from tests.proxy_values import SNI_DOMAIN
+
 _SECRET: Final[bytes] = bytes.fromhex("0123456789abcdef0123456789abcdef")
 _UNIX_TIME: Final[int] = 1756000000
 
@@ -124,7 +125,7 @@ def _parse_extensions(record: bytes) -> Dict[int, bytes]:
 
 
 def _build_client_hello() -> faketls.FakeTlsHello:
-    return faketls.build_client_hello(domain=_DOMAIN, secret=_SECRET, unix_time=_UNIX_TIME)
+    return faketls.build_client_hello(domain=SNI_DOMAIN, secret=_SECRET, unix_time=_UNIX_TIME)
 
 
 def test_client_hello_length_fields_all_agree() -> None:
@@ -135,7 +136,7 @@ def test_client_hello_names_the_domain_in_its_sni_extension() -> None:
     server_name = _parse_extensions(_build_client_hello().record)[0x0000]
 
     # `ServerNameList` length, one `ServerName` of type 0, then the host length.
-    assert server_name[5:] == _DOMAIN.encode("ascii")
+    assert server_name[5:] == SNI_DOMAIN.encode("ascii")
 
 
 def test_client_hello_carries_every_extension_whatever_the_permutation_does() -> None:

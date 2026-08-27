@@ -16,8 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Test values shared by more than one WEB proxy test module, so no module
-declares its own copy."""
+"""Test values shared by more than one proxy test module, so no module declares
+its own copy."""
 
 from typing import Final, Tuple
 
@@ -25,6 +25,10 @@ from typing import Final, Tuple
 #  here needs a secret that belongs to a real deployment.
 PLAIN_SECRET_HEX: Final[str] = "0123456789abcdef0123456789abcdef"
 DD_SECRET_HEX: Final[str] = "dd" + PLAIN_SECRET_HEX
+
+# The domain an ee secret carries. Also made up: the tests round-trip it through
+#  the secret encoding and into the greeting, and never resolve it.
+SNI_DOMAIN: Final[str] = "www.example.com"
 
 # Normative capability vectors. The relay publishes the same two in its own
 #  protocol spec, so client and relay agree on the derivation byte for byte.

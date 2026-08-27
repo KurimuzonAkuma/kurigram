@@ -43,7 +43,7 @@ from pyrogram.connection.transport.tcp.tcp import (
 )
 from pyrogram.crypto import aes
 
-from tests.web_proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX
+from tests.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
 
 # The obfuscated2 handshake is one fixed-size buffer; only its last 8 bytes are
 #  encrypted.
@@ -55,7 +55,6 @@ _UNREACHABLE_DC_ADDRESS: Final[Tuple[str, int]] = ("198.51.100.1", 443)
 
 _DC_ID: Final[int] = 2
 
-_SNI_DOMAIN: Final[str] = "www.example.com"
 
 # The ClientHello record header, and the offset of the random field both sides
 #  authenticate - 5 bytes of record header, 4 of handshake header, 2 of version.
@@ -162,7 +161,7 @@ async def test_connect_via_mtproxy_rejects_an_ee_secret_on_the_wrong_class() -> 
         hostname="1.2.3.4",
         port=443,
         secret=bytes.fromhex(PLAIN_SECRET_HEX),
-        sni_hostname=_SNI_DOMAIN,
+        sni_hostname=SNI_DOMAIN,
     )
     transport = TCPAbridged(proxy=mtproxy, dc_id=_DC_ID)
 
@@ -264,7 +263,7 @@ async def _start_fake_tls_stub(
 
 
 def _fake_tls_mtproxy(port: int, *, secret: bytes) -> MTProxy:
-    return MTProxy(hostname="127.0.0.1", port=port, secret=secret, sni_hostname=_SNI_DOMAIN)
+    return MTProxy(hostname="127.0.0.1", port=port, secret=secret, sni_hostname=SNI_DOMAIN)
 
 
 async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_hello() -> None:
@@ -281,7 +280,7 @@ async def test_connect_via_mtproxy_greets_a_fake_tls_proxy_with_a_signed_client_
         await stub.server.wait_closed()
 
     assert greeting[:3] == _CLIENT_HELLO_PREFIX
-    assert _SNI_DOMAIN.encode("ascii") in greeting
+    assert SNI_DOMAIN.encode("ascii") in greeting
 
     # The proxy authenticates the greeting exactly this way before answering it.
     zeroed = (
