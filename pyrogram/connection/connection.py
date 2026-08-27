@@ -85,10 +85,9 @@ class Connection:
         self.protocol_factory = transport_class_for(proxy, default=protocol_factory)
 
         if self.protocol_factory is not protocol_factory:
-            log.info(
-                "Proxy secret asks for random padding: using %s over the requested %s",
+            log.debug(
+                "Proxy secret asks for random padding, so %s frames this connection",
                 self.protocol_factory.__name__,
-                protocol_factory.__name__,
             )
 
         self.protocol: Optional[TCP] = None
