@@ -16,10 +16,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from pyrogram.connection.transport.tcp.tcp import TCP
-from pyrogram.connection.transport.tcp.tcp_abridged import TCPAbridged
-from pyrogram.connection.transport.tcp.tcp_abridged_o import TCPAbridgedO
-from pyrogram.connection.transport.tcp.tcp_full import TCPFull
-from pyrogram.connection.transport.tcp.tcp_intermediate import TCPIntermediate
-from pyrogram.connection.transport.tcp.tcp_intermediate_o import TCPIntermediateO
-from pyrogram.connection.transport.tcp.tcp_intermediate_padded import TCPIntermediatePadded
+from .tcp import TCP
+from .tcp_abridged import TCPAbridged
+from .tcp_abridged_o import TCPAbridgedO
+from .tcp_full import TCPFull
+from .tcp_intermediate import TCPIntermediate
+from .tcp_intermediate_o import TCPIntermediateO
+from .tcp_intermediate_padded import TCPIntermediatePadded

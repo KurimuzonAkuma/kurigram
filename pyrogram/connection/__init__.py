@@ -16,8 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from pyrogram.connection.connection import Connection
-from pyrogram.connection.proxy import (
+from .connection import Connection
+from .proxy import (
     HTTPProxy,
     MTProxy,
     Proxy,
