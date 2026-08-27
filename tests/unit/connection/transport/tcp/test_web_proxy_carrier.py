@@ -54,6 +54,7 @@ def test_serialize_parse_round_trip() -> None:
 
     assert parsed.consumed == len(wire)
     assert len(parsed.frames) == 1
+
     assert parsed.frames[0].type == FrameType.DATA
     assert parsed.frames[0].stream_id == 42
     assert parsed.frames[0].payload == payload
