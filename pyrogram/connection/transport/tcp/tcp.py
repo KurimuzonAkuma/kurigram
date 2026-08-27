@@ -47,12 +47,19 @@ log = logging.getLogger(__name__)
 #  so what the relay's locally-configured stock MTProxy expects over the WEB
 #  proxy carrier.
 
+# The first four bytes a nonce must not open with, read off TDLib's own loop.
+#  The four verbs are what an HTTP-sniffing middlebox looks for, the two
+#  repeated bytes are framing tags, and `16 03 01 02` is a TLS ClientHello
+#  record - each would make the stream look like a protocol it is not.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.cpp#L99-L101
 _OBFUSCATED2_RESERVED_PREFIXES: Final[Tuple[bytes, ...]] = (
     b"HEAD",
     b"POST",
     b"GET ",
     b"OPTI",
+    b"\xdd\xdd\xdd\xdd",
     b"\xee\xee\xee\xee",
+    b"\x16\x03\x01\x02",
 )
 
 # The 4-byte tag written at nonce[56:60], by which stock MTProxy recognizes the

@@ -38,6 +38,8 @@ from pyrogram.connection.transport.tcp.tcp import (
     ABRIDGED_OBFUSCATE_TAG,
     INTERMEDIATE_PADDED_OBFUSCATE_TAG,
     TCP,
+    _OBFUSCATED2_RESERVED_PREFIXES,
+    generate_obfuscated2_nonce,
 )
 from pyrogram.crypto import aes
 
@@ -525,3 +527,37 @@ async def test_build_proxy_rejects_a_scheme_it_cannot_dial() -> None:
 
     with pytest.raises(ValueError, match="WebProxy"):
         await transport._build_proxy()
+
+
+# The same seven values TDLib refuses, as the little-endian ints it compares.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.cpp#L99-L101
+_TDLIB_RESERVED_FIRST_INTS: Final[Tuple[int, ...]] = (
+    0x44414548,
+    0x54534F50,
+    0x20544547,
+    0x4954504F,
+    0xDDDDDDDD,
+    0xEEEEEEEE,
+    0x02010316,
+)
+
+_NONCE_SIZE: Final[int] = 64
+_NONCE_DRAWS: Final[int] = 256
+
+
+def test_obfuscated2_reserved_prefixes_are_the_ones_tdlib_refuses() -> None:
+    # A dropped entry is invisible at runtime - it costs one connection in four
+    #  billion - so the list is compared against its source rather than exercised.
+    expected = {value.to_bytes(4, "little") for value in _TDLIB_RESERVED_FIRST_INTS}
+
+    assert set(_OBFUSCATED2_RESERVED_PREFIXES) == expected
+
+
+def test_generate_obfuscated2_nonce_avoids_every_fingerprintable_opening() -> None:
+    for _ in range(_NONCE_DRAWS):
+        nonce = generate_obfuscated2_nonce()
+
+        assert len(nonce) == _NONCE_SIZE
+        assert nonce[0] != ABRIDGED_OBFUSCATE_TAG[0]
+        assert bytes(nonce[:4]) not in _OBFUSCATED2_RESERVED_PREFIXES
+        assert nonce[4:8] != bytes(4)
