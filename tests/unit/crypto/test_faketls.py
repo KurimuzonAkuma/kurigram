@@ -140,7 +140,17 @@ def test_client_hello_carries_every_extension_whatever_the_permutation_does() ->
 
 
 def test_client_hello_extension_order_actually_varies() -> None:
-    orders = {tuple(_parse_extensions(_build_client_hello().record)) for _ in range(16)}
+    # GREASE types are drawn fresh per greeting, so an order that kept them
+    #  would vary on those values alone and still pass with the permutation
+    #  removed entirely.
+    orders = {
+        tuple(
+            extension
+            for extension in _parse_extensions(_build_client_hello().record)
+            if not _is_grease(extension)
+        )
+        for _ in range(16)
+    }
 
     assert len(orders) > 1
 
