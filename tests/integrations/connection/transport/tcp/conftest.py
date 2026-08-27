@@ -29,7 +29,7 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import AsyncIterator, Final, Type
+from typing import AsyncIterator, Final, List, NamedTuple, Optional, Type
 
 import pytest
 
@@ -83,16 +83,50 @@ def relay_transport_class(relay_proxy: WebProxy) -> Type[TCP]:
     return transport_class_for(relay_proxy)
 
 
-@pytest.fixture(scope="session")
-def mtproxy_proxy() -> MTProxy:
-    # One variable rather than three, because a proxy is shared as a link and
-    #  the link is what carries the secret flavour - plain, dd or ee.
-    _skip_unless_set("MTPROXY_TEST_LINK")
+class _LinkParams(NamedTuple):
+    links: List[Optional[str]]
+    ids: List[str]
 
-    proxy = normalize_proxy(os.environ["MTPROXY_TEST_LINK"])
+
+def _mtproxy_link_parameters() -> _LinkParams:
+    """One parameter per configured link, or one that skips when none is.
+
+    Read at import time because `params` has to exist before collection, and an
+    empty list would collect no tests at all rather than skipping them.
+    """
+    links = os.environ.get("MTPROXY_TEST_LINKS", "").split()
+
+    if not links:
+        return _LinkParams(links=[None], ids=["unset"])
+
+    parameters = _LinkParams(links=[], ids=[])
+
+    for link in links:
+        proxy = normalize_proxy(link)
+        parameters.links.append(link)
+        # The link carries the secret, so the id names the address alone.
+        parameters.ids.append("{}:{}".format(proxy.hostname, proxy.port))
+
+    return parameters
+
+
+# One variable rather than three per proxy, because a proxy is shared as a link
+#  and the link is what carries the secret flavour - plain, dd or ee. Every test
+#  below runs once per link, so one command covers every flavour configured.
+_MTPROXY_LINK_PARAMETERS: Final[_LinkParams] = _mtproxy_link_parameters()
+
+
+@pytest.fixture(scope="session", params=_MTPROXY_LINK_PARAMETERS.links, ids=_MTPROXY_LINK_PARAMETERS.ids)
+def mtproxy_proxy(request: pytest.FixtureRequest) -> MTProxy:
+    link = request.param
+
+    if link is None:
+        pytest.skip("set MTPROXY_TEST_LINKS in .env.test to run this test")
+
+    proxy = normalize_proxy(link)
 
     if not isinstance(proxy, MTProxy):
-        pytest.skip("MTPROXY_TEST_LINK parses as {}, not an MTProxy".format(type(proxy).__name__))
+        pytest.skip("MTPROXY_TEST_LINKS carries a {}, not an MTProxy".format(type(proxy).__name__))
 
     return proxy
 
