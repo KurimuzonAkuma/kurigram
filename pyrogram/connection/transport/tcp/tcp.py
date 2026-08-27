@@ -30,6 +30,8 @@ from python_socks.async_.asyncio import Proxy as SocksProxy
 
 from pyrogram import utils
 from pyrogram.connection.proxy import (
+    MARKED_SECRET_SIZE,
+    OBFUSCATED2_SECRET_SIZE,
     HTTPProxy,
     MTProxy,
     Proxy,
@@ -76,11 +78,6 @@ _OBFUSCATED2_RESERVED_PREFIXES: Final[Tuple[bytes, ...]] = (
 ABRIDGED_OBFUSCATE_TAG: Final[bytes] = b"\xef\xef\xef\xef"
 INTERMEDIATE_PADDED_OBFUSCATE_TAG: Final[bytes] = b"\xdd\xdd\xdd\xdd"
 
-# The obfuscated2 secret is the bare AES key, and a dd-prefixed one carries a
-#  marker byte in front of it.
-_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
-_DD_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
-
 _OBFUSCATE_TAG_SIZE: Final[int] = 4
 
 CipherArgs = Tuple[bytes, bytearray, bytearray]  # (key, iv, state) for aes.ctr256_{en,de}crypt
@@ -124,8 +121,8 @@ class Obfuscated2Header(NamedTuple):
 
 def build_obfuscated2_header(secret: bytes, *, dc_id: int, obfuscate_tag: bytes) -> Obfuscated2Header:
     # secret is the bare key - callers strip any 0xDD marker first.
-    if len(secret) != _OBFUSCATED2_SECRET_SIZE:
-        msg = f"obfuscated2: secret must be exactly {_OBFUSCATED2_SECRET_SIZE} bytes, got {len(secret)}"
+    if len(secret) != OBFUSCATED2_SECRET_SIZE:
+        msg = f"obfuscated2: secret must be exactly {OBFUSCATED2_SECRET_SIZE} bytes, got {len(secret)}"
         raise ValueError(msg)
 
     if len(obfuscate_tag) != _OBFUSCATE_TAG_SIZE:
@@ -233,7 +230,7 @@ class TCP:
             )
             raise ValueError(msg)
 
-        if len(secret) == _DD_SECRET_SIZE:
+        if len(secret) == MARKED_SECRET_SIZE:
             return secret[1:]
 
         return secret

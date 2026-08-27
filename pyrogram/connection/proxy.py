@@ -73,9 +73,10 @@ class HTTPProxy:
     password: Optional[str] = None
 
 
-# The obfuscated2 key is 16 bytes, and a dd or ee marker prefixes it with one more.
-_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
-_MARKED_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
+# The obfuscated2 key is 16 bytes, and a dd or ee marker prefixes it with one
+#  more. The transport reads both from here, so the two sizes have one home.
+OBFUSCATED2_SECRET_SIZE: Final[int] = 16
+MARKED_SECRET_SIZE: Final[int] = OBFUSCATED2_SECRET_SIZE + 1
 
 
 @dataclass(frozen=True)
@@ -140,7 +141,7 @@ def uses_random_padding(proxy: Optional[Proxy]) -> bool:
     if isinstance(proxy, MTProxy) and proxy.sni_hostname is not None:
         return True
 
-    return len(proxy.secret) == _MARKED_SECRET_SIZE
+    return len(proxy.secret) == MARKED_SECRET_SIZE
 
 
 _PROXY_TYPES: Final[Tuple[type, ...]] = (SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy)
@@ -270,7 +271,7 @@ class _DecodedSecret(NamedTuple):
 
 
 def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
-    domain = full_secret[_MARKED_SECRET_SIZE:]
+    domain = full_secret[MARKED_SECRET_SIZE:]
 
     # The domain goes into the ClientHello's SNI extension, whose length field
     #  the hello cannot outgrow, so TDLib caps it and rejects a longer secret
@@ -290,7 +291,7 @@ def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
         msg = f"ee-prefixed proxy secret carries a non-ASCII SNI domain: {e}"
         raise ValueError(msg) from e
 
-    return _DecodedSecret(secret=full_secret[1:_MARKED_SECRET_SIZE], sni_hostname=sni_hostname)
+    return _DecodedSecret(secret=full_secret[1:MARKED_SECRET_SIZE], sni_hostname=sni_hostname)
 
 
 def _base64_decoded(encoded_secret: str, *, altchars: bytes) -> Optional[bytes]:
@@ -332,17 +333,17 @@ def _decode_mtproxy_secret(encoded_secret: str, *, scheme: ProxyScheme) -> _Deco
     #  it in: 16 bytes is a bare key whatever its first byte happens to be, so a
     #  plain secret that starts with dd or ee is still plain.
     #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.cpp#L37-L39
-    if len(full_secret) == _OBFUSCATED2_SECRET_SIZE:
+    if len(full_secret) == OBFUSCATED2_SECRET_SIZE:
         return _DecodedSecret(secret=full_secret, sni_hostname=None)
 
-    if len(full_secret) == _MARKED_SECRET_SIZE and full_secret[0] == _PADDED_MARKER:
+    if len(full_secret) == MARKED_SECRET_SIZE and full_secret[0] == _PADDED_MARKER:
         return _DecodedSecret(secret=full_secret, sni_hostname=None)
 
     # Strictly longer than a dd secret, because the domain that follows the key
     #  may not be empty: TDLib refuses to build a ClientHello without one, so an
     #  ee secret carrying no domain is unusable rather than merely odd.
     #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L579
-    if len(full_secret) > _MARKED_SECRET_SIZE and full_secret[0] == _FAKE_TLS_MARKER:
+    if len(full_secret) > MARKED_SECRET_SIZE and full_secret[0] == _FAKE_TLS_MARKER:
         if scheme is ProxyScheme.WEB:
             raise ValueError(_WEB_FAKE_TLS_REJECTION)
 
