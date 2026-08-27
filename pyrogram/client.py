@@ -125,11 +125,13 @@ class Client(Methods):
             The *username* and *password* can be omitted if the proxy doesn't require authorization.
             A WEB proxy takes *dict(scheme="web", hostname="relay.example.com", secret="...")* and a
             classic MTProxy *dict(scheme="mtproxy", hostname="11.22.33.44", port=443, secret="...")*,
-            both with an MTProxy secret as hex - pass ``protocol_factory=TCPAbridged`` for a plain
-            16-byte secret or ``protocol_factory=TCPIntermediatePadded`` for a dd-prefixed 17-byte
-            one. The mtproxy scheme also takes an ee-prefixed secret, which appends the domain the
-            connection then imitates a TLS session with; the web scheme cannot, because the relay
-            speaks obfuscated2 to its own MTProxy and never adds the TLS record layer.
+            both with an MTProxy secret as hex. The mtproxy scheme also takes an ee-prefixed
+            secret, which appends the domain the connection then imitates a TLS session with;
+            the web scheme cannot, because the relay speaks obfuscated2 to its own MTProxy and
+            never adds the TLS record layer. Any secret longer than 16 bytes - dd-prefixed or
+            ee-prefixed - means random padding, so pass
+            ``protocol_factory=TCPIntermediatePadded`` for those and leave the default
+            ``TCPAbridged`` in place for a plain 16-byte one.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.
