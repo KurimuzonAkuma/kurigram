@@ -20,7 +20,20 @@
 import ipaddress
 import re
 from dataclasses import dataclass
-from typing import ClassVar, Dict, Final, List, Literal, Optional, Pattern, Tuple, Type, TypedDict, Union
+from typing import (
+    ClassVar,
+    Dict,
+    Final,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Pattern,
+    Tuple,
+    Type,
+    TypedDict,
+    Union,
+)
 from urllib.parse import parse_qs, urlsplit
 
 from pyrogram.enums import ProxyScheme
@@ -69,6 +82,9 @@ class MTProxy:
     hostname: str
     port: int
     secret: bytes  # decoded, dd marker kept when present
+    # Only an ee secret sets this: the domain its fake-TLS ClientHello presents
+    #  as SNI, and the one the proxy checks the connection against.
+    sni_hostname: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -175,40 +191,78 @@ def canonicalize_web_hostname(hostname: str) -> str:
     return canonical
 
 
-# An `ee` secret asks for the fake-TLS record layer tdesktop wraps around the
-#  obfuscated2 stream, and neither kind here can carry it. The reason differs per
-#  kind, so the two messages do too - a WEB user who is told about an unimplemented
-#  record layer will go looking for it in this library, and an MTProxy user who is
-#  told about a relay never configured one.
+# The three secret forms, by their first byte. A plain secret carries no marker
+#  and is the bare 16-byte obfuscated2 key; dd asks for random padding on every
+#  packet; ee asks for the fake-TLS record layer, and appends the SNI domain
+#  after the key.
+#  https://core.telegram.org/mtproto/mtproto-transports#transport-obfuscation
+_PADDED_MARKER: Final[int] = 0xDD
+_FAKE_TLS_MARKER: Final[int] = 0xEE
+
+_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
+_MARKED_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
+
+# The WEB scheme cannot carry an ee secret whatever this library implements: the
+#  relay speaks to a stock MTProxy over a plain obfuscated2 stream and never adds
+#  the fake-TLS records, by design.
 _WEB_FAKE_TLS_REJECTION: Final[str] = (
     "proxy secret uses TLS-emulation ('ee') framing: the relay would need to add the "
     "inner fake-TLS record stock MTProxy expects, and it deliberately does not "
     "(web-proxy-plan.md §3). Use a plain 16-byte or dd-prefixed secret instead."
 )
 
-_MTPROXY_FAKE_TLS_REJECTION: Final[str] = (
-    "proxy secret uses TLS-emulation ('ee') framing, which needs a TLS record layer "
-    "under the obfuscated2 stream that this library does not implement. Use a plain "
-    "16-byte or dd-prefixed secret instead."
-)
+
+class _DecodedSecret(NamedTuple):
+    secret: bytes  # bare 16 bytes, or 17 with the dd marker kept
+    sni_hostname: Optional[str]  # the domain an ee secret appends, else None
 
 
-def _decode_mtproxy_secret(secret_hex: str, *, scheme: ProxyScheme) -> bytes:
+def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
+    secret = full_secret[1:_MARKED_SECRET_SIZE]
+
+    if len(secret) != _OBFUSCATED2_SECRET_SIZE:
+        msg = (
+            "ee-prefixed proxy secret must carry a 16-byte key after the marker, "
+            f"got {len(secret)}"
+        )
+        raise ValueError(msg)
+
+    domain = full_secret[_MARKED_SECRET_SIZE:]
+
+    # TDLib refuses to build a ClientHello without one, so an ee secret that
+    #  carries no domain is unusable rather than merely odd.
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L579
+    if not domain:
+        msg = "ee-prefixed proxy secret must append the SNI domain after the 16-byte key"
+        raise ValueError(msg)
+
+    try:
+        sni_hostname = domain.decode("ascii")
+    except UnicodeDecodeError as e:
+        msg = f"ee-prefixed proxy secret carries a non-ASCII SNI domain: {e}"
+        raise ValueError(msg) from e
+
+    return _DecodedSecret(secret=secret, sni_hostname=sni_hostname)
+
+
+def _decode_mtproxy_secret(secret_hex: str, *, scheme: ProxyScheme) -> _DecodedSecret:
     try:
         full_secret = bytes.fromhex(secret_hex)
     except ValueError as e:
         msg = f"proxy 'secret' must be a hex string: {e}"
         raise ValueError(msg) from e
 
-    if full_secret[:1] == b"\xee":
-        msg = _WEB_FAKE_TLS_REJECTION if scheme is ProxyScheme.WEB else _MTPROXY_FAKE_TLS_REJECTION
-        raise ValueError(msg)
+    if full_secret[:1] == bytes([_FAKE_TLS_MARKER]):
+        if scheme is ProxyScheme.WEB:
+            raise ValueError(_WEB_FAKE_TLS_REJECTION)
 
-    if len(full_secret) == 17 and full_secret[0] == 0xDD:
-        return full_secret
+        return _decode_fake_tls_secret(full_secret)
 
-    if len(full_secret) == 16:
-        return full_secret
+    if len(full_secret) == _MARKED_SECRET_SIZE and full_secret[0] == _PADDED_MARKER:
+        return _DecodedSecret(secret=full_secret, sni_hostname=None)
+
+    if len(full_secret) == _OBFUSCATED2_SECRET_SIZE:
+        return _DecodedSecret(secret=full_secret, sni_hostname=None)
 
     msg = f"proxy secret must decode to 16 bytes (plain) or 17 bytes (dd-prefixed), got {len(full_secret)}"
     raise ValueError(msg)
@@ -218,17 +272,22 @@ def _decode_mtproxy_secret(secret_hex: str, *, scheme: ProxyScheme) -> bytes:
 #  cannot validate differently.
 
 def _build_web_proxy(*, hostname: str, secret_hex: str) -> WebProxy:
+    decoded = _decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.WEB)
+
     return WebProxy(
         hostname=canonicalize_web_hostname(hostname),
-        secret=_decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.WEB),
+        secret=decoded.secret,
     )
 
 
 def _build_mtproxy(*, hostname: str, port: Union[int, str], secret_hex: str) -> MTProxy:
+    decoded = _decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.MTPROXY)
+
     return MTProxy(
         hostname=hostname,
         port=int(port),
-        secret=_decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.MTPROXY),
+        secret=decoded.secret,
+        sni_hostname=decoded.sni_hostname,
     )
 
 

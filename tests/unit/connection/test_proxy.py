@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Final
+
 import pytest
 
 from pyrogram.connection.proxy import (
@@ -30,6 +32,9 @@ from pyrogram.connection.proxy import (
 from pyrogram.enums import ProxyScheme
 
 from tests.web_proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX
+
+# A made-up domain. The tests only round-trip it through the secret encoding.
+_SNI_DOMAIN: Final[str] = "www.example.com"
 
 
 def test_hostname_canonicalization_matches_normative_vector_host() -> None:
@@ -133,15 +138,46 @@ def test_normalize_proxy_web_ee_secret_names_the_relay() -> None:
         normalize_proxy({"scheme": "web", "hostname": "relay.example.com", "secret": "ee" + PLAIN_SECRET_HEX})
 
 
-def test_normalize_proxy_mtproxy_ee_secret_does_not_name_the_relay() -> None:
-    # A classic MTProxy user configures no relay, so the WEB explanation would send
-    #  them looking for something they never set up.
-    with pytest.raises(ValueError, match="TLS record layer") as raised:
-        normalize_proxy(
-            {"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": "ee" + PLAIN_SECRET_HEX}
-        )
+def test_normalize_proxy_mtproxy_ee_secret_splits_key_from_sni_domain() -> None:
+    proxy = normalize_proxy(
+        {
+            "scheme": "mtproxy",
+            "hostname": "1.2.3.4",
+            "port": 443,
+            "secret": "ee" + PLAIN_SECRET_HEX + _SNI_DOMAIN.encode("ascii").hex(),
+        }
+    )
 
-    assert "relay" not in str(raised.value)
+    assert proxy == MTProxy(
+        hostname="1.2.3.4",
+        port=443,
+        secret=bytes.fromhex(PLAIN_SECRET_HEX),
+        sni_hostname=_SNI_DOMAIN,
+    )
+
+
+@pytest.mark.parametrize(
+    "secret_hex",
+    [
+        pytest.param("ee" + PLAIN_SECRET_HEX, id="no-domain"),
+        pytest.param("ee" + PLAIN_SECRET_HEX[:-2], id="short-key"),
+        pytest.param("ee" + PLAIN_SECRET_HEX + "ff", id="non-ascii-domain"),
+    ],
+)
+def test_normalize_proxy_mtproxy_malformed_ee_secret_raises(secret_hex: str) -> None:
+    with pytest.raises(ValueError):
+        normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": secret_hex})
+
+
+@pytest.mark.parametrize("secret_hex", [PLAIN_SECRET_HEX, DD_SECRET_HEX])
+def test_normalize_proxy_mtproxy_secret_without_ee_marker_has_no_sni(secret_hex: str) -> None:
+    # Only fake-TLS needs a domain, so nothing else may invent one - the transport
+    #  decides whether to speak TLS by this field being set.
+    proxy = normalize_proxy(
+        {"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": secret_hex}
+    )
+
+    assert proxy.sni_hostname is None
 
 
 def test_normalize_proxy_invalid_secret_length_raises() -> None:
