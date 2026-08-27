@@ -56,10 +56,11 @@ log = logging.getLogger(__name__)
 #  proxy carrier.
 
 # The first four bytes a nonce must not open with, read off TDLib's own loop.
-#  The four verbs are what an HTTP-sniffing middlebox looks for, the two
-#  repeated bytes are framing tags, and `16 03 01 02` is a TLS ClientHello
-#  record - each would make the stream look like a protocol it is not.
+#  The two repeated bytes are framing tags and `16 03 01 02` is a TLS
+#  ClientHello record; the four verbs are the ones stock MTProxy hands to its
+#  HTTP fallback, so a nonce opening with one would be answered as a web request.
 #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.cpp#L99-L101
+#  https://github.com/TelegramMessenger/MTProxy/blob/f36d8af769ffaeac36978d38c2c0f6d1104c2137/net/net-tcp-rpc-ext-server.c#L1065
 _OBFUSCATED2_RESERVED_PREFIXES: Final[Tuple[bytes, ...]] = (
     b"HEAD",
     b"POST",
