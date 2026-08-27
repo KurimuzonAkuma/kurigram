@@ -49,9 +49,8 @@ class TCPIntermediatePadded(TCP):
         self.marker_event.clear()
         await super().connect(address)
         if not self.opens_with_obfuscated2_header:
-            # Over a WEB or MTProxy scheme the obfuscated2 header TCP already sent
-            #  embeds this same tag - sending it again here would corrupt the
-            #  stream with extra, unobfuscated bytes.
+            # The header already carries this tag where one was sent; see
+            #  `TCP.opens_with_obfuscated2_header`.
             await super().send(INTERMEDIATE_PADDED_OBFUSCATE_TAG, wait_for_marker=False)
         self.marker_event.set()
 

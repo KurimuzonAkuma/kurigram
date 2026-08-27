@@ -394,8 +394,6 @@ class TCP:
 
         response = await self._read_greeting_response()
 
-        # Without this a censor could answer with any plausible ServerHello and
-        #  watch what the client does next.
         if not faketls.server_hello_is_authentic(response, secret=secret, client_random=hello.random):
             msg = f"fake-TLS: {domain} answered the greeting without knowing the proxy secret"
             raise OSError(msg)
@@ -422,6 +420,7 @@ class TCP:
 
         # Hashed exactly as it arrived, both segments together, the way TDLib
         #  hashes the span it consumed.
+        #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L636-L644
         return bytes(response)
 
     async def _connect(self, destination: Tuple[str, int]) -> None:
