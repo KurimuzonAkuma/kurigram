@@ -19,10 +19,10 @@
 import pytest
 
 from pyrogram.connection.proxy import (
-    HttpProxy,
-    MtProxy,
-    Socks4Proxy,
-    Socks5Proxy,
+    HTTPProxy,
+    MTProxy,
+    SOCKS4Proxy,
+    SOCKS5Proxy,
     WebProxy,
     canonicalize_web_hostname,
     normalize_proxy,
@@ -81,25 +81,25 @@ def test_normalize_proxy_socks5_dict_form() -> None:
         {"scheme": "socks5", "hostname": "1.2.3.4", "port": 1080, "username": "user", "password": "pass"}
     )
 
-    assert proxy == Socks5Proxy(hostname="1.2.3.4", port=1080, username="user", password="pass")
+    assert proxy == SOCKS5Proxy(hostname="1.2.3.4", port=1080, username="user", password="pass")
 
 
 def test_normalize_proxy_socks4_dict_form_without_credentials() -> None:
     proxy = normalize_proxy({"scheme": "socks4", "hostname": "1.2.3.4", "port": 1080})
 
-    assert proxy == Socks4Proxy(hostname="1.2.3.4", port=1080)
+    assert proxy == SOCKS4Proxy(hostname="1.2.3.4", port=1080)
 
 
 def test_normalize_proxy_http_dict_form() -> None:
     proxy = normalize_proxy({"scheme": "http", "hostname": "1.2.3.4", "port": 8080})
 
-    assert isinstance(proxy, HttpProxy)
+    assert isinstance(proxy, HTTPProxy)
 
 
 def test_normalize_proxy_mtproxy_dict_form() -> None:
     proxy = normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": PLAIN_SECRET_HEX})
 
-    assert isinstance(proxy, MtProxy)
+    assert isinstance(proxy, MTProxy)
     assert proxy.port == 443
     assert proxy.secret == bytes.fromhex(PLAIN_SECRET_HEX)
 
@@ -179,13 +179,13 @@ def test_normalize_proxy_web_string_link_missing_secret_raises() -> None:
 def test_normalize_proxy_socks_telegram_link_form() -> None:
     proxy = normalize_proxy("tg://socks?server=1.2.3.4&port=1080&user=user&pass=pass")
 
-    assert proxy == Socks5Proxy(hostname="1.2.3.4", port=1080, username="user", password="pass")
+    assert proxy == SOCKS5Proxy(hostname="1.2.3.4", port=1080, username="user", password="pass")
 
 
 def test_normalize_proxy_generic_url_form() -> None:
     proxy = normalize_proxy("socks5://user:pass@1.2.3.4:1080")
 
-    assert proxy == Socks5Proxy(hostname="1.2.3.4", port=1080, username="user", password="pass")
+    assert proxy == SOCKS5Proxy(hostname="1.2.3.4", port=1080, username="user", password="pass")
 
 
 def test_normalize_proxy_generic_url_form_without_port_raises() -> None:

@@ -20,7 +20,7 @@ import pytest
 
 from python_socks import ProxyType
 
-from pyrogram.connection.proxy import HttpProxy, MtProxy, Socks5Proxy, WebProxy
+from pyrogram.connection.proxy import HTTPProxy, MTProxy, SOCKS5Proxy, WebProxy
 from pyrogram.connection.transport.tcp import TCPAbridged
 from pyrogram.connection.transport.tcp.tcp import TCP
 
@@ -41,7 +41,7 @@ def test_tcp_takes_an_already_normalized_proxy_dataclass() -> None:
 
 
 def test_tcp_is_not_web_proxy_for_a_socks_proxy() -> None:
-    transport = TCP(proxy=Socks5Proxy(hostname="1.2.3.4", port=1080), dc_id=2)
+    transport = TCP(proxy=SOCKS5Proxy(hostname="1.2.3.4", port=1080), dc_id=2)
 
     assert not transport.is_web_proxy
 
@@ -76,7 +76,7 @@ async def test_connect_via_web_proxy_rejects_dd_secret_on_the_wrong_class() -> N
 
 
 async def test_connect_rejects_mtproxy_as_not_implemented() -> None:
-    mtproxy = MtProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(PLAIN_SECRET_HEX))
+    mtproxy = MTProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(PLAIN_SECRET_HEX))
     transport = TCPAbridged(proxy=mtproxy, dc_id=2)
 
     with pytest.raises(NotImplementedError):
@@ -87,7 +87,7 @@ async def test_build_proxy_keeps_a_credential_a_url_would_mangle() -> None:
     # `SocksProxy.from_url` parses the credentials back out with `unquote()`,
     #  so a password holding `@`, `:` or `%` came out different from the one
     #  the caller passed, and the proxy rejected the login.
-    socks_proxy = Socks5Proxy(
+    socks_proxy = SOCKS5Proxy(
         hostname="1.2.3.4",
         port=1080,
         username="user@example.com",
@@ -104,7 +104,7 @@ async def test_build_proxy_keeps_a_credential_a_url_would_mangle() -> None:
 async def test_build_proxy_keeps_a_username_that_comes_without_a_password() -> None:
     # `parse_proxy_url` resets both credentials to `''` when either is missing,
     #  so a username-only proxy was dialed anonymously.
-    socks_proxy = Socks5Proxy(hostname="1.2.3.4", port=1080, username="user")
+    socks_proxy = SOCKS5Proxy(hostname="1.2.3.4", port=1080, username="user")
     transport = TCPAbridged(proxy=socks_proxy, dc_id=2)
 
     dialed = await transport._build_proxy()
@@ -113,7 +113,7 @@ async def test_build_proxy_keeps_a_username_that_comes_without_a_password() -> N
 
 
 async def test_build_proxy_maps_each_scheme_to_its_dial_type() -> None:
-    http_proxy = HttpProxy(hostname="1.2.3.4", port=8080)
+    http_proxy = HTTPProxy(hostname="1.2.3.4", port=8080)
     transport = TCPAbridged(proxy=http_proxy, dc_id=2)
 
     dialed = await transport._build_proxy()

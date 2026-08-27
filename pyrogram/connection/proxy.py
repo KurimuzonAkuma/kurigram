@@ -30,7 +30,7 @@ from pyrogram.enums import ProxyScheme
 
 
 @dataclass(frozen=True)
-class Socks4Proxy:
+class SOCKS4Proxy:
     scheme: ClassVar[Literal[ProxyScheme.SOCKS4]] = ProxyScheme.SOCKS4
 
     hostname: str
@@ -40,7 +40,7 @@ class Socks4Proxy:
 
 
 @dataclass(frozen=True)
-class Socks5Proxy:
+class SOCKS5Proxy:
     scheme: ClassVar[Literal[ProxyScheme.SOCKS5]] = ProxyScheme.SOCKS5
 
     hostname: str
@@ -50,7 +50,7 @@ class Socks5Proxy:
 
 
 @dataclass(frozen=True)
-class HttpProxy:
+class HTTPProxy:
     scheme: ClassVar[Literal[ProxyScheme.HTTP]] = ProxyScheme.HTTP
 
     hostname: str
@@ -60,7 +60,7 @@ class HttpProxy:
 
 
 @dataclass(frozen=True)
-class MtProxy:
+class MTProxy:
     # Classic MTProxy: obfuscated2 straight to (hostname, port), no relay. Not
     #  implemented yet - TCP raises a clear NotImplementedError for it. The type
     #  exists now so implementing it needs no further proxy-shape changes.
@@ -79,15 +79,15 @@ class WebProxy:
     secret: bytes  # decoded, dd marker kept when present
 
 
-Proxy = Union[Socks4Proxy, Socks5Proxy, HttpProxy, MtProxy, WebProxy]
+Proxy = Union[SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy]
 
-_PROXY_TYPES: Final[Tuple[type, ...]] = (Socks4Proxy, Socks5Proxy, HttpProxy, MtProxy, WebProxy)
+_PROXY_TYPES: Final[Tuple[type, ...]] = (SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy)
 
 # Schemes python_socks dials for us; the rest need a transport of their own.
-_DIALED_PROXY_TYPES: Final[Dict[ProxyScheme, Type[Union[Socks4Proxy, Socks5Proxy, HttpProxy]]]] = {
-    ProxyScheme.SOCKS4: Socks4Proxy,
-    ProxyScheme.SOCKS5: Socks5Proxy,
-    ProxyScheme.HTTP: HttpProxy,
+_DIALED_PROXY_TYPES: Final[Dict[ProxyScheme, Type[Union[SOCKS4Proxy, SOCKS5Proxy, HTTPProxy]]]] = {
+    ProxyScheme.SOCKS4: SOCKS4Proxy,
+    ProxyScheme.SOCKS5: SOCKS5Proxy,
+    ProxyScheme.HTTP: HTTPProxy,
 }
 
 
@@ -224,8 +224,8 @@ def _build_web_proxy(*, hostname: str, secret_hex: str) -> WebProxy:
     )
 
 
-def _build_mtproxy(*, hostname: str, port: Union[int, str], secret_hex: str) -> MtProxy:
-    return MtProxy(
+def _build_mtproxy(*, hostname: str, port: Union[int, str], secret_hex: str) -> MTProxy:
+    return MTProxy(
         hostname=hostname,
         port=int(port),
         secret=_decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.MTPROXY),
@@ -239,7 +239,7 @@ def _build_dialed_proxy(
     port: Union[int, str],
     username: Optional[str] = None,
     password: Optional[str] = None,
-) -> Union[Socks4Proxy, Socks5Proxy, HttpProxy]:
+) -> Union[SOCKS4Proxy, SOCKS5Proxy, HTTPProxy]:
     proxy_type = _DIALED_PROXY_TYPES[scheme]
 
     return proxy_type(hostname=hostname, port=int(port), username=username, password=password)

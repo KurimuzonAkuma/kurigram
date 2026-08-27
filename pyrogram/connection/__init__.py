@@ -18,10 +18,10 @@
 
 from .connection import Connection
 from .proxy import (
-    HttpProxy,
-    MtProxy,
+    HTTPProxy,
+    MTProxy,
     Proxy,
-    Socks4Proxy,
-    Socks5Proxy,
+    SOCKS4Proxy,
+    SOCKS5Proxy,
     WebProxy,
 )

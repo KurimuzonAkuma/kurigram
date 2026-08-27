@@ -31,7 +31,7 @@ from pyrogram import utils
 from pyrogram.crypto import aes
 from pyrogram.enums import ProxyScheme
 
-from ...proxy import HttpProxy, MtProxy, Proxy, Socks4Proxy, Socks5Proxy, WebProxy
+from ...proxy import HTTPProxy, MTProxy, Proxy, SOCKS4Proxy, SOCKS5Proxy, WebProxy
 from .web_proxy_carrier import WebCarrierError, WebProxyCarrier
 
 log = logging.getLogger(__name__)
@@ -236,7 +236,7 @@ class TCP:
         #  https://github.com/romis2012/python-socks/blob/8794dfc734cc6fb98c61099905a9f8de186719b9/python_socks/async_/asyncio/_proxy.py#L38
         proxy = self.proxy
 
-        if not isinstance(proxy, (Socks4Proxy, Socks5Proxy, HttpProxy)):
+        if not isinstance(proxy, (SOCKS4Proxy, SOCKS5Proxy, HTTPProxy)):
             msg = f"{type(proxy).__name__} cannot be dialed as a SOCKS/HTTP proxy"
             raise ValueError(msg)
 
@@ -321,7 +321,7 @@ class TCP:
             await self._connect_via_web_proxy()
             return
 
-        if isinstance(self.proxy, MtProxy):
+        if isinstance(self.proxy, MTProxy):
             msg = "Classic MTProxy (scheme='mtproxy') is not implemented yet."
             raise NotImplementedError(msg)
 
