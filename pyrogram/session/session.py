@@ -184,7 +184,7 @@ class Session:
 
             # Telegram wants to know which proxy a client sits behind.
             proxy_address = client_proxy_address(self.client.proxy)
-            client_proxy = None
+            client_proxy: Optional[raw.types.InputClientProxy] = None
 
             if proxy_address is not None:
                 client_proxy = raw.types.InputClientProxy(
@@ -209,7 +209,7 @@ class Session:
                             lang_code=self.client.lang_code,
                             query=raw.functions.help.GetConfig(),
                             params=init_connection_params,
-                            proxy=client_proxy
+                            proxy=client_proxy,
                         )
                     ),
                     timeout=self.START_TIMEOUT
