@@ -23,7 +23,7 @@ greeting is that a censor cannot tell it from the ClientHello a current Chrome
 sends, so every byte string, extension and random length below is that file's
 and not a choice of ours. `_client_hello_ops` mirrors its non-Apple op list
 one entry at a time so the two stay comparable.
-https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L194-L236
+https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp
 """
 
 import hashlib
@@ -144,6 +144,15 @@ def _padding() -> _Op:
 
 
 def _client_hello_ops() -> Tuple[_Op, ...]:
+    """TDLib's non-Apple op list, entry for entry.
+
+    The byte strings are the fixed fields of a Chrome ClientHello - record and
+    handshake headers, the cipher suite list, the extension bodies - and the ops
+    between them are the parts that vary per connection. Both are TDLib's, in its
+    order, so the two lists can be read side by side.
+
+    https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L194-L236
+    """
     return (
         _string(b"\x16\x03\x01"),
         _begin_scope(),
