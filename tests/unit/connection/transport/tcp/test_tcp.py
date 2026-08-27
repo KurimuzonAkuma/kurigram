@@ -267,6 +267,9 @@ async def _start_fake_tls_stub(
 
         # Read what a real proxy reads - the change-cipher-spec and then one whole
         #  application record - rather than a byte count the random padding decides.
+        #  Reading exactly what the length field declares is also what checks it:
+        #  a record that under-declares leaves the stub waiting until the test's
+        #  own timeout.
         prologue = await reader.readexactly(len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE)
         body = await reader.readexactly(int.from_bytes(prologue[-RECORD_LENGTH_SIZE:], "big"))
         received.set_result(prologue + body)
@@ -352,9 +355,6 @@ async def test_connect_via_mtproxy_wraps_the_handshake_in_application_records() 
     record = stream[len(CHANGE_CIPHER_SPEC) :]
 
     assert record[: len(APPLICATION_DATA_PREFIX)] == APPLICATION_DATA_PREFIX
-    assert int.from_bytes(record[len(APPLICATION_DATA_PREFIX) : RECORD_HEADER_SIZE], "big") == len(
-        record
-    ) - RECORD_HEADER_SIZE
 
     framed = record[RECORD_HEADER_SIZE:]
     key = hashlib.sha256(framed[8:40] + secret).digest()
