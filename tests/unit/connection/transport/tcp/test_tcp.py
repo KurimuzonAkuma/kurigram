@@ -26,7 +26,7 @@ import pytest
 
 from python_socks import ProxyType
 
-from pyrogram.connection.proxy import HTTPProxy, MTProxy, SOCKS5Proxy, WebProxy
+from pyrogram.connection.proxy import HTTPProxy, MTProxy, Proxy, SOCKS5Proxy, WebProxy
 from pyrogram.connection.transport.tcp import TCPAbridged, TCPIntermediatePadded
 from pyrogram.connection.transport.tcp.faketls_records import (
     APPLICATION_DATA_PREFIX,
@@ -111,6 +111,43 @@ def test_tcp_is_not_web_proxy_for_a_socks_proxy() -> None:
 
 def test_tcp_is_not_web_proxy_when_no_proxy_is_set() -> None:
     assert not TCP(dc_id=2).is_web_proxy
+
+
+class _SlowConnect(TCPAbridged):
+    # Stands in for a WEB handshake that outlasts `TCP.TIMEOUT`. The real one
+    #  can: its own steps budget 10s for the TLS connect, 10s per uplink POST
+    #  over two attempts and 30s for the WELCOME.
+
+    def __init__(self, proxy: Proxy) -> None:
+        super().__init__(proxy=proxy, dc_id=2)
+        self.finished = False
+
+    async def _connect(self, destination: Tuple[str, int]) -> None:
+        await asyncio.sleep(TCP.TIMEOUT * 4)
+        self.finished = True
+
+
+@pytest.fixture()
+def short_connect_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Small enough that a handshake outlasting it does not slow the suite down.
+    monkeypatch.setattr(TCP, "TIMEOUT", 0.01)
+
+
+async def test_connect_does_not_cut_a_web_handshake_short(short_connect_timeout: None) -> None:
+    transport = _SlowConnect(_web_proxy())
+
+    await transport.connect(("1.2.3.4", 443))
+
+    assert transport.finished
+
+
+async def test_connect_still_bounds_every_other_scheme(short_connect_timeout: None) -> None:
+    transport = _SlowConnect(SOCKS5Proxy(hostname="1.2.3.4", port=1080))
+
+    with pytest.raises(TimeoutError, match="Connection timed out"):
+        await transport.connect(("1.2.3.4", 443))
+
+    assert not transport.finished
 
 
 async def test_connect_via_web_proxy_requires_dc_id() -> None:

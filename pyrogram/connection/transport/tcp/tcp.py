@@ -439,6 +439,14 @@ class TCP:
         await self._connect_via_direct(destination)
 
     async def connect(self, address: Tuple[str, int]) -> None:
+        # Every step of the WEB handshake is already bounded by the carrier's own
+        #  timeouts, and they add up well past `TCP.TIMEOUT`: at 10s the relay
+        #  never reaches the WELCOME that `_WELCOME_TIMEOUT` waits 30s for, so
+        #  the outer guard can only cut a working handshake short.
+        if self.is_web_proxy:
+            await self._connect(address)
+            return
+
         try:
             await asyncio.wait_for(self._connect(address), timeout=TCP.TIMEOUT)
         except asyncio.TimeoutError:  # Re-raise as TimeoutError. asyncio.TimeoutError is deprecated in 3.11
