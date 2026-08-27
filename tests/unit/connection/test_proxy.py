@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 from typing import Final, Optional
 
 import pytest
@@ -256,3 +257,84 @@ def test_client_proxy_address_reports_a_web_proxy_on_the_https_port() -> None:
 )
 def test_client_proxy_address_reports_nothing_for_a_proxy_telegram_does_not_own(proxy: Optional[Proxy]) -> None:
     assert client_proxy_address(proxy) is None
+
+
+_EE_SECRET_HEX: Final[str] = "ee" + PLAIN_SECRET_HEX + _SNI_DOMAIN.encode("ascii").hex()
+
+
+def _base64url(secret_hex: str) -> str:
+    # Telegram's own links drop the padding, so the tests carry the same shape.
+    return base64.urlsafe_b64encode(bytes.fromhex(secret_hex)).decode("ascii").rstrip("=")
+
+
+@pytest.mark.parametrize(
+    "link",
+    [
+        "tg://proxy?server=1.2.3.4&port=443&secret=" + PLAIN_SECRET_HEX,
+        "https://t.me/proxy?server=1.2.3.4&port=443&secret=" + PLAIN_SECRET_HEX,
+        "t.me/proxy?server=1.2.3.4&port=443&secret=" + PLAIN_SECRET_HEX,
+        "https://telegram.me/proxy?server=1.2.3.4&port=443&secret=" + _base64url(PLAIN_SECRET_HEX),
+    ],
+)
+def test_normalize_proxy_mtproxy_string_link_forms(link: str) -> None:
+    proxy = normalize_proxy(link)
+
+    assert proxy == MTProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(PLAIN_SECRET_HEX))
+
+
+def test_normalize_proxy_mtproxy_link_carries_a_dd_secret_whole() -> None:
+    proxy = normalize_proxy("tg://proxy?server=1.2.3.4&port=443&secret=" + DD_SECRET_HEX)
+
+    assert proxy == MTProxy(hostname="1.2.3.4", port=443, secret=bytes.fromhex(DD_SECRET_HEX))
+
+
+def test_normalize_proxy_mtproxy_link_splits_a_base64url_ee_secret() -> None:
+    # The form an ee proxy is actually shared in: base64url, no padding.
+    proxy = normalize_proxy("tg://proxy?server=1.2.3.4&port=443&secret=" + _base64url(_EE_SECRET_HEX))
+
+    assert proxy == MTProxy(
+        hostname="1.2.3.4",
+        port=443,
+        secret=bytes.fromhex(PLAIN_SECRET_HEX),
+        sni_hostname=_SNI_DOMAIN,
+    )
+
+
+@pytest.mark.parametrize(
+    "link",
+    [
+        "tg://proxy?server=1.2.3.4&port=443",
+        "tg://proxy?server=1.2.3.4&secret=" + PLAIN_SECRET_HEX,
+        "tg://proxy?port=443&secret=" + PLAIN_SECRET_HEX,
+    ],
+)
+def test_normalize_proxy_mtproxy_link_missing_a_param_raises(link: str) -> None:
+    with pytest.raises(ValueError):
+        normalize_proxy(link)
+
+
+def test_normalize_proxy_webproxy_link_is_not_read_as_an_mtproxy_one() -> None:
+    # `/proxy?` is a suffix of `/webproxy?`, so the two patterns can collide.
+    proxy = normalize_proxy("https://t.me/webproxy?server=relay.example.com&secret=" + PLAIN_SECRET_HEX)
+
+    assert isinstance(proxy, WebProxy)
+
+
+@pytest.mark.parametrize(
+    "encoded_secret",
+    [
+        PLAIN_SECRET_HEX,
+        _base64url(PLAIN_SECRET_HEX),
+        base64.b64encode(bytes.fromhex(PLAIN_SECRET_HEX)).decode("ascii"),
+    ],
+)
+def test_normalize_proxy_mtproxy_accepts_every_encoding_tdlib_accepts(encoded_secret: str) -> None:
+    proxy = normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": encoded_secret})
+
+    assert isinstance(proxy, MTProxy)
+    assert proxy.secret == bytes.fromhex(PLAIN_SECRET_HEX)
+
+
+def test_normalize_proxy_mtproxy_rejects_a_secret_in_no_known_encoding() -> None:
+    with pytest.raises(ValueError):
+        normalize_proxy({"scheme": "mtproxy", "hostname": "1.2.3.4", "port": 443, "secret": "not a secret!"})

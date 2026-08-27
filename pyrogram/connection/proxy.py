@@ -17,6 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import base64
 import ipaddress
 import re
 from dataclasses import dataclass
@@ -223,6 +224,11 @@ _FAKE_TLS_MARKER: Final[int] = 0xEE
 _OBFUSCATED2_SECRET_SIZE: Final[int] = 16
 _MARKED_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
 
+# An ee secret is shared base64url-encoded, the others as hex - but every client
+#  accepts any of the three, so the alphabet does not identify the flavour.
+_BASE64URL_ALTCHARS: Final[bytes] = b"-_"
+_BASE64_ALTCHARS: Final[bytes] = b"+/"
+
 # The WEB scheme cannot carry an ee secret whatever this library implements: the
 #  relay speaks to a stock MTProxy over a plain obfuscated2 stream and never adds
 #  the fake-TLS records, by design.
@@ -266,12 +272,40 @@ def _decode_fake_tls_secret(full_secret: bytes) -> _DecodedSecret:
     return _DecodedSecret(secret=secret, sni_hostname=sni_hostname)
 
 
-def _decode_mtproxy_secret(secret_hex: str, *, scheme: ProxyScheme) -> _DecodedSecret:
+def _base64_decoded(encoded_secret: str, *, altchars: bytes) -> Optional[bytes]:
+    # Telegram's own links drop the `=` padding that `base64` still requires.
+    padded = encoded_secret + "=" * (-len(encoded_secret) % 4)
+
     try:
-        full_secret = bytes.fromhex(secret_hex)
-    except ValueError as e:
-        msg = f"proxy 'secret' must be a hex string: {e}"
-        raise ValueError(msg) from e
+        return base64.b64decode(padded, altchars=altchars, validate=True)
+
+    # `binascii.Error` is a `ValueError`, and both mean the same thing here.
+    except ValueError:
+        return None
+
+
+def _decode_proxy_secret(encoded_secret: str) -> bytes:
+    """Hex, then base64url, then base64 - the order TDLib tries them in.
+
+    https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/ProxySecret.cpp#L15-L27
+    """
+    try:
+        return bytes.fromhex(encoded_secret)
+    except ValueError:
+        pass
+
+    for altchars in (_BASE64URL_ALTCHARS, _BASE64_ALTCHARS):
+        decoded = _base64_decoded(encoded_secret, altchars=altchars)
+
+        if decoded is not None:
+            return decoded
+
+    msg = f"proxy 'secret' must be hex, base64url or base64: {encoded_secret!r}"
+    raise ValueError(msg)
+
+
+def _decode_mtproxy_secret(encoded_secret: str, *, scheme: ProxyScheme) -> _DecodedSecret:
+    full_secret = _decode_proxy_secret(encoded_secret)
 
     if full_secret[:1] == bytes([_FAKE_TLS_MARKER]):
         if scheme is ProxyScheme.WEB:
@@ -292,8 +326,8 @@ def _decode_mtproxy_secret(secret_hex: str, *, scheme: ProxyScheme) -> _DecodedS
 # The one place each kind is built, so the dict form and the string form below
 #  cannot validate differently.
 
-def _build_web_proxy(*, hostname: str, secret_hex: str) -> WebProxy:
-    decoded = _decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.WEB)
+def _build_web_proxy(*, hostname: str, encoded_secret: str) -> WebProxy:
+    decoded = _decode_mtproxy_secret(encoded_secret, scheme=ProxyScheme.WEB)
 
     return WebProxy(
         hostname=canonicalize_web_hostname(hostname),
@@ -301,8 +335,8 @@ def _build_web_proxy(*, hostname: str, secret_hex: str) -> WebProxy:
     )
 
 
-def _build_mtproxy(*, hostname: str, port: Union[int, str], secret_hex: str) -> MTProxy:
-    decoded = _decode_mtproxy_secret(secret_hex, scheme=ProxyScheme.MTPROXY)
+def _build_mtproxy(*, hostname: str, port: Union[int, str], encoded_secret: str) -> MTProxy:
+    decoded = _decode_mtproxy_secret(encoded_secret, scheme=ProxyScheme.MTPROXY)
 
     return MTProxy(
         hostname=hostname,
@@ -340,6 +374,10 @@ def _parse_scheme(scheme_value: Optional[str]) -> ProxyScheme:
 _WEB_PROXY_LINK_RE: Final[Pattern[str]] = re.compile(
     r"(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/webproxy\?|tg://webproxy\?)(.+)"
 )
+# `/webproxy?` above cannot also match here: the alternation anchors on `/proxy?`.
+_MTPROXY_LINK_RE: Final[Pattern[str]] = re.compile(
+    r"(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/proxy\?|tg://proxy\?)(.+)"
+)
 _SOCKS_LINK_RE: Final[Pattern[str]] = re.compile(
     r"(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/socks\?|tg://socks\?)(.+)"
 )
@@ -358,13 +396,27 @@ def _parse_proxy_link(link: str) -> Proxy:
         query_parameters = parse_qs(web_match.group(1))
         # `host` is the alias the Android fork emits for the same field.
         hostname = _query_param(query_parameters, name="server") or _query_param(query_parameters, name="host")
-        secret_hex = _query_param(query_parameters, name="secret")
+        encoded_secret = _query_param(query_parameters, name="secret")
 
-        if not hostname or not secret_hex:
+        if not hostname or not encoded_secret:
             msg = "WEB proxy link must contain 'server' (or 'host') and 'secret' params"
             raise ValueError(msg)
 
-        return _build_web_proxy(hostname=hostname, secret_hex=secret_hex)
+        return _build_web_proxy(hostname=hostname, encoded_secret=encoded_secret)
+
+    mtproxy_match = _MTPROXY_LINK_RE.match(link)
+
+    if mtproxy_match:
+        query_parameters = parse_qs(mtproxy_match.group(1))
+        hostname = _query_param(query_parameters, name="server")
+        port = _query_param(query_parameters, name="port")
+        encoded_secret = _query_param(query_parameters, name="secret")
+
+        if not hostname or not port or not encoded_secret:
+            msg = "MTProxy link must contain 'server', 'port' and 'secret' params"
+            raise ValueError(msg)
+
+        return _build_mtproxy(hostname=hostname, port=port, encoded_secret=encoded_secret)
 
     socks_match = _SOCKS_LINK_RE.match(link)
 
@@ -410,23 +462,23 @@ def _parse_proxy_dict(proxy: ProxyDict) -> Proxy:
     scheme = _parse_scheme(proxy.get("scheme"))
     hostname = proxy.get("hostname")
     port = proxy.get("port")
-    secret_hex = proxy.get("secret")
+    encoded_secret = proxy.get("secret")
     username = proxy.get("username")
     password = proxy.get("password")
 
     if scheme is ProxyScheme.WEB:
-        if not hostname or not secret_hex:
+        if not hostname or not encoded_secret:
             msg = "WEB proxy config requires both 'hostname' and 'secret'"
             raise ValueError(msg)
 
-        return _build_web_proxy(hostname=hostname, secret_hex=secret_hex)
+        return _build_web_proxy(hostname=hostname, encoded_secret=encoded_secret)
 
     if scheme is ProxyScheme.MTPROXY:
-        if not hostname or not port or not secret_hex:
+        if not hostname or not port or not encoded_secret:
             msg = "MTProxy config requires 'hostname', 'port', and 'secret'"
             raise ValueError(msg)
 
-        return _build_mtproxy(hostname=hostname, port=port, secret_hex=secret_hex)
+        return _build_mtproxy(hostname=hostname, port=port, encoded_secret=encoded_secret)
 
     if not hostname or not port:
         msg = f"{scheme.value} proxy config requires 'hostname' and 'port'"

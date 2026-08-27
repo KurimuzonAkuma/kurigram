@@ -124,8 +124,9 @@ class Client(Methods):
             or *"http://11.22.33.44:1234"* or *"socks5://user:pass@11.22.33.44:1234"* or *"tg://socks?server=11.22.33.44&port=1234"*.
             The *username* and *password* can be omitted if the proxy doesn't require authorization.
             A WEB proxy takes *dict(scheme="web", hostname="relay.example.com", secret="...")* and a
-            classic MTProxy *dict(scheme="mtproxy", hostname="11.22.33.44", port=443, secret="...")*,
-            both with an MTProxy secret as hex. The mtproxy scheme also takes an ee-prefixed
+            classic MTProxy *dict(scheme="mtproxy", hostname="11.22.33.44", port=443, secret="...")*
+            or its ordinary share link *"tg://proxy?server=11.22.33.44&port=443&secret=..."*. A
+            secret is read as hex, base64url or base64. The mtproxy scheme also takes an ee-prefixed
             secret, which appends the domain the connection then imitates a TLS session with;
             the web scheme cannot, because the relay speaks obfuscated2 to its own MTProxy and
             never adds the TLS record layer. Any secret longer than 16 bytes - dd-prefixed or
