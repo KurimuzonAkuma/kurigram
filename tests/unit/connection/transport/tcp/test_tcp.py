@@ -75,6 +75,13 @@ def _web_proxy(secret_hex: str = PLAIN_SECRET_HEX) -> WebProxy:
 # Every `serve` below is an `asyncio.start_server` handler, which the stdlib calls
 #  with two positional arguments - so those signatures are its shape, not ours.
 
+# Each one closes its writer on the way out. On 3.12 `Server` counts live connections
+#  by hand and `wait_closed()` never returns while one is still attached, so a handler
+#  that just returned hung eight tests here until the run's own timeout. 3.13 replaced
+#  that counter with a `WeakSet`, which the garbage collector empties on its own, and
+#  3.11 returned from `wait_closed()` without waiting at all.
+#  https://github.com/python/cpython/blob/3bb231a6a5dc02b95658877318bf61501a7209e9/Lib/asyncio/base_events.py#L298-L302
+
 
 class _ProxyStub(NamedTuple):
     server: asyncio.AbstractServer
@@ -86,8 +93,12 @@ async def _start_proxy_stub(*, read_bytes: int) -> _ProxyStub:
     """A local server standing in for an MTProxy: reads `read_bytes` and stops."""
     received: "asyncio.Future[bytes]" = asyncio.get_running_loop().create_future()
 
-    async def serve(reader: asyncio.StreamReader, _writer: asyncio.StreamWriter) -> None:
-        received.set_result(await reader.readexactly(read_bytes))
+    async def serve(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            received.set_result(await reader.readexactly(read_bytes))
+
+        finally:
+            writer.close()
 
     server = await asyncio.start_server(serve, host="127.0.0.1", port=0)
 
@@ -255,35 +266,39 @@ async def _start_fake_tls_stub(
     received: "asyncio.Future[bytes]" = loop.create_future()
 
     async def serve(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        head = await reader.readexactly(RECORD_HEADER_SIZE)
-        greeting = head + await reader.readexactly(int.from_bytes(head[3:5], "big"))
-        hello.set_result(greeting)
+        try:
+            head = await reader.readexactly(RECORD_HEADER_SIZE)
+            greeting = head + await reader.readexactly(int.from_bytes(head[3:5], "big"))
+            hello.set_result(greeting)
 
-        writer.write(_server_hello(greeting[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE], secret=secret))
-        await writer.drain()
+            writer.write(_server_hello(greeting[_RANDOM_OFFSET : _RANDOM_OFFSET + _RANDOM_SIZE], secret=secret))
+            await writer.drain()
 
-        if not expects_packet:
-            return
+            if not expects_packet:
+                return
 
-        # Read what a real proxy reads - the change-cipher-spec and then one whole
-        #  application record - rather than a byte count the random padding decides.
-        #  Reading exactly what the length field declares is also what checks it:
-        #  a record that under-declares leaves the stub waiting until the test's
-        #  own timeout.
-        prologue = await reader.readexactly(len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE)
-        body = await reader.readexactly(int.from_bytes(prologue[-RECORD_LENGTH_SIZE:], "big"))
-        received.set_result(prologue + body)
+            # Read what a real proxy reads - the change-cipher-spec and then one whole
+            #  application record - rather than a byte count the random padding decides.
+            #  Reading exactly what the length field declares is also what checks it:
+            #  a record that under-declares leaves the stub waiting until the test's
+            #  own timeout.
+            prologue = await reader.readexactly(len(CHANGE_CIPHER_SPEC) + RECORD_HEADER_SIZE)
+            body = await reader.readexactly(int.from_bytes(prologue[-RECORD_LENGTH_SIZE:], "big"))
+            received.set_result(prologue + body)
 
-        if not reply:
-            return
+            if not reply:
+                return
 
-        encrypted = aes.ctr256_encrypt(
-            reply,
-            *_client_decrypt_args(body[:_OBFUSCATED2_HEADER_SIZE], secret=secret),
-        )
+            encrypted = aes.ctr256_encrypt(
+                reply,
+                *_client_decrypt_args(body[:_OBFUSCATED2_HEADER_SIZE], secret=secret),
+            )
 
-        writer.write(_as_records(encrypted, record_size=reply_record_size))
-        await writer.drain()
+            writer.write(_as_records(encrypted, record_size=reply_record_size))
+            await writer.drain()
+
+        finally:
+            writer.close()
 
     server = await asyncio.start_server(serve, host="127.0.0.1", port=0)
 
@@ -423,8 +438,12 @@ async def test_connect_via_mtproxy_rejects_a_fake_tls_reply_signed_with_another_
 async def test_connect_via_mtproxy_rejects_a_fake_tls_reply_that_is_not_a_server_hello() -> None:
     # What a plain web server on the configured port answers with.
     async def serve(_reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        writer.write(b"HTTP/1.1 400 Bad Request\r\n\r\n")
-        await writer.drain()
+        try:
+            writer.write(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+            await writer.drain()
+
+        finally:
+            writer.close()
 
     server = await asyncio.start_server(serve, host="127.0.0.1", port=0)
     transport = TCPIntermediatePadded(
