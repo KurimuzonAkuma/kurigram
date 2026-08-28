@@ -38,7 +38,7 @@ from pyrogram.errors import (
     StoryLiveAlready
 )
 from pyrogram.errors.exceptions.all import exceptions
-from tests.errors import RPC_NAME, raise_it
+from tests.unit.errors import RPC_NAME, raise_it
 
 # Every class whose message names its value, counted once. All 32 rows the tables name are reachable:
 # `FILE_MIGRATE_X` is listed under both 303 and 400, and the two compile to `FileMigrate` and

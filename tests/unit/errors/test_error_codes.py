@@ -44,7 +44,7 @@ from pyrogram.errors import (
     UnknownError400
 )
 from pyrogram.errors.exceptions.all import exceptions
-from tests.errors import raise_it
+from tests.unit.errors import raise_it
 
 
 @pytest.mark.parametrize(

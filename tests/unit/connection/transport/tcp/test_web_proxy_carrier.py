@@ -43,7 +43,7 @@ from pyrogram.connection.transport.tcp.web_proxy_carrier import (
     parse_frames,
     serialize_frame,
 )
-from tests.proxy_values import BRIDGE_CAPABILITY_VECTORS
+from tests.unit.proxy_values import BRIDGE_CAPABILITY_VECTORS
 
 
 def test_serialize_parse_round_trip() -> None:

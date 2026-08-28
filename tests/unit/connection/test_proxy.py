@@ -36,7 +36,7 @@ from pyrogram.connection.proxy import (
 )
 from pyrogram.enums import ProxyScheme
 
-from tests.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
+from tests.unit.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
 
 # TDLib's `MAX_DOMAIN_LENGTH`, written out rather than imported: what the two
 #  tests below pin is the number TDLib publishes, and importing ours would only

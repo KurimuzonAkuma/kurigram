@@ -43,7 +43,7 @@ from pyrogram.connection.transport.tcp.tcp import (
 )
 from pyrogram.crypto import aes
 
-from tests.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
+from tests.unit.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
 
 # The obfuscated2 handshake is one fixed-size buffer; only its last 8 bytes are
 #  encrypted.

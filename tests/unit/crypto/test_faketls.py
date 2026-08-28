@@ -22,7 +22,7 @@ from typing import Dict, Final, FrozenSet, List, NamedTuple
 
 from pyrogram.crypto import faketls
 
-from tests.proxy_values import SNI_DOMAIN
+from tests.unit.proxy_values import SNI_DOMAIN
 
 _SECRET: Final[bytes] = bytes.fromhex("0123456789abcdef0123456789abcdef")
 _UNIX_TIME: Final[int] = 1756000000

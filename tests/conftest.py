@@ -24,9 +24,12 @@ import pytest
 _TESTS_DIR: Final[Path] = Path(__file__).parent
 
 # The marker comes from the directory a test file lives in, not from a decorator
-#  on each test - a path cannot be forgotten the way a decorator can. The
-#  environment `.env.test` carries is loaded by the runner (see `Makefile`), not
-#  from here: a test process that reads files of its own has two config sources.
+#  on each test - a path cannot be forgotten the way a decorator can. These two are
+#  the whole tree, and collection refuses anything outside them: `make test-unit` runs
+#  `-m 'not integration'`, so a test that never reaches this mapping collects unmarked
+#  and runs there whatever it opens. The environment `.env.test` carries is loaded by
+#  the runner (see `Makefile`), not from here: a test process that reads files of its
+#  own has two config sources.
 _LAYER_MARKERS: Final[Dict[str, str]] = {
     "unit": "unit",
     "integrations": "integration",
@@ -36,7 +39,11 @@ _LAYER_MARKERS: Final[Dict[str, str]] = {
 def pytest_collection_modifyitems(items: List[pytest.Item]) -> None:
     for item in items:
         relative = Path(item.fspath).relative_to(_TESTS_DIR)
-        top_directory = relative.parts[0] if len(relative.parts) > 1 else None
+        layer = _LAYER_MARKERS.get(relative.parts[0])
 
-        if top_directory in _LAYER_MARKERS:
-            item.add_marker(getattr(pytest.mark, _LAYER_MARKERS[top_directory]))
+        if layer is None:
+            raise pytest.UsageError(
+                f"{relative} is outside tests/unit and tests/integrations - every test lives in one of the two."
+            )
+
+        item.add_marker(getattr(pytest.mark, layer))

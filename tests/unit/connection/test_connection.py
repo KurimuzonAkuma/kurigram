@@ -24,7 +24,7 @@ from pyrogram.connection.connection import Connection, _protocol_dc_id, transpor
 from pyrogram.connection.proxy import MTProxy, Proxy, SOCKS5Proxy, WebProxy
 from pyrogram.connection.transport import TCP, TCPAbridged, TCPFull, TCPIntermediatePadded
 
-from tests.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
+from tests.unit.proxy_values import DD_SECRET_HEX, PLAIN_SECRET_HEX, SNI_DOMAIN
 
 _PLAIN_MTPROXY: Final[MTProxy] = MTProxy(
     hostname="11.22.33.44",

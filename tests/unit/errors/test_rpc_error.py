@@ -33,7 +33,7 @@ from pyrogram.errors import (
     RPCError,
     UnknownError
 )
-from tests.errors import RPC_NAME, raise_it
+from tests.unit.errors import RPC_NAME, raise_it
 
 ATTRIBUTES: Final[Tuple[str, ...]] = ("ID", "CODE", "NAME", "MESSAGE")
 
