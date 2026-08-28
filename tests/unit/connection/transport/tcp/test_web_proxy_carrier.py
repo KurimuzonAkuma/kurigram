@@ -438,6 +438,14 @@ async def _run_failing_tracked_task(carrier: WebProxyCarrier) -> None:
     assert carrier._background_tasks == set(), "a finished task must not stay in the tracking set"
 
 
+def _carrier_records(caplog: pytest.LogCaptureFixture) -> List[logging.LogRecord]:
+    # `caplog` collects at the root, so a report from another logger lands in it too.
+    #  On 3.8 the garbage collector reaches a task an earlier test left pending mid-run
+    #  and `asyncio` logs "Task was destroyed but it is pending!" at ERROR, which the
+    #  comparisons below then read as a line this module emitted.
+    return [record for record in caplog.records if record.name == web_proxy_carrier.log.name]
+
+
 async def test_a_failed_background_task_the_carrier_recorded_is_reported_at_debug(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -449,7 +457,7 @@ async def test_a_failed_background_task_the_carrier_recorded_is_reported_at_debu
 
     # The next `send()` raises `_fail_exc` at the caller, so this is the second
     #  report of an error that already has an owner.
-    assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+    assert [(record.levelno, record.getMessage()) for record in _carrier_records(caplog)] == [
         (logging.DEBUG, "WEB proxy: background task failed: uplink rejected: HTTP 409"),
     ]
 
@@ -464,7 +472,7 @@ async def test_a_failed_background_task_nothing_recorded_is_reported_at_error(
 
     # `_fail_exc` is unset, so no caller will ever be handed this failure and
     #  swallowing it at debug would lose it outright.
-    assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+    assert [(record.levelno, record.getMessage()) for record in _carrier_records(caplog)] == [
         (
             logging.ERROR,
             "WEB proxy: background task failed with nothing to report it: uplink rejected: HTTP 409",
@@ -484,7 +492,7 @@ async def test_a_cancelled_background_task_is_not_reported(caplog: pytest.LogCap
 
         await carrier._cancel_tracked(task)
 
-    assert caplog.records == []
+    assert _carrier_records(caplog) == []
 
 
 async def test_recv_after_close_does_not_start_a_grant_task() -> None:
