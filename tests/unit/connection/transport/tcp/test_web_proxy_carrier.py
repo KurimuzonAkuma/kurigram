@@ -285,9 +285,15 @@ def _window_grant(amount: int) -> Frame:
 
 
 async def _run_until_blocked(sending: "asyncio.Task[None]") -> None:
-    # `send()` only suspends once it runs out of credit, so a single loop
-    #  iteration is enough to drive it up to that point.
-    await asyncio.sleep(0)
+    # `send()` suspends once it runs out of credit, and waking it after a WINDOW
+    #  grant costs three loop iterations below 3.12, where `asyncio.wait_for` ran the
+    #  wait in a task of its own, against one on 3.12+, which awaits the coroutine
+    #  directly. A single yield left the grant unspent and failed
+    #  `test_send_never_puts_more_on_the_wire_than_the_credit_granted` on 3.9-3.11.
+    #  Ten is that measured three with room to spare.
+    #  https://github.com/python/cpython/blob/0fb18b02c8ad56299d6a2910be0bab8ad601ef24/Lib/asyncio/tasks.py#L509
+    for _ in range(10):
+        await asyncio.sleep(0)
 
     assert not sending.done()
 
