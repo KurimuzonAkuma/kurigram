@@ -37,8 +37,9 @@ log = logging.getLogger(__name__)
 #  which the hosted relay and this carrier both implement.
 #  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/docs/web-proxy-plan.md
 
-# type:u8 | stream_id:u24 (big-endian) | length:u32 (big-endian) | payload, laid
-#  out by tdesktop's `SerializeFrame`.
+# A frame header is `type:u8 | stream_id:u24 (big-endian) | length:u32 (big-endian) |
+#  payload`, laid out by tdesktop's `SerializeFrame`. It cannot start at `type:`, which
+#  `mypy` reads as a `# type:` comment and refuses to parse.
 #  https://github.com/telegramdesktop/tdesktop/blob/23dff657fc857c3223fa20472aa8614b9ab2c7eb/Telegram/SourceFiles/mtproto/web_proxy/web_proxy_frame.cpp#L33-L55
 FRAME_HEADER_SIZE: Final[int] = 8
 
