@@ -25,7 +25,7 @@ import math
 import os
 from hashlib import md5
 from pathlib import PurePath
-from typing import Union, BinaryIO, Callable, Optional
+from typing import List, Union, BinaryIO, Callable, Optional
 
 import pyrogram
 from pyrogram import StopTransmission
@@ -90,15 +90,17 @@ class SaveFile:
 
         Returns:
             ``InputFile`` | ``None``: On success, the uploaded file is returned in form of an InputFile object. In case
-            *path* is None, in case *file_id* is given so that a single missing part is uploaded instead of the whole
-            file, and in case the upload fails, None is returned.
+            *path* is None, and in case *file_id* is given so that a single missing part is uploaded instead of the
+            whole file, None is returned. A failed upload raises.
 
         Raises:
-            RPCError: In case of a Telegram RPC error.
+            RPCError: In case of a Telegram RPC error, including one that happened while a part was being sent.
         """
         async with self.save_file_semaphore:
             if path is None:
                 return None
+
+            failures: List[Exception] = []
 
             async def worker(session):
                 while True:
@@ -110,7 +112,11 @@ class SaveFile:
                     try:
                         await session.invoke(data)
                     except Exception as e:
+                        # The failure is remembered rather than raised, because a worker that stops
+                        #  consuming leaves the producer below blocked forever on `queue.put()` — the
+                        #  queue holds one item. It is raised at the end, once every worker has drained.
                         log.exception(e)
+                        failures.append(e)
 
             part_size = 512 * 1024
 
@@ -179,7 +185,7 @@ class SaveFile:
                     await queue.put(rpc)
 
                     if is_missing_part:
-                        return None
+                        break
 
                     if not is_big and not is_missing_part:
                         md5_sum.update(chunk)
@@ -202,21 +208,7 @@ class SaveFile:
                 raise
             except Exception as e:
                 log.exception(e)
-            else:
-                if is_big:
-                    return raw.types.InputFileBig(
-                        id=file_id,
-                        parts=file_total_parts,
-                        name=file_name,
-
-                    )
-                else:
-                    return raw.types.InputFile(
-                        id=file_id,
-                        parts=file_total_parts,
-                        name=file_name,
-                        md5_checksum=md5_sum
-                    )
+                raise
             finally:
                 for _ in workers:
                     await queue.put(None)
@@ -226,6 +218,24 @@ class SaveFile:
                 if isinstance(path, (str, PurePath)):
                     fp.close()
 
-            # NOTE: The `except Exception` branch above swallows the failure, so the upload can end
-            #       without a file.
-            return None
+            # Outside the `finally` on purpose: a worker only reports a failed part once it has been
+            #  woken up and drained above, so a check any earlier can miss it.
+            if failures:
+                raise failures[0]
+
+            if is_missing_part:
+                return None
+
+            if is_big:
+                return raw.types.InputFileBig(
+                    id=file_id,
+                    parts=file_total_parts,
+                    name=file_name
+                )
+
+            return raw.types.InputFile(
+                id=file_id,
+                parts=file_total_parts,
+                name=file_name,
+                md5_checksum=md5_sum
+            )
