@@ -20,6 +20,7 @@ from typing import Callable, Optional, Union
 
 import pyrogram
 from pyrogram.filters import Filter
+from .handler_type import HandlerType
 
 
 class OnChatJoinRequest:
@@ -27,7 +28,7 @@ class OnChatJoinRequest:
         self: Union["OnChatJoinRequest", Filter, None] = None,
         filters: Optional[Filter] = None,
         group: int = 0,
-    ) -> Callable:
+    ) -> Callable[[HandlerType], HandlerType]:
         """Decorator for handling chat join requests.
 
         This does the same thing as :meth:`~pyrogram.Client.add_handler` using the
@@ -43,7 +44,7 @@ class OnChatJoinRequest:
                 The group identifier, defaults to 0.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
                 self.add_handler(pyrogram.handlers.ChatJoinRequestHandler(func, filters), group)
             elif isinstance(self, Filter) or self is None:

@@ -19,10 +19,11 @@
 from typing import Callable, Optional
 
 import pyrogram
+from .handler_type import HandlerType
 
 
 class OnDisconnect:
-    def on_disconnect(self: Optional["OnDisconnect"] = None) -> Callable:
+    def on_disconnect(self: Optional["OnDisconnect"] = None) -> Callable[[HandlerType], HandlerType]:
         """Decorator for handling disconnections.
 
         This does the same thing as :meth:`~pyrogram.Client.add_handler` using the
@@ -31,7 +32,7 @@ class OnDisconnect:
         .. include:: /_includes/usable-by/users-bots.rst
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
                 self.add_handler(pyrogram.handlers.DisconnectHandler(func))
             else:
