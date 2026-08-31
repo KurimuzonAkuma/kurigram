@@ -29,12 +29,19 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from getpass import getpass
 from io import BytesIO
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any, Callable, TypeVar
 
 import pyrogram
 from pyrogram import enums, raw, types
 from pyrogram.file_id import DOCUMENT_TYPES, PHOTO_TYPES, FileId, FileType
 from pyrogram.types.messages_and_media.message import Str
+
+
+async def run_sync(
+    func: Callable[..., TypeVar("Result")], *args: Any, **kwargs: Any
+) -> TypeVar("Result"):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
 
 
 def get_event_loop() -> asyncio.AbstractEventLoop:
