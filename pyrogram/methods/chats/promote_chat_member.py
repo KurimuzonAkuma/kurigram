@@ -97,7 +97,8 @@ class PromoteChatMember:
                     manage_call=privileges.can_manage_video_chats,
                     manage_topics=privileges.can_manage_topics,
                     manage_ranks=privileges.can_manage_tags,
-                    other=privileges.can_manage_chat
+                    manage_welcome_messages=privileges.can_send_welcome_messages,
+                    other=privileges.can_manage_chat,
                 ),
                 rank=rank or ""
             )

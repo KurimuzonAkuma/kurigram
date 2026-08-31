@@ -24,8 +24,8 @@ from pyrogram import raw, types
 from ..object import Object
 
 
-class GiftedTon(Object):
-    """Toncoins were gifted to a user.
+class GiftedGrams(Object):
+    """TON Grams were gifted to a user.
 
     Parameters:
         gifter (:obj:`~pyrogram.types.User`, *optional*):
@@ -35,7 +35,7 @@ class GiftedTon(Object):
         receiver (:obj:`~pyrogram.types.User`):
             User that received Telegram Premium.
 
-        ton_amount (``int``):
+        gram_amount (``int``):
             The received amount of Toncoins, in the smallest units of the cryptocurrency.
 
         transaction_id (``str``, *optional*):
@@ -50,7 +50,7 @@ class GiftedTon(Object):
         *,
         gifter: Optional["types.User"] = None,
         receiver: "types.User",
-        ton_amount: Optional[int] = None,
+        gram_amount: Optional[int] = None,
         transaction_id: Optional[str] = None,
         sticker: Optional["types.Sticker"] = None,
     ):
@@ -58,7 +58,7 @@ class GiftedTon(Object):
 
         self.gifter = gifter
         self.receiver = receiver
-        self.ton_amount = ton_amount
+        self.gram_amount = gram_amount
         self.transaction_id = transaction_id
         self.sticker = sticker
 
@@ -68,7 +68,7 @@ class GiftedTon(Object):
         action: "raw.types.MessageActionGiftTon",
         gifter: Optional["raw.base.User"] = None,
         receiver: Optional["raw.base.User"] = None,
-    ) -> "GiftedTon":
+    ) -> "GiftedGrams":
         raw_stickers = await client.invoke(
             raw.functions.messages.GetStickerSet(
                 stickerset=raw.types.InputStickerSetTonGifts(),
@@ -76,10 +76,10 @@ class GiftedTon(Object):
             )
         )
 
-        return GiftedTon(
+        return GiftedGrams(
             gifter=await types.User._parse(client, gifter),
             receiver=await types.User._parse(client, receiver),
-            ton_amount=action.crypto_amount,
+            gram_amount=action.crypto_amount,
             transaction_id=action.transaction_id,
             sticker=random.choice(
                 types.List(

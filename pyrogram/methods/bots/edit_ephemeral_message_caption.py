@@ -18,9 +18,11 @@
 
 from typing import TYPE_CHECKING, List, Optional, Union
 
+from pyrogram import types
+
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import enums, types
+    from pyrogram import enums
 
 
 class EditEphemeralMessageCaption:
@@ -32,6 +34,7 @@ class EditEphemeralMessageCaption:
         caption: str = "",
         parse_mode: Optional["enums.ParseMode"] = None,
         caption_entities: Optional[List["types.MessageEntity"]] = None,
+        show_caption_above_media: Optional[bool] = None,
         reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
     ) -> Optional["types.Message"]:
         """Use this method to edit the caption of an ephemeral message.
@@ -59,6 +62,10 @@ class EditEphemeralMessageCaption:
             caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
+            show_caption_above_media (``bool``, *optional*):
+                Pass *True* if the caption must be shown above the message media.
+                Supported only for animation, photo and video messages.
+
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
@@ -71,8 +78,6 @@ class EditEphemeralMessageCaption:
 
                 await app.edit_ephemeral_message_caption(chat_id, message_id, receiver_user_id, "new media caption")
         """
-        link_preview_options = self.link_preview_options
-
         return await self.edit_ephemeral_message_text(
             chat_id=chat_id,
             receiver_user_id=receiver_user_id,
@@ -80,6 +85,8 @@ class EditEphemeralMessageCaption:
             text=caption,
             parse_mode=parse_mode,
             entities=caption_entities,
-            link_preview_options=link_preview_options,
-            reply_markup=reply_markup
+            link_preview_options=types.LinkPreviewOptions(show_above_text=show_caption_above_media)
+            if show_caption_above_media
+            else self.link_preview_options,
+            reply_markup=reply_markup,
         )
