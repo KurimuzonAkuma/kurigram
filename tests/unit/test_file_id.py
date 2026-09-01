@@ -229,7 +229,7 @@ def test_photo_from_a_current_client():
     Twelve bytes trail `access_hash`: `01000000 02000000 6d000000`. Read against the pre-32 layout
     the first eight become `volume_id` and `6d000000` becomes the source, hence the reported
     `ValueError: Unknown thumbnail_source 109`. Read against the current one they are the source,
-    the thumbnail's own file type, and `chr(109)` — the size letter `m`.
+    the thumbnail's own file type, and `chr(109)`, the size letter `m`.
     """
     photo = "AgACAgIAAxkBAAIENGfeY4AfRquwTL2LpDrzqvFMVNt_AAIG9DEbXX3wSq3oI7t_PqQGAQADAgADbQADNgQ"
 

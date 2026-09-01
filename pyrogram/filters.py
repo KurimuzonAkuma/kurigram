@@ -147,9 +147,9 @@ _SELF = "self"
 _ME_ALIASES = frozenset({_ME, _SELF})
 
 
-# NOTE: `Update` declares none of these -- an inline query happens in no chat, a poll update
-#       has no sender -- so each field names the types that carry it. Kept in sync by
-#       `test_the_filters_name_every_update_type_that_carries_the_field`.
+# `Update` declares none of these (an inline query happens in no chat, a poll update
+#  has no sender), so each field names the types that carry it. Kept in sync by
+#  `test_the_filters_name_every_update_type_that_carries_the_field`.
 _WITH_A_SENDER = (
     CallbackQuery,
     ChatJoinRequest,
@@ -195,10 +195,10 @@ def _is_outgoing(update: Update) -> bool:
     return bool(update.outgoing) if isinstance(update, _CAN_BE_OUTGOING) else False
 
 
-# NOTE: `business_connection_id`, `forward_origin` and `topic` live on `Message` alone, so the
-#       filters that read them cannot take the field off the update the way the ones above do.
-#       They go through the message the update is about instead, which is the same message the
-#       user is looking at when a button under it is pressed.
+# `business_connection_id`, `forward_origin` and `topic` live on `Message` alone, so the
+#  filters that read them cannot take the field off the update the way the ones above do.
+#  They go through the message the update is about instead, which is the same message the
+#  user is looking at when a button under it is pressed.
 _WITH_A_MESSAGE = (CallbackQuery,)
 
 
@@ -1269,8 +1269,8 @@ class chat(Filter, set):
             return True
         sender = _sender_of(update)
 
-        # NOTE: Saved Messages is the chat whose id is your own user id.
-        #       `is_self` on its own is true of anything you caused, in any chat.
+        # Saved Messages is the chat whose id is your own user id.
+        #  `is_self` on its own is true of anything you caused, in any chat.
         return bool(
             not self.isdisjoint(_ME_ALIASES)
             and sender

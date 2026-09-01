@@ -161,7 +161,7 @@ async def test_message_filters_are_unchanged():
 async def test_chat_me_is_saved_messages_and_nothing_else():
     """`filters.chat("me")` means the chat whose id is your own user id.
 
-    It used to test the sender instead — `is_self and not outgoing` — which is
+    It used to test the sender instead (`is_self and not outgoing`), which is
     also true of an update you caused in a chat that is not Saved Messages.
     """
     assert await filters.chat("me")(CLIENT, Message(id=1, chat=SAVED_MESSAGES, from_user=MYSELF))
@@ -198,7 +198,7 @@ UPDATE_TYPES = [
 
 
 def carries(update_type, field: str) -> bool:
-    """Whether `update_type` answers `field` -- as an `__init__` argument or as a property.
+    """Whether `update_type` answers `field`, as an `__init__` argument or as a property.
 
     The property is looked up in the class dictionaries along the MRO rather than read off
     the class, so it is found as the descriptor it is instead of being evaluated.
@@ -302,7 +302,7 @@ def test_callback_query_chat_stays_out_of_the_serialized_form():
     """`chat` is derived, so it must not show up next to `message` in the output.
 
     `Object.default()` and `Object.__repr__()` walk `__dict__`, and `bind()`
-    documents `eval(repr(obj))` as supported — an attribute here would repeat the
+    documents `eval(repr(obj))` as supported, so an attribute here would repeat the
     whole chat in the JSON and feed `__init__` a keyword it does not take.
     """
     query = in_private(CallbackQuery, from_user=SOMEONE)
