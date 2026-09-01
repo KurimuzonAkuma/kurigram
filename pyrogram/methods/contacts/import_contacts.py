@@ -37,7 +37,7 @@ class ImportContacts:
                 The contact list to be added
 
         Returns:
-            :obj:`ImportedContacts <pyrogram.raw.base.contacts.ImportedContacts>`: On success.
+            :obj:`~pyrogram.raw.base.contacts.ImportedContacts`: On success.
 
         Example:
             .. code-block:: python
