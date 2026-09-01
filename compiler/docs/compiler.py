@@ -900,6 +900,7 @@ def pyrogram_api():
             PaidMessagesPriceChanged
             DirectMessagePriceChanged
             DirectMessagesTopic
+            EphemeralMessageParameters
             PaymentForm
             PaymentOption
             SavedCredentials
@@ -919,7 +920,7 @@ def pyrogram_api():
             ChatBackground
             ChatTheme
             GiftedStars
-            GiftedTon
+            GiftedGrams
             UpgradedGiftValueInfo
             UpgradedGiftAttributeId
             UpgradedGiftPurchaseOffer

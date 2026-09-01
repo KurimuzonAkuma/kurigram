@@ -29,6 +29,7 @@ from pyrogram.file_id import FileType
 
 log = logging.getLogger(__name__)
 
+
 class SendAudio:
     async def send_audio(
         self: "pyrogram.Client",
@@ -45,8 +46,7 @@ class SendAudio:
         disable_notification: Optional[bool] = None,
         message_thread_id: Optional[int] = None,
         direct_messages_topic_id: Optional[int] = None,
-        receiver_user_id: Optional[Union[int, str]] = None,
-        callback_query_id: Optional[str] = None,
+        ephemeral_message_parameters: Optional["types.EphemeralMessageParameters"] = None,
         effect_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         schedule_date: Optional[datetime] = None,
@@ -56,15 +56,16 @@ class SendAudio:
         allow_paid_broadcast: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None,
         suggested_post_parameters: Optional["types.SuggestedPostParameters"] = None,
-        reply_markup: Optional[Union[
-            "types.InlineKeyboardMarkup",
-            "types.ReplyKeyboardMarkup",
-            "types.ReplyKeyboardRemove",
-            "types.ForceReply"
-        ]] = None,
+        reply_markup: Optional[
+            Union[
+                "types.InlineKeyboardMarkup",
+                "types.ReplyKeyboardMarkup",
+                "types.ReplyKeyboardRemove",
+                "types.ForceReply",
+            ]
+        ] = None,
         progress: Optional[Callable] = None,
         progress_args: tuple = (),
-
         reply_to_message_id: Optional[int] = None,
         reply_to_chat_id: Optional[Union[int, str]] = None,
         reply_to_story_id: Optional[int] = None,
@@ -132,14 +133,8 @@ class SendAudio:
                 Unique identifier of the topic in a channel direct messages chat administered by the current user.
                 For direct chats only.
 
-            receiver_user_id (``int`` | ``str``, *optional*):
-                For outgoing ephemeral messages, unique identifier (int) or username (str) of the user who will receive the message.
-                For group and supergroup chats only.
-                It is not guaranteed that the user will receive the message, especially if they are offline.
-                See `ephemeral message sending <https://core.telegram.org/bots/api#ephemeral-messages-and-commands>`__ for more details.
-
-            callback_query_id (``str``, *optional*):
-                For outgoing ephemeral messages, identifier of the callback query which triggered the message if any.
+            ephemeral_message_parameters (:obj:`~pyrogram.types.EphemeralMessageParameters`, *optional*):
+                Parameters of the ephemeral message to send.
 
             effect_id (``int``, *optional*):
                 Unique identifier of the message effect.
@@ -269,7 +264,7 @@ class SendAudio:
                 quote=quote_text,
                 quote_parse_mode=parse_mode,
                 quote_entities=quote_entities,
-                quote_position=quote_offset
+                quote_position=quote_offset,
             )
 
         file = None
@@ -281,24 +276,24 @@ class SendAudio:
                     if mime_type == "audio/ogg":
                         mime_type = "audio/opus"
                     thumb = await self.save_file(thumb)
-                    file = await self.save_file(audio, progress=progress, progress_args=progress_args)
+                    file = await self.save_file(
+                        audio, progress=progress, progress_args=progress_args
+                    )
                     media = raw.types.InputMediaUploadedDocument(
                         mime_type=mime_type,
                         file=file,
                         thumb=thumb,
                         attributes=[
                             raw.types.DocumentAttributeAudio(
-                                duration=duration,
-                                performer=performer,
-                                title=title
+                                duration=duration, performer=performer, title=title
                             ),
-                            raw.types.DocumentAttributeFilename(file_name=file_name or os.path.basename(audio))
-                        ]
+                            raw.types.DocumentAttributeFilename(
+                                file_name=file_name or os.path.basename(audio)
+                            ),
+                        ],
                     )
                 elif re.match("^https?://", audio):
-                    media = raw.types.InputMediaDocumentExternal(
-                        url=audio
-                    )
+                    media = raw.types.InputMediaDocumentExternal(url=audio)
                 else:
                     media = utils.get_input_media_from_file_id(audio, FileType.AUDIO)
             else:
@@ -313,33 +308,35 @@ class SendAudio:
                     thumb=thumb,
                     attributes=[
                         raw.types.DocumentAttributeAudio(
-                            duration=duration,
-                            performer=performer,
-                            title=title
+                            duration=duration, performer=performer, title=title
                         ),
-                        raw.types.DocumentAttributeFilename(file_name=file_name or audio.name)
-                    ]
+                        raw.types.DocumentAttributeFilename(file_name=file_name or audio.name),
+                    ],
                 )
 
             while True:
                 try:
                     peer = await self.resolve_peer(chat_id)
 
-                    if receiver_user_id:
+                    if ephemeral_message_parameters:
                         rpc = raw.functions.ephemeral.SendMessage(
                             peer=peer,
-                            receiver_id=await self.resolve_peer(receiver_user_id),
-                            query_id=int(callback_query_id) if callback_query_id is not None else None,
+                            receiver_id=await self.resolve_peer(
+                                ephemeral_message_parameters.receiver_user_id
+                            ),
+                            query_id=int(ephemeral_message_parameters.callback_query_id)
+                            if ephemeral_message_parameters.callback_query_id is not None
+                            else None,
                             media=media,
                             reply_to=await utils.get_reply_to(
-                                self,
-                                reply_parameters,
-                                message_thread_id,
-                                direct_messages_topic_id
+                                self, reply_parameters, message_thread_id, direct_messages_topic_id
                             ),
                             random_id=self.rnd_id(),
+                            anchor=ephemeral_message_parameters.replace_callback_query_message,
                             reply_markup=await reply_markup.write(self) if reply_markup else None,
-                            **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
+                            **await utils.parse_text_entities(
+                                self, caption, parse_mode, caption_entities
+                            ),
                         )
                     else:
                         rpc = raw.functions.messages.SendMedia(
@@ -347,10 +344,7 @@ class SendAudio:
                             media=media,
                             silent=disable_notification or None,
                             reply_to=await utils.get_reply_to(
-                                self,
-                                reply_parameters,
-                                message_thread_id,
-                                direct_messages_topic_id
+                                self, reply_parameters, message_thread_id, direct_messages_topic_id
                             ),
                             random_id=self.rnd_id(),
                             schedule_date=utils.datetime_to_timestamp(schedule_date),
@@ -360,8 +354,12 @@ class SendAudio:
                             reply_markup=await reply_markup.write(self) if reply_markup else None,
                             effect=effect_id,
                             allow_paid_stars=paid_message_star_count,
-                            suggested_post=suggested_post_parameters.write() if suggested_post_parameters else None,
-                            **await utils.parse_text_entities(self, caption, parse_mode, caption_entities)
+                            suggested_post=suggested_post_parameters.write()
+                            if suggested_post_parameters
+                            else None,
+                            **await utils.parse_text_entities(
+                                self, caption, parse_mode, caption_entities
+                            ),
                         )
 
                     r = await self.invoke(rpc, business_connection_id=business_connection_id)

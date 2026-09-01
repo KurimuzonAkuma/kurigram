@@ -46,6 +46,7 @@ from .dice import Dice
 from .direct_message_price_changed import DirectMessagePriceChanged
 from .direct_messages_topic import DirectMessagesTopic
 from .document import Document
+from .ephemeral_message_parameters import EphemeralMessageParameters
 from .external_reply_info import ExternalReplyInfo
 from .fact_check import FactCheck
 from .formatted_text import FormattedText
@@ -68,9 +69,9 @@ from .gift_resale_price import GiftResalePrice, GiftResalePriceStar, GiftResaleP
 from .gift_upgrade_preview import GiftUpgradePreview
 from .gift_upgrade_price import GiftUpgradePrice
 from .gift_upgrade_variants import GiftUpgradeVariants
+from .gifted_grams import GiftedGrams
 from .gifted_premium import GiftedPremium
 from .gifted_stars import GiftedStars
-from .gifted_ton import GiftedTon
 from .giveaway import Giveaway
 from .giveaway_completed import GiveawayCompleted
 from .giveaway_created import GiveawayCreated
@@ -250,6 +251,7 @@ __all__ = [
     "DirectMessagePriceChanged",
     "DirectMessagesTopic",
     "Document",
+    "EphemeralMessageParameters",
     "ExternalReplyInfo",
     "FactCheck",
     "FormattedText",
@@ -274,9 +276,9 @@ __all__ = [
     "GiftUpgradePreview",
     "GiftUpgradePrice",
     "GiftUpgradeVariants",
+    "GiftedGrams",
     "GiftedPremium",
     "GiftedStars",
-    "GiftedTon",
     "Giveaway",
     "GiveawayCompleted",
     "GiveawayCreated",

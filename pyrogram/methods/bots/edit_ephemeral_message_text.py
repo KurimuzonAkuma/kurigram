@@ -28,9 +28,10 @@ class EditEphemeralMessageText:
         chat_id: Union[int, str],
         receiver_user_id: Union[int, str],
         ephemeral_message_id: int,
-        text: str,
+        text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
+        rich_message: Optional["types.InputRichMessage"] = None,
         link_preview_options: Optional["types.LinkPreviewOptions"] = None,
         reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
     ) -> Optional["types.Message"]:
@@ -50,7 +51,7 @@ class EditEphemeralMessageText:
                 Identifier of the ephemeral message to edit.
 
             text (``str``):
-                New text of the message.
+                New text of the message, 1-4096 characters after entity parsing, required if *rich_message* isn't specified.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
@@ -58,6 +59,9 @@ class EditEphemeralMessageText:
 
             entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
+
+            rich_message (:obj:`~pyrogram.types.InputRichMessage`, *optional*):
+                New rich content of the message, required if *text* isn't specified.
 
             link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
                 Options used for link preview generation for the message.
@@ -86,8 +90,10 @@ class EditEphemeralMessageText:
                 peer=await self.resolve_peer(chat_id),
                 receiver_id=await self.resolve_peer(receiver_user_id),
                 id=ephemeral_message_id,
+                invert_media=getattr(link_preview_options, "show_above_text", None),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,
+                rich_message=rich_message.write() if rich_message else None,
                 media=(
                     raw.types.InputMediaWebPage(
                         url=link_preview_options.url,
