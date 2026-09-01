@@ -56,7 +56,7 @@ class RequestCallbackAnswer:
                 Timeout in seconds.
 
         Returns:
-            :obj:`BotCallbackAnswer <pyrogram.raw.base.messages.BotCallbackAnswer>`: The answer containing info
+            :obj:`~pyrogram.raw.base.messages.BotCallbackAnswer`: The answer containing info
             useful for clients to display a notification at the top of the chat screen or as an alert.
 
         Raises:
