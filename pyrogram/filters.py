@@ -223,7 +223,6 @@ def _sender_chat_of(update: Update) -> Optional[Chat]:
     # A callback query carries no sender chat of its own, but the message the button sits
     #  under does, by the same route `business`, `linked_channel` and `topic` take below.
     message = _message_of(update)
-
     return message.sender_chat if message else None
 
 
