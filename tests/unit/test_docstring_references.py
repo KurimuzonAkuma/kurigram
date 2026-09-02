@@ -26,7 +26,7 @@ import ast
 import importlib
 import pathlib
 import re
-from typing import Final, Iterator, List, NamedTuple, Pattern, Set, Tuple
+from typing import Final, Iterator, List, NamedTuple, Optional, Pattern, Set, Tuple
 
 _REPOSITORY_ROOT: Final[pathlib.Path] = pathlib.Path(__file__).resolve().parents[2]
 _PACKAGE_ROOT: Final[pathlib.Path] = _REPOSITORY_ROOT / "pyrogram"
@@ -42,26 +42,60 @@ _CROSS_REFERENCE: Final[Pattern[str]] = re.compile(r":(?:py:)?(?:obj|class|meth|
 
 _DOCUMENTED_NODES: Final[Tuple[type, ...]] = (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
 
+# A label is free text as often as it is a name, and prose is a suffix of nothing: a label
+#  reading "send a message" over `pyrogram.Client.send_message` is correct Sphinx.
+_LABEL_THAT_IS_A_PATH: Final[Pattern[str]] = re.compile(r"^[\w.]+(?:\(\))?$")
+
 
 class Reference(NamedTuple):
     target: str
     path: pathlib.Path
     line: int
+    label: Optional[str] = None
 
     def __str__(self) -> str:
-        return "{}:{}: {}".format(self.path.relative_to(_REPOSITORY_ROOT), self.line, self.target)
+        body = self.target if self.label is None else "{} <{}>".format(self.label, self.target)
+
+        return "{}:{}: {}".format(self.path.relative_to(_REPOSITORY_ROOT), self.line, body)
 
 
-def targets_in(text: str) -> Iterator[str]:
-    """Take the target out of every cross-reference in `text`, both of its two forms."""
+def components(dotted: str) -> List[str]:
+    """Split a dotted name the way Sphinx reads one, with the decoration taken off.
+
+    A leading `~` prints the last component only and a leading `.` asks Sphinx to search;
+    neither is part of the name. Trailing `()` marks a callable.
+    """
+    return dotted.strip().lstrip("~.").rstrip("()").split(".")
+
+
+def references_in(text: str) -> Iterator[Tuple[Optional[str], str]]:
+    """Take the label and the target out of every cross-reference in `text`."""
     for body in _CROSS_REFERENCE.findall(text):
         # A reference is either a target with the text to print in front of it, or a bare
-        #  target that is both at once.
-        target = body.rpartition("<")[2].rstrip(">") if "<" in body else body
+        #  target that is both at once. Sphinx tells them apart with `^(.+?)\s*(?<!\x00)<([^<]*?)>$`,
+        #  so the split is at the last `<` and only when the body ends in `>`.
+        #  https://github.com/sphinx-doc/sphinx/blob/cc7c6f435ad37bb12264f8118c8461b230e6830c/sphinx/util/nodes.py#L35
+        if not body.endswith(">"):
+            yield None, ".".join(components(body))
+            continue
 
-        # A leading `~` prints the last component only and a leading `.` asks Sphinx to
-        #  search; neither is part of the name. Trailing `()` marks a callable.
-        yield target.strip().lstrip("~.").rstrip("()")
+        label, _, target = body[:-1].rpartition("<")
+
+        yield label.strip(), ".".join(components(target))
+
+
+def label_agrees_with_target(label: str, *, target: str) -> bool:
+    """A label written as a path names the tail of the target, or it names something else.
+
+    Only the label decides whether this applies: prose is exempt, because a sentence is
+    not a shortened name and cannot be a suffix of one.
+    """
+    if not _LABEL_THAT_IS_A_PATH.match(label):
+        return True
+
+    label_parts = components(label)
+
+    return label_parts == components(target)[-len(label_parts):]
 
 
 def docstrings_of(path: pathlib.Path) -> Iterator[Tuple[str, int]]:
@@ -84,8 +118,8 @@ def hand_written_references() -> List[Reference]:
 
         for docstring, first_line in docstrings_of(path):
             for offset, line in enumerate(docstring.splitlines()):
-                for target in targets_in(line):
-                    references.append(Reference(target, path, first_line + offset))
+                for label, target in references_in(line):
+                    references.append(Reference(target, path, first_line + offset, label))
 
     return references
 
@@ -141,3 +175,49 @@ def test_a_target_that_does_not_exist_does_not_resolve() -> None:
     assert not resolves("pyrogram.types.Message.no_such_method")
     assert not resolves("pyrogram.types.NoSuchType")
     assert not resolves("Message.reply")
+
+
+def test_every_label_that_looks_like_a_path_names_the_target_it_points_at() -> None:
+    """`:obj:`Filters.regex <pyrogram.filters.regex>`` prints a name the link does not lead to.
+
+    Sphinx prints the label and links the target without comparing them, so a label left
+    behind by a rename reads as a working reference to a name that moved.
+    """
+    disagreeing = sorted(
+        {
+            str(one)
+            for one in hand_written_references()
+            if one.label is not None and not label_agrees_with_target(one.label, target=one.target)
+        }
+    )
+
+    assert not disagreeing, "{} labels name something other than their target:\n{}".format(
+        len(disagreeing),
+        "\n".join(disagreeing),
+    )
+
+
+def test_a_label_is_checked_only_when_it_is_written_as_a_path() -> None:
+    assert label_agrees_with_target("filters.regex", target="pyrogram.filters.regex")
+    assert label_agrees_with_target("create()", target="pyrogram.filters.create")
+    assert label_agrees_with_target("pyrogram.filters.regex", target="pyrogram.filters.regex")
+
+    assert not label_agrees_with_target("Filters.regex", target="pyrogram.filters.regex")
+    assert not label_agrees_with_target("types.Folder", target="pyrogram.types.Chat")
+    assert not label_agrees_with_target("regex.filters", target="pyrogram.filters.regex")
+
+    # Prose is exempt, whatever it says.
+    assert label_agrees_with_target("send a message", target="pyrogram.Client.send_message")
+    assert label_agrees_with_target("the chat itself", target="pyrogram.types.Chat")
+
+
+def test_a_reference_carries_the_label_it_was_written_with() -> None:
+    """The rule above passes over everything if the label stops being read."""
+    assert list(references_in(":obj:`~pyrogram.types.Message`")) == [(None, "pyrogram.types.Message")]
+    assert list(references_in(":meth:`filters.create() <pyrogram.filters.create>`")) == [
+        ("filters.create()", "pyrogram.filters.create")
+    ]
+
+    labelled = [one for one in hand_written_references() if one.label is not None]
+
+    assert labelled, "the explicit-title form is gone from the tree, and this rule with it"
