@@ -113,8 +113,8 @@ class SaveFile:
                         await session.invoke(data)
                     except Exception as e:
                         # The failure is remembered rather than raised, because a worker that stops
-                        #  consuming leaves the producer below blocked forever on `queue.put()` — the
-                        #  queue holds one item. It is raised at the end, once every worker has drained.
+                        #  consuming leaves the producer below blocked forever on `queue.put()`, since
+                        #  the queue holds one item. It is raised at the end, once every worker has drained.
                         log.exception(e)
                         failures.append(e)
 

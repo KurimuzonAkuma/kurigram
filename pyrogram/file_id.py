@@ -151,16 +151,16 @@ class ThumbnailSource(IntEnum):
     STICKER_SET_THUMBNAIL_VERSION = 9
 
 
-# NOTE: TDLib's `Version::RemovePhotoVolumeAndLocalId` — the minor version from which photo file ids
-#       carry neither `volume_id` nor `local_id`, the sources that still need them having become
-#       values 5 to 9 above. Reading a current file id against the older layout takes the source tag
-#       for `volume_id` and part of the tail for the source:
+# TDLib's `Version::RemovePhotoVolumeAndLocalId`, the minor version from which photo file ids
+#  carry neither `volume_id` nor `local_id`, the sources that still need them having become
+#  values 5 to 9 above. Reading a current file id against the older layout takes the source tag
+#  for `volume_id` and part of the tail for the source:
 #
-#         FileId.decode("AgACAgIAAxkBAAIENGfeY4AfRquwTL2LpDrzqvFMVNt_AAIG9DEbXX3wSq3o"
-#                       "I7t_PqQGAQADAgADbQADNgQ")
-#         # -> ValueError: Unknown thumbnail_source 109 of file_id AgACAgI...
+#    FileId.decode("AgACAgIAAxkBAAIENGfeY4AfRquwTL2LpDrzqvFMVNt_AAIG9DEbXX3wSq3o"
+#                  "I7t_PqQGAQADAgADbQADNgQ")
+#    # -> ValueError: Unknown thumbnail_source 109 of file_id AgACAgI...
 #
-#       https://github.com/tdlib/td/blob/master/td/telegram/files/FileLocation.hpp
+#  https://github.com/tdlib/td/blob/master/td/telegram/files/FileLocation.hpp
 NO_VOLUME_AND_LOCAL_ID_MINOR: Final[int] = 32
 
 
@@ -203,14 +203,14 @@ def read_photo_tail(buffer: BytesIO, *, thumbnail_source: ThumbnailSource) -> Ph
 
         return PhotoTail(secret=secret)
 
-    # NOTE: `thumbnail_size` is the `type` of the `PhotoSize` the file id points at — one letter,
-    #       whose character code the file id stores as an int32 while
-    #       `inputPhotoFileLocation.thumb_size` takes a `string`. It is a `str` from here on:
-    #       `chr()` in, `ord()` back out in `write_photo_tail()`, `get_file()` passes it through.
+    # `thumbnail_size` is the `type` of the `PhotoSize` the file id points at: one letter,
+    #  whose character code the file id stores as an int32 while
+    #  `inputPhotoFileLocation.thumb_size` takes a `string`. It is a `str` from here on:
+    #  `chr()` in, `ord()` back out in `write_photo_tail()`, `get_file()` passes it through.
     #
-    #       What the letters mean: https://core.telegram.org/api/files#image-thumbnail-types, and
-    #       the same table with the order Telegram Desktop picks them in:
-    #       https://github.com/telegramdesktop/tdesktop/blob/8e18cb71103d83d7d98994ff27f0a2bca55c489c/Telegram/SourceFiles/data/data_session.cpp#L102-L114
+    #  What the letters mean: https://core.telegram.org/api/files#image-thumbnail-types, and
+    #  the same table with the order Telegram Desktop picks them in:
+    #  https://github.com/telegramdesktop/tdesktop/blob/8e18cb71103d83d7d98994ff27f0a2bca55c489c/Telegram/SourceFiles/data/data_session.cpp#L102-L114
     if thumbnail_source == ThumbnailSource.THUMBNAIL:
         thumbnail_file_type, thumbnail_size = struct.unpack("<ii", buffer.read(8))
 
@@ -226,8 +226,8 @@ def read_photo_tail(buffer: BytesIO, *, thumbnail_source: ThumbnailSource) -> Ph
 
         return PhotoTail(sticker_set_id=sticker_set_id, sticker_set_access_hash=sticker_set_access_hash)
 
-    # NOTE: `secret` sits between the other two, where `inputPhotoLegacyFileLocation` lists them as
-    #       `volume_id local_id secret`. The file id follows `FullLegacy::store`, not the schema.
+    # `secret` sits between the other two, where `inputPhotoLegacyFileLocation` lists them as
+    #  `volume_id local_id secret`. The file id follows `FullLegacy::store`, not the schema.
     if thumbnail_source == ThumbnailSource.FULL_LEGACY:
         volume_id, secret, local_id = struct.unpack("<qqi", buffer.read(20))
 
@@ -267,7 +267,7 @@ def read_photo_tail(buffer: BytesIO, *, thumbnail_source: ThumbnailSource) -> Ph
 
 
 def write_photo_tail(file_id: "FileId") -> bytes:
-    """The counterpart of `read_photo_tail()` — same layout per source, same order."""
+    """The counterpart of `read_photo_tail()`: same layout per source, same order."""
     if file_id.thumbnail_source == ThumbnailSource.LEGACY:
         return struct.pack("<q", file_id.secret)
 

@@ -217,7 +217,7 @@ def test_the_base_class_renders_the_value_on_its_own() -> None:
         # https://github.com/tdlib/td/blob/022d60202e446ad1287b9fb68e687c8a0760788b/td/telegram/net/NetQueryDispatcher.cpp#L73-L82
         #
         # The reCAPTCHA one carries an action with an underscore of its own, and TDLib splits it
-        # off at the *last* `__` — its loop keeps overwriting rather than breaking, so `AB_CD` is
+        # off at the *last* `__`, its loop overwriting rather than breaking, so `AB_CD` is
         # the action and `KEY` the site key id:
         # https://github.com/tdlib/td/blob/022d60202e446ad1287b9fb68e687c8a0760788b/td/telegram/net/NetQueryDispatcher.cpp#L124-L130
         #

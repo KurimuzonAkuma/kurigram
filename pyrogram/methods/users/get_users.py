@@ -25,8 +25,8 @@ from pyrogram import types
 
 
 class GetUsers:
-    # NOTE: `str` is itself an iterable of `str`, so a username matches both overloads.
-    #       The single-user one comes first, resolving it the way the body does.
+    # `str` is itself an iterable of `str`, so a username matches both overloads.
+    #  The single-user one comes first, resolving it the way the body does.
     @overload
     async def get_users(  # type: ignore[overload-overlap]
         self: "pyrogram.Client",
@@ -56,7 +56,7 @@ class GetUsers:
         Returns:
             :obj:`~pyrogram.types.User` | List of :obj:`~pyrogram.types.User` | ``None``: In case *user_ids* was not a
             list, a single user is returned, otherwise a list of users is returned. Telegram answers with an empty
-            list for an identifier that belongs to no user — a channel, a chat, or a peer this account cannot see —
+            list for an identifier that belongs to no user (a channel, a chat, or a peer this account cannot see),
             in which case None is returned for a single identifier and the missing users are absent from the list.
 
         Example:

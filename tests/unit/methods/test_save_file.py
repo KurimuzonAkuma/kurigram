@@ -97,7 +97,7 @@ async def test_a_finished_upload_describes_every_part(three_parts: str) -> None:
 async def test_a_part_the_server_refused_reaches_the_caller(three_parts: str) -> None:
     # The failure used to be logged inside the worker and nowhere else: `save_file()` handed back
     #  an `InputFile` for a file the server never received in full, and the send that followed
-    #  failed with an unrelated error — or, for a caller that stored the id, much later.
+    #  failed with an unrelated error (much later still, for a caller that stored the id).
     media = Media(rejects_part=1)
 
     with pytest.raises(ConnectionError):
@@ -111,7 +111,7 @@ async def test_the_parts_around_the_refused_one_are_still_sent(three_parts: str)
     with pytest.raises(ConnectionError):
         await Uploader(media).save_file(three_parts)
 
-    # The upload is not aborted mid-way — a worker that stops consuming leaves the producer
+    # The upload is not aborted mid-way: a worker that stops consuming leaves the producer
     #  blocked on a queue of size one, so every part is offered and only the answer is remembered.
     assert media.saved_parts == [0, 2]
 
