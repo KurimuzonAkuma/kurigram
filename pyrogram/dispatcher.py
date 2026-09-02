@@ -437,11 +437,21 @@ class Dispatcher:
                 update, users, chats = packet
                 parser = self.update_parsers.get(type(update), None)
 
-                parsed_update, handler_type = (
+                result = (
                     await parser(update, users, chats)
                     if parser is not None
-                    else (None, type(None))
+                    else None
                 )
+                if result is None:
+                    log.warning(
+                        "Parser returned None: update_type=%s, parser=%r, update=%r",
+                        type(update),
+                        parser,
+                        update
+                    )
+                    parsed_update, handler_type = None, type(None)
+                else:
+                    parsed_update, handler_type = result
 
                 async with lock:
                     for group in self.groups.values():
