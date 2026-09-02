@@ -39,7 +39,7 @@ class GetChatAdminsWithInviteLinks:
                 (in the format @username).
 
         Returns:
-            List of :obj:`~pyrogram.types.ChatAdminWithInviteLink`: On success, the list of admins that have exported
+            List of :obj:`~pyrogram.types.ChatAdminWithInviteLinks`: On success, the list of admins that have exported
             invite links is returned.
         """
         r = await self.invoke(

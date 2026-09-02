@@ -27,9 +27,9 @@ class UpgradedGiftAttributeId(Object):
 
     It can be one of:
 
-    - :obj:`~pyrogram.types.UpgradedfGiftAttributeIdModel`
-    - :obj:`~pyrogram.types.UpgradedfGiftAttributeIdSymbol`
-    - :obj:`~pyrogram.types.UpgradedfGiftAttributeIdBackdrop`
+    - :obj:`~pyrogram.types.UpgradedGiftAttributeIdModel`
+    - :obj:`~pyrogram.types.UpgradedGiftAttributeIdSymbol`
+    - :obj:`~pyrogram.types.UpgradedGiftAttributeIdBackdrop`
     """
 
     def __init__(

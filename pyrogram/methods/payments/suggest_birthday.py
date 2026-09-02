@@ -38,7 +38,7 @@ class SuggestBirthday:
                 Unique identifier (int) or username (str) of the target chat.
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            birthday (:obj:`types.Birthday`):
+            birthday (:obj:`~pyrogram.types.Birthday`):
                 Birthdate to suggest.
 
         Returns:

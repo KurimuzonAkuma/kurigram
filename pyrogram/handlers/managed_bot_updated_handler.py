@@ -36,7 +36,7 @@ class ManagedBotUpdatedHandler(Handler):
             Pass a function that will be called when a new managed bot creation update arrives. It takes *(client, managed_bot_updated)*
             as positional arguments (look at the section below for a detailed description).
 
-        filters (:obj:`Filters`):
+        filters (:obj:`~pyrogram.filters.Filter`):
             Pass one or more filters to allow only a subset of users to be passed in your callback function.
 
     Other parameters:

@@ -44,7 +44,7 @@ class ErrorHandler(Handler):
             An exception type or a sequence of exception types that this handler should handle.
             If None, the handler will catch any exception that is a subclass of ``Exception``.
 
-        filters (:obj:`Filter`, *optional*):
+        filters (:obj:`~pyrogram.filters.Filter`, *optional*):
             Pass one or more filters to allow only a subset of updates to be passed
             in your callback function.
 

@@ -76,7 +76,7 @@ class PaymentForm(Object):
         native_provider (``str``, *optional*):
             Payment provider name.
 
-        raw (:obj:`~raw.base.payments.PaymentForm`, *optional*):
+        raw (:obj:`~pyrogram.raw.base.payments.PaymentForm`, *optional*):
             The raw object, as received from the Telegram API.
     """
 

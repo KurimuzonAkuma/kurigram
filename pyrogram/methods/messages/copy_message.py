@@ -62,7 +62,7 @@ class CopyMessage:
     ) -> Optional["types.Message"]:
         """Copy messages of any kind.
 
-        The method is analogous to the method :meth:`~Client.forward_messages`, but the copied message doesn't have a
+        The method is analogous to the method :meth:`~pyrogram.Client.forward_messages`, but the copied message doesn't have a
         link to the original message.
 
         .. include:: /_includes/usable-by/users-bots.rst

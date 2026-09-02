@@ -28,7 +28,7 @@ class InputPollOption(Object):
     """This object contains information about one answer option in a poll to be sent.
 
     Parameters:
-        text (``str`` | :obj:`~pyrogram.enums.FormattedText`, *optional*):
+        text (``str`` | :obj:`~pyrogram.types.FormattedText`, *optional*):
             Option text, 1-100 characters.
 
         media (:obj:`~pyrogram.types.InputPollOptionMedia`, *optional*):

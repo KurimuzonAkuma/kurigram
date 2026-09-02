@@ -44,7 +44,7 @@ class AnswerShippingQuery:
             ok (``bool``):
                 Specify True if everything is alright (goods are available, etc.) and the bot is ready to proceed with the order. Use False if there are any problems.
 
-            shipping_options (List of :obj:`~pyrogram.types.ShippingOptions`, *optional*):
+            shipping_options (List of :obj:`~pyrogram.types.ShippingOption`, *optional*):
                 Required if ok is True. A array of available shipping options.
 
             error_message (``str``, *optional*):

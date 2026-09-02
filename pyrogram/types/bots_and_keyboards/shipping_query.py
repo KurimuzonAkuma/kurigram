@@ -104,7 +104,7 @@ class ShippingQuery(Object, Update):
             ok (``bool``):
                 Pass True if delivery to the specified address is possible and False if there are any problems (for example, if delivery to the specified address is not possible).
 
-            shipping_options (:obj:`~pyrogram.types.ShippingOptions`, *optional*):
+            shipping_options (:obj:`~pyrogram.types.ShippingOption`, *optional*):
                 Required if ok is True. A JSON-serialized array of available shipping options.
 
             error_message (``str``, *optional*):

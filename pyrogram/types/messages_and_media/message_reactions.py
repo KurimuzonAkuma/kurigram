@@ -38,7 +38,7 @@ class MessageReactions(Object):
             Information about top users that added the paid reaction.
 
         can_get_added_reactions (``bool``, *optional*):
-            True, if the list of added reactions is available using :meth:`~pyrogram.Client.get_message_added_reactions`.
+            True, if the list of added reactions is available.
     """
 
     # TODO: Add get_message_added_reactions method

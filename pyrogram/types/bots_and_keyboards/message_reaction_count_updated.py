@@ -40,7 +40,7 @@ class MessageReactionCountUpdated(Object, Update):
         date (:py:obj:`~datetime.datetime`):
             Date of change of the reaction.
 
-        reactions (:obj:`~pyrogram.types.ReactionCount`):
+        reactions (List of :obj:`~pyrogram.types.Reaction`):
             List of reactions that are present on the message.
     """
 

@@ -385,7 +385,7 @@ class Message(Object, Update):
 
         matches (List of regex Matches, *optional*):
             A list containing all `Match Objects <https://docs.python.org/3/library/re.html#match-objects>`_ that match
-            the text of this message. Only applicable when using :obj:`Filters.regex <pyrogram.Filters.regex>`.
+            the text of this message. Only applicable when using :obj:`filters.regex <pyrogram.filters.regex>`.
 
         command (List of ``str``, *optional*):
             A list containing the command and its arguments, if any.
@@ -422,7 +422,7 @@ class Message(Object, Update):
         video_chat_ended (:obj:`~pyrogram.types.VideoChatEnded`, *optional*):
             Service message: the voice chat has ended.
 
-        video_chat_members_invited (:obj:`~pyrogram.types.VoiceChatParticipantsInvited`, *optional*):
+        video_chat_members_invited (:obj:`~pyrogram.types.VideoChatMembersInvited`, *optional*):
             Service message: new members were invited to the voice chat.
 
         phone_call_started (:obj:`~pyrogram.types.PhoneCallStarted`, *optional*):
@@ -570,7 +570,7 @@ class Message(Object, Update):
         chat_has_protected_content_toggled (:obj:`~pyrogram.types.ChatHasProtectedContentToggled`, *optional*):
             Service message: An ``has_protected_content`` setting was changed or request to change it was rejected in a chat.
 
-        chat_has_protected_content_disable_requested (:obj:`~pyrogram.types.ChatProtectedContentDisableRequested`, *optional*):
+        chat_has_protected_content_disable_requested (:obj:`~pyrogram.types.ChatHasProtectedContentDisableRequested`, *optional*):
             Service message: An process requested to disable ``has_protected_content`` in a chat.
 
         business_connection_id (``str``, *optional*):
@@ -4398,8 +4398,7 @@ class Message(Object, Update):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
         Returns:
-            On success, a :obj:`~pyrogram.types.Messages` object is returned containing all the
-            single messages sent.
+            List of :obj:`~pyrogram.types.Message`: On success, a list of the sent messages is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -4460,8 +4459,7 @@ class Message(Object, Update):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
         Returns:
-            On success, a :obj:`~pyrogram.types.Messages` object is returned containing all the
-            single messages sent.
+            List of :obj:`~pyrogram.types.Message`: On success, a list of the sent messages is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -8756,8 +8754,8 @@ class Message(Object, Update):
 
         Returns:
             -   The result of :meth:`~pyrogram.Client.request_callback_answer` in case of inline callback button clicks.
-            -   ``None`` in case of normal button clicks: the label is sent with :meth:`~Message.reply()` or
-                :meth:`~Message.answer()`, whose result is not passed on.
+            -   ``None`` in case of normal button clicks: the label is sent with :meth:`~pyrogram.types.Message.reply` or
+                :meth:`~pyrogram.types.Message.answer`, whose result is not passed on.
             -   A string in case the inline button is a URL, a *switch_inline_query*,
                 *switch_inline_query_current_chat* or a *copy_text* button.
             -   A string URL with the user details, in case of a WebApp button.

@@ -38,7 +38,7 @@ class ChatJoinRequestHandler(Handler):
             *(client, chat_join_request)* as positional arguments (look at the section below for a detailed
             description).
 
-        filters (:obj:`Filters`):
+        filters (:obj:`~pyrogram.filters.Filter`):
             Pass one or more filters to allow only a subset of updates to be passed in your callback function.
 
     Other parameters:

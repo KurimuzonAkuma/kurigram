@@ -32,7 +32,7 @@ class FormattedText(Object):
         text (``str``):
             The text.
 
-        parse_mode (:obj:`~pyrogram.types.ParseMode`, *optional*):
+        parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
             Parse mode of the text.
 
         entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):

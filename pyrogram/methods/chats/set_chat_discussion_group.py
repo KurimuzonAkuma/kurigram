@@ -41,7 +41,7 @@ class SetChatDiscussionGroup:
 
             discussion_chat_id (``int`` | ``str``, *optional*):
                 Unique identifier (int) or username (str) of a new channel's discussion group.
-                Use the method :meth:`get_suitable_discussion_chats` to find all suitable groups.
+                Use the method :meth:`~pyrogram.Client.get_suitable_discussion_chats` to find all suitable groups.
                 Pass None to remove the discussion group.
 
         Returns:

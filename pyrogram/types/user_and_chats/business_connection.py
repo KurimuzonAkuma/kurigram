@@ -42,8 +42,8 @@ class BusinessConnection(Object):
         is_enabled (``bool``, *optional*):
             True, if the connection is active.
 
-        permissions (:obj:`~pyrogram.types.BusinessBotPermissions`, *optional*):
-            Permissions for the business bot.
+        rights (:obj:`~pyrogram.types.BusinessBotRights`, *optional*):
+            Rights of the business bot.
     """
 
     def __init__(

@@ -32,7 +32,7 @@ class ResendPhoneNumberCode:
         """Re-send the confirmation code using a different type.
 
         The type of the code to be re-sent is specified in the *next_type* attribute of the
-        :obj:`~pyrogram.types.SentCode` object returned by :meth:`send_phone_number_code`.
+        :obj:`~pyrogram.types.SentCode` object returned by :meth:`~pyrogram.Client.send_phone_number_code`.
 
         .. include:: /_includes/usable-by/users.rst
 
