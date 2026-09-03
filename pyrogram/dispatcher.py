@@ -318,6 +318,7 @@ class Dispatcher:
                     ),
                     StoppedMessageGenerationHandler
                 )
+            return (None, type(None))
 
         self.update_parsers = {
             Dispatcher.NEW_MESSAGE_UPDATES: message_parser,
@@ -437,21 +438,11 @@ class Dispatcher:
                 update, users, chats = packet
                 parser = self.update_parsers.get(type(update), None)
 
-                result = (
+                parsed_update, handler_type = (
                     await parser(update, users, chats)
                     if parser is not None
-                    else None
+                    else (None, type(None))
                 )
-                if result is None:
-                    log.warning(
-                        "Parser returned None: update_type=%s, parser=%r, update=%r",
-                        type(update),
-                        parser,
-                        update
-                    )
-                    parsed_update, handler_type = None, type(None)
-                else:
-                    parsed_update, handler_type = result
 
                 async with lock:
                     for group in self.groups.values():
