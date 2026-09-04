@@ -186,6 +186,7 @@ class RichBlock(Object):
                     [RichBlockParagraph(text=await types.RichText._parse(client, rich_block.text))]
                 ),
                 credit=await types.RichText._parse(client, rich_block.caption),
+                expandable=rich_block.collapsed,
             )
         if isinstance(rich_block, raw.types.PageBlockPullquote):
             return RichBlockPullQuotation(
@@ -672,13 +673,22 @@ class RichBlockBlockQuotation(RichBlock):
 
         credit (:obj:`~pyrogram.types.RichText`, *optional*):
             Credit of the block.
+
+        expandable (``bool``, *optional*):
+            Whether the quotation is shown collapsed until the reader expands it.
     """
 
-    def __init__(self, blocks: List["types.RichBlock"], credit: Optional["types.RichText"] = None):
+    def __init__(
+        self,
+        blocks: List["types.RichBlock"],
+        credit: Optional["types.RichText"] = None,
+        expandable: Optional[bool] = None,
+    ) -> None:
         super().__init__()
 
         self.blocks = blocks
         self.credit = credit
+        self.expandable = expandable
 
 
 class RichBlockPullQuotation(RichBlock):
