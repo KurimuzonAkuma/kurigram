@@ -438,11 +438,14 @@ class Dispatcher:
                 update, users, chats = packet
                 parser = self.update_parsers.get(type(update), None)
 
-                parsed_update, handler_type = (
-                    await parser(update, users, chats)
-                    if parser is not None
-                    else (None, type(None))
-                )
+                if parser is not None:
+                    parsed_res = await parser(update, users, chats)
+                    if isinstance(parsed_res, tuple) and len(parsed_res) == 2:
+                        parsed_update, handler_type = parsed_res
+                    else:
+                        parsed_update, handler_type = None, type(None)
+                else:
+                    parsed_update, handler_type = None, type(None)
 
                 async with lock:
                     for group in self.groups.values():

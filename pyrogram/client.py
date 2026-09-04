@@ -24,6 +24,7 @@ import os
 import platform
 import re
 import shutil
+import sqlite3
 import sys
 import time
 from collections import OrderedDict
@@ -823,110 +824,117 @@ class Client(Methods):
         return is_min
 
     async def handle_updates(self, updates):
-        self.last_update_time = datetime.now()
+        try:
+            self.last_update_time = datetime.now()
 
-        if isinstance(updates, (raw.types.Updates, raw.types.UpdatesCombined)):
-            is_min = any((
-                await self.fetch_peers(updates.users),
-                await self.fetch_peers(updates.chats),
-            ))
-
-            users = {u.id: u for u in updates.users}
-            chats = {c.id: c for c in updates.chats}
-
-            for update in updates.updates:
-                channel_id = getattr(
-                    getattr(
-                        getattr(
-                            update, "message", None
-                        ), "peer_id", None
-                    ), "channel_id", None
-                ) or getattr(update, "channel_id", None)
-
-                pts = getattr(update, "pts", None)
-                pts_count = getattr(update, "pts_count", None)
-                qts = getattr(update, "qts", None)
-
-                if pts is not None or qts is not None:
-                    state_id = utils.get_channel_id(channel_id) if channel_id else 0
-
-                    await self.storage.set_update_state(
-                        UpdateState(
-                            state_id,
-                            pts,
-                            qts,
-                            None,
-                            None,
-                        )
-                    )
-
-                if isinstance(update, raw.types.UpdateChannelTooLong):
-                    log.info(update)
-
-                if isinstance(update, raw.types.UpdateNewChannelMessage) and is_min:
-                    message = update.message
-
-                    if not isinstance(message, raw.types.MessageEmpty):
-                        try:
-                            diff = await self.invoke(
-                                raw.functions.updates.GetChannelDifference(
-                                    channel=await self.resolve_peer(utils.get_channel_id(channel_id)),
-                                    filter=raw.types.ChannelMessagesFilter(
-                                        ranges=[raw.types.MessageRange(
-                                            min_id=update.message.id,
-                                            max_id=update.message.id
-                                        )]
-                                    ),
-                                    pts=pts - pts_count,
-                                    limit=pts,
-                                    force=False
-                                )
-                            )
-                        except (ChannelPrivate, PersistentTimestampOutdated, PersistentTimestampInvalid):
-                            pass
-                        else:
-                            if not isinstance(diff, raw.types.updates.ChannelDifferenceEmpty):
-                                users.update({u.id: u for u in diff.users})
-                                chats.update({c.id: c for c in diff.chats})
-
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
-
-            await self.storage.set_update_state(
-                UpdateState(0, None, None, updates.date, updates.seq)
-            )
-        elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
-            await self.storage.set_update_state(
-                UpdateState(0, updates.pts, None, updates.date, None)
-            )
-
-            diff = await self.invoke(
-                raw.functions.updates.GetDifference(
-                    pts=updates.pts - updates.pts_count,
-                    date=updates.date,
-                    qts=-1
-                )
-            )
-
-            users = {u.id: u for u in diff.users}
-            chats = {c.id: c for c in diff.chats}
-
-            for message in diff.new_messages:
-                self.dispatcher.updates_queue.put_nowait((
-                    raw.types.UpdateNewMessage(
-                        message=message,
-                        pts=updates.pts,
-                        pts_count=updates.pts_count
-                    ),
-                    users,
-                    chats
+            if isinstance(updates, (raw.types.Updates, raw.types.UpdatesCombined)):
+                is_min = any((
+                    await self.fetch_peers(updates.users),
+                    await self.fetch_peers(updates.chats),
                 ))
 
-            for update in diff.other_updates:
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
-        elif isinstance(updates, raw.types.UpdateShort):
-            self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
-        elif isinstance(updates, raw.types.UpdatesTooLong):
-            log.info(updates)
+                users = {u.id: u for u in updates.users}
+                chats = {c.id: c for c in updates.chats}
+
+                for update in updates.updates:
+                    channel_id = getattr(
+                        getattr(
+                            getattr(
+                                update, "message", None
+                            ), "peer_id", None
+                        ), "channel_id", None
+                    ) or getattr(update, "channel_id", None)
+
+                    pts = getattr(update, "pts", None)
+                    pts_count = getattr(update, "pts_count", None)
+                    qts = getattr(update, "qts", None)
+
+                    if pts is not None or qts is not None:
+                        state_id = utils.get_channel_id(channel_id) if channel_id else 0
+
+                        await self.storage.set_update_state(
+                            UpdateState(
+                                state_id,
+                                pts,
+                                qts,
+                                None,
+                                None,
+                            )
+                        )
+
+                    if isinstance(update, raw.types.UpdateChannelTooLong):
+                        log.info(update)
+
+                    if isinstance(update, raw.types.UpdateNewChannelMessage) and is_min:
+                        message = update.message
+
+                        if not isinstance(message, raw.types.MessageEmpty):
+                            try:
+                                diff = await self.invoke(
+                                    raw.functions.updates.GetChannelDifference(
+                                        channel=await self.resolve_peer(utils.get_channel_id(channel_id)),
+                                        filter=raw.types.ChannelMessagesFilter(
+                                            ranges=[raw.types.MessageRange(
+                                                min_id=update.message.id,
+                                                max_id=update.message.id
+                                            )]
+                                        ),
+                                        pts=pts - pts_count,
+                                        limit=pts,
+                                        force=False
+                                    )
+                                )
+                            except (ChannelPrivate, PersistentTimestampOutdated, PersistentTimestampInvalid):
+                                pass
+                            else:
+                                if not isinstance(diff, raw.types.updates.ChannelDifferenceEmpty):
+                                    users.update({u.id: u for u in diff.users})
+                                    chats.update({c.id: c for c in diff.chats})
+
+                    self.dispatcher.updates_queue.put_nowait((update, users, chats))
+
+                await self.storage.set_update_state(
+                    UpdateState(0, None, None, updates.date, updates.seq)
+                )
+            elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
+                await self.storage.set_update_state(
+                    UpdateState(0, updates.pts, None, updates.date, None)
+                )
+
+                diff = await self.invoke(
+                    raw.functions.updates.GetDifference(
+                        pts=updates.pts - updates.pts_count,
+                        date=updates.date,
+                        qts=-1
+                    )
+                )
+
+                users = {u.id: u for u in diff.users}
+                chats = {c.id: c for c in diff.chats}
+
+                for message in diff.new_messages:
+                    self.dispatcher.updates_queue.put_nowait((
+                        raw.types.UpdateNewMessage(
+                            message=message,
+                            pts=updates.pts,
+                            pts_count=updates.pts_count
+                        ),
+                        users,
+                        chats
+                    ))
+
+                for update in diff.other_updates:
+                    self.dispatcher.updates_queue.put_nowait((update, users, chats))
+            elif isinstance(updates, raw.types.UpdateShort):
+                self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
+            elif isinstance(updates, raw.types.UpdatesTooLong):
+                log.info(updates)
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError, ConnectionError):
+            return None
+        except Exception:
+            if not getattr(self, "is_connected", False):
+                return None
+            raise
 
     async def load_session(self):
         await self.storage.open()
@@ -1003,6 +1011,21 @@ class Client(Methods):
         else:
             return
 
+        def _extract_handlers(target_attr):
+            try:
+                handlers = getattr(target_attr, "handlers", None)
+            except Exception:
+                return []
+            if not isinstance(handlers, (list, tuple)):
+                return []
+            valid = []
+            for item in handlers:
+                if isinstance(item, (list, tuple)) and len(item) == 2:
+                    handler, group = item
+                    if isinstance(handler, Handler) and isinstance(group, int):
+                        valid.append((handler, group))
+            return valid
+
         if plugins.get("enabled", True):
             root = plugins["root"]
             include = plugins.get("include", [])
@@ -1016,17 +1039,14 @@ class Client(Methods):
                     module = import_module(module_path)
 
                     for name in vars(module).keys():
-                        # The name comes from the module's own `__dict__`, so it always resolves.
-                        target_attr = getattr(module, name)
-                        if hasattr(target_attr, "handlers"):
-                            for handler, group in target_attr.handlers:
-                                if isinstance(handler, Handler) and isinstance(group, int):
-                                    self.add_handler(handler, group)
+                        target_attr = getattr(module, name, None)
+                        for handler, group in _extract_handlers(target_attr):
+                            self.add_handler(handler, group)
 
-                                    log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
-                                        self.name, type(handler).__name__, name, group, module_path))
+                            log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
+                                self.name, type(handler).__name__, name, group, module_path))
 
-                                    count += 1
+                            count += 1
             else:
                 for path, handlers in include:
                     module_path = root + "." + path
@@ -1048,15 +1068,15 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        if hasattr(target_attr, "handlers"):
-                            for handler, group in target_attr.handlers:
-                                if isinstance(handler, Handler) and isinstance(group, int):
-                                    self.add_handler(handler, group)
+                        valid_handlers = _extract_handlers(target_attr)
+                        if valid_handlers:
+                            for handler, group in valid_handlers:
+                                self.add_handler(handler, group)
 
-                                    log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
-                                        self.name, type(handler).__name__, name, group, module_path))
+                                log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
+                                    self.name, type(handler).__name__, name, group, module_path))
 
-                                    count += 1
+                                count += 1
                         elif warn_non_existent_functions:
                             log.warning('[{}] [LOAD] Ignoring non-existent function "{}" from "{}"'.format(
                                 self.name, name, module_path))
@@ -1082,15 +1102,15 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        if hasattr(target_attr, "handlers"):
-                            for handler, group in target_attr.handlers:
-                                if isinstance(handler, Handler) and isinstance(group, int):
-                                    self.remove_handler(handler, group)
+                        valid_handlers = _extract_handlers(target_attr)
+                        if valid_handlers:
+                            for handler, group in valid_handlers:
+                                self.remove_handler(handler, group)
 
-                                    log.info('[{}] [UNLOAD] {}("{}") from group {} in "{}"'.format(
-                                        self.name, type(handler).__name__, name, group, module_path))
+                                log.info('[{}] [UNLOAD] {}("{}") from group {} in "{}"'.format(
+                                    self.name, type(handler).__name__, name, group, module_path))
 
-                                    count -= 1
+                                count -= 1
                         elif warn_non_existent_functions:
                             log.warning('[{}] [UNLOAD] Ignoring non-existent function "{}" from "{}"'.format(
                                 self.name, name, module_path))

@@ -307,94 +307,130 @@ class SQLiteStorage(Storage):
             self.conn.execute("VACUUM")
 
     async def save(self):
-        await self.date(int(time.time()))
-        self.conn.commit()
+        if not self.conn:
+            return
+        try:
+            await self.date(int(time.time()))
+            if self.conn:
+                self.conn.commit()
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            pass
 
     async def close(self):
-        self.conn.close()
+        if self.conn is not None:
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+            self.conn = None
 
     async def delete(self):
         if not self.in_memory:
             Path(self.database).unlink()
 
     async def update_peers(self, peers: Iterable[Tuple[int, int, str, Optional[str]]]):
-        self.conn.executemany(
-            "REPLACE INTO peers (id, access_hash, type, phone_number) VALUES (?, ?, ?, ?)", peers
-        )
+        if not self.conn:
+            return
+        try:
+            self.conn.executemany(
+                "REPLACE INTO peers (id, access_hash, type, phone_number) VALUES (?, ?, ?, ?)", peers
+            )
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            pass
 
     async def update_usernames(self, usernames: Iterable[Tuple[int, List[Optional[str]]]]):
-        usernames = list(usernames)
-
-        if not usernames:
+        if not self.conn:
             return
+        try:
+            usernames = list(usernames)
 
-        ids = [id_ for id_, _ in usernames]
-        placeholders = ", ".join("?" for _ in ids)
+            if not usernames:
+                return
 
-        self.conn.execute(
-            f"DELETE FROM usernames WHERE id IN ({placeholders})",
-            ids,
-        )
+            ids = [id_ for id_, _ in usernames]
+            placeholders = ", ".join("?" for _ in ids)
 
-        self.conn.executemany(
-            "REPLACE INTO usernames (id, username) VALUES (?, ?)",
-            [
-                (id_, username)
-                for id_, names in usernames
-                for username in names
-                if username is not None
-            ],
-        )
+            self.conn.execute(
+                f"DELETE FROM usernames WHERE id IN ({placeholders})",
+                ids,
+            )
+
+            self.conn.executemany(
+                "REPLACE INTO usernames (id, username) VALUES (?, ?)",
+                [
+                    (id_, username)
+                    for id_, names in usernames
+                    for username in names
+                    if username is not None
+                ],
+            )
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            pass
 
     async def get_update_states(self, ids: Optional[Union[int, Iterable[int]]] = None):
-        query = "SELECT id, pts, qts, date, seq FROM update_state"
+        if not self.conn:
+            return []
+        try:
+            query = "SELECT id, pts, qts, date, seq FROM update_state"
 
-        if ids is not None:
-            state_ids = (ids,) if isinstance(ids, int) else tuple(ids)
+            if ids is not None:
+                state_ids = (ids,) if isinstance(ids, int) else tuple(ids)
 
-            if not state_ids:
-                return []
+                if not state_ids:
+                    return []
 
-            placeholders = ", ".join("?" for _ in state_ids)
-            query += f" WHERE id IN ({placeholders})"
-        else:
-            state_ids = ()
+                placeholders = ", ".join("?" for _ in state_ids)
+                query += f" WHERE id IN ({placeholders})"
+            else:
+                state_ids = ()
 
-        rows = self.conn.execute(query + " ORDER BY date ASC", state_ids).fetchall()
-        return [UpdateState(*row) for row in rows]
+            rows = self.conn.execute(query + " ORDER BY date ASC", state_ids).fetchall()
+            return [UpdateState(*row) for row in rows]
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            return []
 
     async def set_update_state(self, update_state: Union[UpdateState, Iterable[UpdateState]]):
-        states = [update_state] if isinstance(update_state, UpdateState) else update_state
+        if not self.conn:
+            return
+        try:
+            states = [update_state] if isinstance(update_state, UpdateState) else update_state
 
-        self.conn.executemany(
-            "INSERT INTO update_state (id, pts, qts, date, seq) VALUES (?, ?, ?, ?, ?) "
-            "ON CONFLICT(id) DO UPDATE SET "
-            "pts = COALESCE(excluded.pts, update_state.pts), "
-            "qts = COALESCE(excluded.qts, update_state.qts), "
-            "date = COALESCE(excluded.date, update_state.date), "
-            "seq = COALESCE(excluded.seq, update_state.seq)",
-            [(state.id, state.pts, state.qts, state.date, state.seq) for state in states],
-        )
+            self.conn.executemany(
+                "INSERT INTO update_state (id, pts, qts, date, seq) VALUES (?, ?, ?, ?, ?) "
+                "ON CONFLICT(id) DO UPDATE SET "
+                "pts = COALESCE(excluded.pts, update_state.pts), "
+                "qts = COALESCE(excluded.qts, update_state.qts), "
+                "date = COALESCE(excluded.date, update_state.date), "
+                "seq = COALESCE(excluded.seq, update_state.seq)",
+                [(state.id, state.pts, state.qts, state.date, state.seq) for state in states],
+            )
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            pass
 
     async def delete_update_state(self, state_id):
-        if isinstance(state_id, int):
+        if not self.conn:
+            return
+        try:
+            if isinstance(state_id, int):
+                self.conn.execute(
+                    "DELETE FROM update_state WHERE id = ?",
+                    (state_id,),
+                )
+                return
+
+            state_ids = tuple(state_id)
+
+            if not state_ids:
+                return
+
+            placeholders = ", ".join("?" for _ in state_ids)
+
             self.conn.execute(
-                "DELETE FROM update_state WHERE id = ?",
-                (state_id,),
+                f"DELETE FROM update_state WHERE id IN ({placeholders})",
+                state_ids,
             )
-            return
-
-        state_ids = tuple(state_id)
-
-        if not state_ids:
-            return
-
-        placeholders = ", ".join("?" for _ in state_ids)
-
-        self.conn.execute(
-            f"DELETE FROM update_state WHERE id IN ({placeholders})",
-            state_ids,
-        )
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            pass
 
     async def get_peer_by_id(self, peer_id: int):
         r = self.conn.execute(
@@ -434,11 +470,22 @@ class SQLiteStorage(Storage):
         return get_input_peer(*r)
 
     async def _get(self, table: str, attr: str):
-        return self.conn.execute(f"SELECT {attr} FROM {table}").fetchone()[0]
+        if not self.conn:
+            return None
+        try:
+            row = self.conn.execute(f"SELECT {attr} FROM {table}").fetchone()
+            return row[0] if row else None
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            return None
 
     async def _set(self, table: str, attr: str, value: Any):
-        with self.conn:
-            self.conn.execute(f"UPDATE {table} SET {attr} = ?", (value,))
+        if not self.conn:
+            return
+        try:
+            with self.conn:
+                self.conn.execute(f"UPDATE {table} SET {attr} = ?", (value,))
+        except (sqlite3.ProgrammingError, sqlite3.OperationalError):
+            pass
 
     async def _accessor(self, table: str, attr: str, value: Any = object):
         return (
