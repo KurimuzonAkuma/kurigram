@@ -64,7 +64,7 @@ class InlineKeyboardMarkup(Object):
             for b in r:
                 buttons.append(await b.write(client))
 
-            rows.append(raw.types.KeyboardButtonRow(buttons=buttons))
+            rows.append(raw.types.KeyboardInlineButtonRow(buttons=buttons))
 
         return raw.types.ReplyInlineMarkup(rows=rows, force_reply=self.force_reply)
 
