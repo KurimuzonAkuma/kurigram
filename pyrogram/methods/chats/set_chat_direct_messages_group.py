@@ -27,7 +27,7 @@ class SetChatDirectMessagesGroup:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         paid_message_star_count: int = 0,
-        is_enabled: bool = Optional[None],
+        is_enabled: Optional[bool] = None,
     ) -> bool:
         """Change direct messages group settings for a channel chat.
 
