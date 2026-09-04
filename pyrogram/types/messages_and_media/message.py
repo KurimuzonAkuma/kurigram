@@ -3703,7 +3703,7 @@ class Message(Object, Update):
         self,
         game_short_name: str,
         disable_notification: Optional[bool] = None,
-        effect_id: int = Optional[None],
+        effect_id: Optional[int] = None,
         allow_paid_broadcast: Optional[bool] = None,
         reply_markup: Optional[
             Union[
@@ -3769,7 +3769,7 @@ class Message(Object, Update):
         self,
         game_short_name: str,
         disable_notification: Optional[bool] = None,
-        effect_id: int = Optional[None],
+        effect_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         allow_paid_broadcast: Optional[bool] = None,
         reply_markup: Optional[
