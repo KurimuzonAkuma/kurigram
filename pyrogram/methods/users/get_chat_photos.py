@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncIterator, List, Union
+from typing import AsyncGenerator, List, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -73,7 +73,7 @@ class GetChatPhotos:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         limit: int = 0,
-    ) -> AsyncIterator["types.ChatPhoto"]:
+    ) -> AsyncGenerator["types.ChatPhoto", None]:
         """Get a chat or a user profile photos sequentially.
         Personal and public photo aren't returned.
 

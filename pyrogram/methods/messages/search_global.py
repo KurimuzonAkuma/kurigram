@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncIterator, Optional
+from typing import AsyncGenerator, Optional
 
 import pyrogram
 from pyrogram import raw, enums
@@ -33,7 +33,7 @@ class SearchGlobal:
         groups_only: Optional[bool] = None,
         users_only: Optional[bool] = None,
         limit: int = 0,
-    ) -> AsyncIterator["types.Message"]:
+    ) -> AsyncGenerator["types.Message", None]:
         """Search messages globally from all of your chats.
 
         If you want to get the messages count only, see :meth:`~pyrogram.Client.search_global_count`.

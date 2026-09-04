@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, Optional, AsyncIterator
+from typing import Union, Optional, AsyncGenerator
 
 import pyrogram
 from pyrogram import raw
@@ -29,7 +29,7 @@ class GetChatJoinRequests:
         chat_id: Union[int, str],
         limit: int = 0,
         query: str = ""
-    ) -> AsyncIterator["types.ChatJoiner"]:
+    ) -> AsyncGenerator["types.ChatJoiner", None]:
         """Get the pending join requests of a chat.
 
         .. include:: /_includes/usable-by/users.rst

@@ -18,7 +18,7 @@
 
 import logging
 from datetime import datetime
-from typing import AsyncIterator, Union, List, Optional
+from typing import AsyncGenerator, Union, List, Optional
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -81,7 +81,7 @@ class GetChatHistory:
         min_id: int = 0,
         max_id: int = 0,
         reverse: bool = False,
-    ) -> AsyncIterator["types.Message"]:
+    ) -> AsyncGenerator["types.Message", None]:
         """Get messages from a chat history.
 
         The messages are returned in reverse chronological order.

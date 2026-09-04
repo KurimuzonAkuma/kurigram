@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, Optional, AsyncIterator
+from typing import Union, Optional, AsyncGenerator
 
 import pyrogram
 from pyrogram import types, raw
@@ -28,7 +28,7 @@ class GetDiscussionReplies:
         chat_id: Union[int, str],
         message_id: int,
         limit: int = 0,
-    ) -> AsyncIterator["types.Message"]:
+    ) -> AsyncGenerator["types.Message", None]:
         """Get the message replies of a discussion thread.
 
         .. include:: /_includes/usable-by/users.rst

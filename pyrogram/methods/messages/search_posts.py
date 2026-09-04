@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 import pyrogram
 from pyrogram import raw
@@ -29,7 +29,7 @@ class SearchPosts:
         self: "pyrogram.Client",
         hashtag: str,
         limit: int = 0,
-    ) -> AsyncIterator["types.Message"]:
+    ) -> AsyncGenerator["types.Message", None]:
         """Search posts globally by hashtag.
 
         If you want to get the posts count only, see :meth:`~pyrogram.Client.search_posts_count`.

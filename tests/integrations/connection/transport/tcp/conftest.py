@@ -29,7 +29,7 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import AsyncIterator, Final, List, NamedTuple, Optional, Type
+from typing import AsyncGenerator, AsyncIterator, Final, List, NamedTuple, Optional, Type
 
 import pytest
 
@@ -209,7 +209,7 @@ def unauthorized_client(relay_proxy: WebProxy) -> Client:
 
 
 @pytest.fixture()
-async def client(session_copy: Path, relay_proxy: WebProxy) -> AsyncIterator[Client]:
+async def client(session_copy: Path, relay_proxy: WebProxy) -> AsyncGenerator[Client, None]:
     async with _started_client(session_copy, proxy=relay_proxy) as client:
         yield client
 
@@ -220,7 +220,7 @@ def unauthorized_mtproxy_client(mtproxy_proxy: MTProxy) -> Client:
 
 
 @pytest.fixture()
-async def mtproxy_client(session_copy: Path, mtproxy_proxy: MTProxy) -> AsyncIterator[Client]:
+async def mtproxy_client(session_copy: Path, mtproxy_proxy: MTProxy) -> AsyncGenerator[Client, None]:
     async with _started_client(session_copy, proxy=mtproxy_proxy) as client:
         yield client
 

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -28,7 +28,7 @@ class GetBlockedMessageSenders:
         block_list: "enums.BlockList" = enums.BlockList.MAIN,
         offset: int = 0,
         limit: int = 0,
-    ) -> AsyncIterator["types.Chat"]:
+    ) -> AsyncGenerator["types.Chat", None]:
         """Returns users and chats that were blocked by the current user.
 
         .. include:: /_includes/usable-by/users.rst

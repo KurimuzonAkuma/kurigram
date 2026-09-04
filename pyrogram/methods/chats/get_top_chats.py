@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -27,7 +27,7 @@ class GetTopChats:
         self: "pyrogram.Client",
         category: "enums.TopChatCategory",
         limit: int = 0,
-    ) -> AsyncIterator["types.Chat"]:
+    ) -> AsyncGenerator["types.Chat", None]:
         """Returns a list of frequently used chats.
 
         .. include:: /_includes/usable-by/users.rst

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, Optional, AsyncIterator
+from typing import Union, Optional, AsyncGenerator
 
 import pyrogram
 from pyrogram import raw
@@ -30,7 +30,7 @@ class GetChatAdminInviteLinks:
         admin_id: Union[int, str],
         revoked: bool = False,
         limit: int = 0,
-    ) -> AsyncIterator["types.ChatInviteLink"]:
+    ) -> AsyncGenerator["types.ChatInviteLink", None]:
         """Get the invite links created by an administrator in a chat.
 
         .. note::

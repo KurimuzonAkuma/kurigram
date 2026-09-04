@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import AsyncIterator, Union
+from typing import AsyncGenerator, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -32,7 +32,7 @@ class GetUserPersonalChatMessages:
         limit: int = 0,
         min_id: int = 0,
         max_id: int = 0,
-    ) -> AsyncIterator["types.Message"]:
+    ) -> AsyncGenerator["types.Message", None]:
         """Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user.
 
         The messages are returned in reverse chronological order.

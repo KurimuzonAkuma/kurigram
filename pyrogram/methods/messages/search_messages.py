@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, List, AsyncIterator, Optional
+from typing import Union, List, AsyncGenerator, Optional
 from datetime import datetime
 
 import pyrogram
@@ -81,7 +81,7 @@ class SearchMessages:
         limit: Optional[int] = 0,
         from_user: Optional[Union[int, str]] = None,
         message_thread_id: Optional[int] = None
-    ) -> AsyncIterator["types.Message"]:
+    ) -> AsyncGenerator["types.Message", None]:
         """Search for text and media messages inside a specific chat.
 
         If you want to get the messages count only, see :meth:`~pyrogram.Client.search_messages_count`.

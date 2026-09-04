@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 import pyrogram
 from pyrogram import raw, types
@@ -27,7 +27,7 @@ class GetGiftsForCrafting:
         self: "pyrogram.Client",
         regular_gift_id: int,
         limit: int = 0
-    ) -> AsyncIterator["types.Gift"]:
+    ) -> AsyncGenerator["types.Gift", None]:
         """Returns upgraded gifts of the current user that can be used to craft another gifts.
 
         .. include:: /_includes/usable-by/users.rst
