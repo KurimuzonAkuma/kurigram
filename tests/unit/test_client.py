@@ -29,7 +29,7 @@ from typing import Final
 import pytest
 
 from pyrogram import Client
-from pyrogram.client import plugin_handlers
+from pyrogram.client import _plugin_handlers
 from pyrogram.handlers import MessageHandler
 
 _PLUGIN_SOURCE: Final[str] = '''
@@ -95,6 +95,6 @@ def test_plugin_handlers_ignores_what_is_not_a_pair_list() -> None:
 
     decorated.handlers = [(MessageHandler(decorated), 0)]
 
-    assert plugin_handlers(AnyAttribute()) is None
-    assert plugin_handlers(undecorated) is None
-    assert plugin_handlers(decorated) == decorated.handlers
+    assert _plugin_handlers(AnyAttribute()) is None
+    assert _plugin_handlers(undecorated) is None
+    assert _plugin_handlers(decorated) == decorated.handlers

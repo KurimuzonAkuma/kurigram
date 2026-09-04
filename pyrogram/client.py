@@ -71,17 +71,18 @@ from .session.internals import MsgId
 log = logging.getLogger(__name__)
 
 
-def plugin_handlers(target: Any) -> Optional[Sequence[Tuple[Handler, int]]]:
-    """The handler pairs a plugin function carries, or `None` when it carries none.
-
-    Asking `hasattr(target, "handlers")` is not enough. An object with a catch-all
-    `__getattr__`, such as a Motor or PyMongo collection left at module level, answers
-    every attribute with another proxy, and iterating that raises
-    `TypeError: 'Collection' object is not iterable`.
-    """
+def _plugin_handlers(target: Any) -> Optional[Sequence[Tuple[Handler, int]]]:
     handlers = getattr(target, "handlers", None)
 
-    return handlers if isinstance(handlers, (list, tuple)) else None
+    # `hasattr` is not enough here. An object with a catch-all `__getattr__`, such as a
+    #  PyMongo collection left at module level, answers every attribute with another
+    #  proxy of itself, so the loop below reaches `for handler, group in <proxy>` and
+    #  raises `TypeError: 'Collection' object is not iterable`. `__getattr__` cannot
+    #  influence the type of what it returned, so ask about that instead.
+    if not isinstance(handlers, (list, tuple)):
+        return None
+
+    return handlers
 
 
 class Client(Methods):
@@ -1031,7 +1032,7 @@ class Client(Methods):
                     for name in vars(module).keys():
                         # The name comes from the module's own `__dict__`, so it always resolves.
                         target_attr = getattr(module, name)
-                        target_handlers = plugin_handlers(target_attr)
+                        target_handlers = _plugin_handlers(target_attr)
 
                         if target_handlers is not None:
                             for handler, group in target_handlers:
@@ -1063,7 +1064,7 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        target_handlers = plugin_handlers(target_attr)
+                        target_handlers = _plugin_handlers(target_attr)
 
                         if target_handlers is not None:
                             for handler, group in target_handlers:
@@ -1099,7 +1100,7 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        target_handlers = plugin_handlers(target_attr)
+                        target_handlers = _plugin_handlers(target_attr)
 
                         if target_handlers is not None:
                             for handler, group in target_handlers:
