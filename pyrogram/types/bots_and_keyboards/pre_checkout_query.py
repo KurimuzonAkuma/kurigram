@@ -103,7 +103,7 @@ class PreCheckoutQuery(Object, Update):
             client=client
         )
 
-    async def answer(self, ok: Optional[bool] = None, error_message: Optional[str] = None):
+    async def answer(self, ok: Optional[bool] = None, error_message: Optional[str] = None) -> bool:
         """Bound method *answer* of :obj:`~pyrogram.types.PreCheckoutQuery`.
 
         Use this method as a shortcut for:

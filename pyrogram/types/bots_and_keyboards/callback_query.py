@@ -62,7 +62,7 @@ class CallbackQuery(Object, Update):
 
         matches (List of regex Matches, *optional*):
             A list containing all `Match Objects <https://docs.python.org/3/library/re.html#match-objects>`_ that match
-            the data of this callback query. Only applicable when using :obj:`Filters.regex <pyrogram.Filters.regex>`.
+            the data of this callback query. Only applicable when using :obj:`filters.regex <pyrogram.filters.regex>`.
 
         chat (:obj:`~pyrogram.types.Chat`, *property*):
             The chat *message* was sent in. None for a button attached to an inline message, which carries

@@ -73,7 +73,7 @@ class ChatSettings(Object):
         request_chat_date (:py:obj:`~datetime.datetime`, *optional*):
             Date when join request was sent.
 
-        business_bot (:obj:`types.User`, *optional*):
+        business_bot (:obj:`~pyrogram.types.User`, *optional*):
             Business bot that manages this chat.
 
         business_bot_manage_url (``str``, *optional*):

@@ -22,7 +22,7 @@ from pyrogram.file_id import FileType
 
 
 class RemoveProfileAudio:
-    async def remove_profile_audio(self: "pyrogram.Client", file_id: str):
+    async def remove_profile_audio(self: "pyrogram.Client", file_id: str) -> bool:
         """Removes an audio file from the profile audio files of the current user.
 
         .. include:: /_includes/usable-by/users.rst

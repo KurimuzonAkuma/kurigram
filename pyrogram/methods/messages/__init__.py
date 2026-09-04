@@ -77,6 +77,7 @@ from .send_checklist import SendChecklist
 from .send_contact import SendContact
 from .send_dice import SendDice
 from .send_document import SendDocument
+from .send_live_photo import SendLivePhoto
 from .send_location import SendLocation
 from .send_media_group import SendMediaGroup
 from .send_message import SendMessage
@@ -140,6 +141,7 @@ class Messages(
     SendChecklist,
     SendContact,
     SendDocument,
+    SendLivePhoto,
     SendAnimation,
     SendLocation,
     SendMediaGroup,

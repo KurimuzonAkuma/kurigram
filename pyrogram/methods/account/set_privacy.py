@@ -40,7 +40,7 @@ class SetPrivacy:
             "types.InputPrivacyRuleDisallowContacts",
             "types.InputPrivacyRuleDisallowUsers"
         ]],
-    ):
+    ) -> List["types.PrivacyRule"]:
         """Set account privacy rules.
 
         .. include:: /_includes/usable-by/users.rst

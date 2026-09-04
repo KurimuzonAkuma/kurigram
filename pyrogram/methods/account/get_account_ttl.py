@@ -23,7 +23,7 @@ from pyrogram import raw
 class GetAccountTTL:
     async def get_account_ttl(
         self: "pyrogram.Client",
-    ):
+    ) -> int:
         """Get days to live of account.
 
         .. include:: /_includes/usable-by/users.rst

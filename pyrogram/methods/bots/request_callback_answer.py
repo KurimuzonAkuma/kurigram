@@ -30,7 +30,7 @@ class RequestCallbackAnswer:
         callback_data: Union[str, bytes],
         password: Optional[str] = None,
         timeout: int = 10
-    ):
+    ) -> "raw.base.messages.BotCallbackAnswer":
         """Request a callback answer from bots.
         This is the equivalent of clicking an inline button containing callback data.
 
@@ -56,8 +56,8 @@ class RequestCallbackAnswer:
                 Timeout in seconds.
 
         Returns:
-            The answer containing info useful for clients to display a notification at the top of the chat screen
-            or as an alert.
+            :obj:`~pyrogram.raw.base.messages.BotCallbackAnswer`: The answer containing info
+            useful for clients to display a notification at the top of the chat screen or as an alert.
 
         Raises:
             TimeoutError: In case the bot fails to answer within 10 seconds.

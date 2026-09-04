@@ -178,6 +178,10 @@ class Chat(Object):
         has_direct_messages_group (``bool``, *optional*):
             True, if the channel has direct messages group.
 
+        has_welcome_messages (``bool``, *optional*):
+            True, if the chat has welcome messages.
+            For chat administrators with *can_change_info* administrator right only.
+
         invite_link (``str``, *optional*):
             Chat invite link, for groups, supergroups and channels.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
@@ -600,6 +604,7 @@ class Chat(Object):
         has_automatic_translation: Optional[bool] = None,
         has_forum_tabs: Optional[bool] = None,
         has_direct_messages_group: Optional[bool] = None,
+        has_welcome_messages: Optional[bool] = None,
         invite_link: Optional[str] = None,
         pinned_message: Optional["types.Message"] = None,
         sticker_set_name: Optional[str] = None,
@@ -748,6 +753,7 @@ class Chat(Object):
         self.has_automatic_translation = has_automatic_translation
         self.has_forum_tabs = has_forum_tabs
         self.has_direct_messages_group = has_direct_messages_group
+        self.has_welcome_messages = has_welcome_messages
         self.invite_link = invite_link
         self.pinned_message = pinned_message
         self.sticker_set_name = sticker_set_name
@@ -1276,6 +1282,7 @@ class Chat(Object):
             client, chat.available_reactions
         )
         parsed_chat.reactions_limit = chat.reactions_limit
+        parsed_chat.has_welcome_messages = chat.has_welcome_messages
 
         return parsed_chat
 
@@ -1404,6 +1411,7 @@ class Chat(Object):
         parsed_chat.sticker_set_name = getattr(channel.stickerset, "short_name", None)
         parsed_chat.is_paid_messages_available = channel.paid_messages_available
         parsed_chat.guard_bot = await types.User._parse(client, users.get(channel.guard_bot_id))
+        parsed_chat.has_welcome_messages = channel.has_welcome_messages
 
         if parsed_chat.community_id:
             parsed_chat.community = await types.Community._parse(client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id)))
@@ -1473,7 +1481,7 @@ class Chat(Object):
     def full_name(self) -> Optional[str]:
         return " ".join(filter(None, [self.first_name, self.last_name])) or self.title or None
 
-    async def archive(self):
+    async def archive(self) -> bool:
         """Bound method *archive* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1495,7 +1503,7 @@ class Chat(Object):
         """
         return await self._client.archive_chats(self.id)
 
-    async def unarchive(self):
+    async def unarchive(self) -> bool:
         """Bound method *unarchive* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1832,7 +1840,7 @@ class Chat(Object):
             chat_id=self.id, user_id=user_id, privileges=privileges
         )
 
-    async def join(self):
+    async def join(self) -> "types.ChatJoinResult":
         """Bound method *join* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1851,7 +1859,7 @@ class Chat(Object):
             This only works for public groups, channels that have set a username or linked chats.
 
         Returns:
-            :obj:`~pyrogram.types.Chat`: On success, a chat object is returned.
+            :obj:`~pyrogram.types.ChatJoinResult`: On success, the outcome of the join is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
@@ -1877,7 +1885,7 @@ class Chat(Object):
         """
         return await self._client.leave_chat(self.id)
 
-    async def export_invite_link(self):
+    async def export_invite_link(self) -> "types.ChatInviteLink":
         """Bound method *export_invite_link* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1892,7 +1900,7 @@ class Chat(Object):
                 chat.export_invite_link()
 
         Returns:
-            ``str``: On success, the exported invite link is returned.
+            :obj:`~pyrogram.types.ChatInviteLink`: On success, the exported invite link is returned.
 
         Raises:
             ValueError: In case the chat_id belongs to a user.

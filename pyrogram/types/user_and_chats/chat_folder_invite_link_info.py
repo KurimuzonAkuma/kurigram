@@ -28,7 +28,7 @@ class ChatFolderInviteLinkInfo(Object):
     """Contains information about an invite link to a chat folder.
 
     Parameters:
-        chat_folder_info (:obj:`~pyrogram.types.ChatFolderInfo`):
+        chat_folder_info (:obj:`~pyrogram.types.Folder`):
             Basic information about the chat folder.
             Chat folder identifier will be None if the user didn't have the chat folder yet.
 

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import pyrogram
 from pyrogram import raw, types
@@ -39,7 +39,7 @@ class GetBusinessAccountGifts:
         sort_by_price: Optional[bool] = None,
         limit: int = 0,
         offset: str = "",
-    ):
+    ) -> AsyncIterator["types.Gift"]:
         """Return the gifts received and owned by a managed business account.
 
         .. note::

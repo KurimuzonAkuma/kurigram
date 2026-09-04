@@ -18,7 +18,7 @@
 
 import inspect
 import re
-from typing import Callable, List, Optional, Pattern, Union
+from typing import Callable, Final, FrozenSet, List, Optional, Pattern, Tuple, Type, Union
 
 import pyrogram
 from pyrogram import enums
@@ -137,20 +137,20 @@ class OrFilter(Filter):
         return x or y
 
 
-CUSTOM_FILTER_NAME = "CustomFilter"
+CUSTOM_FILTER_NAME: Final[str] = "CustomFilter"
 
 # Aliases for the client account itself, the same pair `resolve_peer` accepts.
 # `__init__` stores `_ME`, but the container is public and `filters.user().add("self")`
 # skips it, so membership goes against the aliases rather than against the stored one.
-_ME = "me"
-_SELF = "self"
-_ME_ALIASES = frozenset({_ME, _SELF})
+_ME: Final[str] = "me"
+_SELF: Final[str] = "self"
+_ME_ALIASES: Final[FrozenSet[str]] = frozenset({_ME, _SELF})
 
 
-# NOTE: `Update` declares none of these -- an inline query happens in no chat, a poll update
-#       has no sender -- so each field names the types that carry it. Kept in sync by
-#       `test_the_filters_name_every_update_type_that_carries_the_field`.
-_WITH_A_SENDER = (
+# `Update` declares none of these (an inline query happens in no chat, a poll update
+#  has no sender), so each field names the types that carry it. Kept in sync by
+#  `test_the_filters_name_every_update_type_that_carries_the_field`.
+_WITH_A_SENDER: Final[Tuple[Type[Update], ...]] = (
     CallbackQuery,
     ChatJoinRequest,
     ChatMemberUpdated,
@@ -162,7 +162,7 @@ _WITH_A_SENDER = (
     Story,
 )
 
-_WITH_A_CHAT = (
+_WITH_A_CHAT: Final[Tuple[Type[Update], ...]] = (
     CallbackQuery,
     ChatBoostUpdated,
     ChatJoinRequest,
@@ -174,12 +174,38 @@ _WITH_A_CHAT = (
     Story,
 )
 
-_WITH_A_SENDER_CHAT = (Message, Story)
+_WITH_A_SENDER_CHAT: Final[Tuple[Type[Update], ...]] = (Message, Story)
 
-_CAN_BE_OUTGOING = (Message, Story)
+_CAN_BE_OUTGOING: Final[Tuple[Type[Update], ...]] = (Message, Story)
+
+# Three more shapes, one update type each, that the tuples above cannot express: the
+#  attribute is there, but not under the name the tuples read.
+#
+#  `UpdateUserStatus` is parsed into the `User` whose status changed and nothing else
+#  (`User._parse_user_status`), so that update *is* its own sender; `MessageReactionUpdated`
+#  spells the reacting user `user` and the anonymous one `actor_chat`; `ChatBoostUpdated`
+#  keeps the booster one level down, in `boost.from_user`.
+#
+#  Reading them here rather than renaming the attributes leaves the public API untouched.
+_IS_ITS_OWN_SENDER: Final[Tuple[Type[Update], ...]] = (User,)
+
+_WITH_A_SENDER_NAMED_USER: Final[Tuple[Type[Update], ...]] = (MessageReactionUpdated,)
+
+_WITH_A_SENDER_CHAT_NAMED_ACTOR_CHAT: Final[Tuple[Type[Update], ...]] = (MessageReactionUpdated,)
+
+_WITH_A_BOOSTER: Final[Tuple[Type[Update], ...]] = (ChatBoostUpdated,)
 
 
 def _sender_of(update: Update) -> Optional[User]:
+    if isinstance(update, _IS_ITS_OWN_SENDER):
+        return update
+
+    if isinstance(update, _WITH_A_SENDER_NAMED_USER):
+        return update.user
+
+    if isinstance(update, _WITH_A_BOOSTER):
+        return update.boost.from_user if update.boost else None
+
     return update.from_user if isinstance(update, _WITH_A_SENDER) else None
 
 
@@ -188,18 +214,27 @@ def _chat_of(update: Update) -> Optional[Chat]:
 
 
 def _sender_chat_of(update: Update) -> Optional[Chat]:
-    return update.sender_chat if isinstance(update, _WITH_A_SENDER_CHAT) else None
+    if isinstance(update, _WITH_A_SENDER_CHAT):
+        return update.sender_chat
+
+    if isinstance(update, _WITH_A_SENDER_CHAT_NAMED_ACTOR_CHAT):
+        return update.actor_chat
+
+    # A callback query carries no sender chat of its own, but the message the button sits
+    #  under does, by the same route `business`, `linked_channel` and `topic` take below.
+    message = _message_of(update)
+    return message.sender_chat if message else None
 
 
 def _is_outgoing(update: Update) -> bool:
     return bool(update.outgoing) if isinstance(update, _CAN_BE_OUTGOING) else False
 
 
-# NOTE: `business_connection_id`, `forward_origin` and `topic` live on `Message` alone, so the
-#       filters that read them cannot take the field off the update the way the ones above do.
-#       They go through the message the update is about instead, which is the same message the
-#       user is looking at when a button under it is pressed.
-_WITH_A_MESSAGE = (CallbackQuery,)
+# `business_connection_id`, `forward_origin` and `topic` live on `Message` alone, so the
+#  filters that read them cannot take the field off the update the way the ones above do.
+#  They go through the message the update is about instead, which is the same message the
+#  user is looking at when a button under it is pressed.
+_WITH_A_MESSAGE: Final[Tuple[Type[Update], ...]] = (CallbackQuery,)
 
 
 def _message_of(update: Update) -> Optional[Message]:
@@ -1269,8 +1304,8 @@ class chat(Filter, set):
             return True
         sender = _sender_of(update)
 
-        # NOTE: Saved Messages is the chat whose id is your own user id.
-        #       `is_self` on its own is true of anything you caused, in any chat.
+        # Saved Messages is the chat whose id is your own user id.
+        #  `is_self` on its own is true of anything you caused, in any chat.
         return bool(
             not self.isdisjoint(_ME_ALIASES)
             and sender

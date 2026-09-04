@@ -253,7 +253,7 @@ class Client(Methods):
         loop (:py:class:`asyncio.AbstractEventLoop`, *optional*):
             Event loop.
 
-        init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JsonValue`, *optional*):
+        init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
             A dict is converted on connect; an already built JsonValue is sent as it is.

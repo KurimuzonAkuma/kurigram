@@ -85,7 +85,7 @@ class Invoice(Object):
         terms_url (``str``, *optional*):
             Terms of service URL.
 
-        raw (:obj:`~raw.base.payments.MessageMediaInvoice` | :obj:`~raw.base.Invoice`, *optional*):
+        raw (:obj:`~pyrogram.raw.types.MessageMediaInvoice` | :obj:`~pyrogram.raw.types.Invoice`, *optional*):
             The raw object, as received from the Telegram API.
     """
 

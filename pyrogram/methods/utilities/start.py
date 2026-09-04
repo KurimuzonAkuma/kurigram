@@ -31,7 +31,7 @@ class Start:
         self: "pyrogram.Client", *,
         use_qr: bool = False,
         except_ids: List[int] = [],
-    ):
+    ) -> "pyrogram.Client":
         """Start the client.
 
         This method connects the client to Telegram and, in case of new sessions, automatically manages the

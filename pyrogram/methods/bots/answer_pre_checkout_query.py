@@ -28,7 +28,7 @@ class AnswerPreCheckoutQuery:
         pre_checkout_query_id: str,
         ok: Optional[bool] = None,
         error_message: Optional[str] = None
-    ):
+    ) -> bool:
         """Send answers to pre-checkout queries.
 
         .. include:: /_includes/usable-by/bots.rst

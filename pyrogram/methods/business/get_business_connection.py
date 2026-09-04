@@ -24,7 +24,7 @@ class GetBusinessConnection:
     async def get_business_connection(
         self: "pyrogram.Client",
         business_connection_id: str
-    ):
+    ) -> "types.BusinessConnection":
         """Use this method to get information about the connection of the bot with a business account.
 
         .. include:: /_includes/usable-by/bots.rst

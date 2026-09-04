@@ -20,6 +20,7 @@ from typing import Callable, Optional
 
 import pyrogram
 from pyrogram.filters import Filter
+from .handler_type import HandlerType
 
 
 class OnRawUpdate:
@@ -27,7 +28,7 @@ class OnRawUpdate:
         self: Optional["OnRawUpdate"] = None,
         filters=None,
         group: int = 0,
-    ) -> Callable:
+    ) -> Callable[[HandlerType], HandlerType]:
         """Decorator for handling raw updates.
 
         This does the same thing as :meth:`~pyrogram.Client.add_handler` using the
@@ -44,7 +45,7 @@ class OnRawUpdate:
                 The group identifier, defaults to 0.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
                 self.add_handler(pyrogram.handlers.RawUpdateHandler(func, filters), group)
             elif isinstance(self, Filter) or self is None:

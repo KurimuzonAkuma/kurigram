@@ -27,7 +27,7 @@ class ImportContacts:
     async def import_contacts(
         self: "pyrogram.Client",
         contacts: List["types.InputPhoneContact"]
-    ):
+    ) -> "raw.base.contacts.ImportedContacts":
         """Import contacts to your Telegram address book.
 
         .. include:: /_includes/usable-by/users.rst
@@ -37,7 +37,7 @@ class ImportContacts:
                 The contact list to be added
 
         Returns:
-            :obj:`types.contacts.ImportedContacts`
+            :obj:`~pyrogram.raw.base.contacts.ImportedContacts`: On success.
 
         Example:
             .. code-block:: python

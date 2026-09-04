@@ -133,15 +133,15 @@ class ChatEvent(Object):
 
         created_forum_topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
             New forum topic.
-            For :obj:`~pyrogram.enums.ChatEvenAction.CREATED_FORUM_TOPIC` action only.
+            For :obj:`~pyrogram.enums.ChatEventAction.CREATED_FORUM_TOPIC` action only.
 
         old_forum_topic, new_forum_topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
             Edited forum topic.
-            For :obj:`~pyrogram.enums.ChatEvenAction.EDITED_FORUM_TOPIC` action only.
+            For :obj:`~pyrogram.enums.ChatEventAction.EDITED_FORUM_TOPIC` action only.
 
         deleted_forum_topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
             Deleted forum topic.
-            For :obj:`~pyrogram.enums.ChatEvenAction.DELETED_FORUM_TOPIC` action only.
+            For :obj:`~pyrogram.enums.ChatEventAction.DELETED_FORUM_TOPIC` action only.
     """
 
     def __init__(

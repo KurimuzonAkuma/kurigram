@@ -27,7 +27,7 @@ class SetContactNote:
         self: "pyrogram.Client",
         user_id: Union[int, str],
         note: Optional[Union[str, "types.FormattedText"]] = None,
-    ):
+    ) -> bool:
         """Changes a note of a contact user.
 
         .. include:: /_includes/usable-by/users.rst

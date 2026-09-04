@@ -1,5 +1,5 @@
-# The rule set and the excludes live in `pyproject.toml`, and this hook runs `make lint` —
-#  the same recipe the `lint` job runs — so the two cannot drift apart.
+# The rule set and the excludes live in `pyproject.toml`, and this hook runs `make lint`,
+#  the same recipe the `lint` job runs, so the two cannot drift apart.
 repos:
   - repo: local
     hooks:

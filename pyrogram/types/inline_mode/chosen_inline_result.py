@@ -54,7 +54,7 @@ class ChosenInlineResult(Object, Update):
 
         matches (List of regex Matches, *optional*):
             A list containing all `Match Objects <https://docs.python.org/3/library/re.html#match-objects>`_ that match
-            the query of this chosen query. Only applicable when using :obj:`Filters.regex <pyrogram.Filters.regex>`.
+            the query of this chosen query. Only applicable when using :obj:`filters.regex <pyrogram.filters.regex>`.
     """
 
     def __init__(

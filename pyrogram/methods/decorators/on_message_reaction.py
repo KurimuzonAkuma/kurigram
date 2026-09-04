@@ -20,6 +20,7 @@ from typing import Callable, Optional, Union
 
 import pyrogram
 from pyrogram.filters import Filter
+from .handler_type import HandlerType
 
 
 class OnMessageReaction:
@@ -27,7 +28,7 @@ class OnMessageReaction:
         self: Union["OnMessageReaction", Filter, None] = None,
         filters: Optional[Filter] = None,
         group: int = 0
-    ) -> Callable:
+    ) -> Callable[[HandlerType], HandlerType]:
         """Decorator for handling reaction changes on messages.
 
         This does the same thing as :meth:`~pyrogram.Client.add_handler` using the
@@ -43,7 +44,7 @@ class OnMessageReaction:
                 The group identifier, defaults to 0.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
                 self.add_handler(pyrogram.handlers.MessageReactionHandler(func, filters), group)
             elif isinstance(self, Filter) or self is None:

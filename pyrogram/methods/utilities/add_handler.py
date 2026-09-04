@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Tuple
+
 import pyrogram
 from pyrogram.handlers import StartHandler, StopHandler, ConnectHandler, DisconnectHandler
 from pyrogram.handlers.handler import Handler
@@ -26,7 +28,7 @@ class AddHandler:
         self: "pyrogram.Client",
         handler: "Handler",
         group: int = 0
-    ):
+    ) -> Tuple["Handler", int]:
         """Register an update handler.
 
         You can register multiple handlers, but at most one handler within a group will be used for a single update.

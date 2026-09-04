@@ -89,8 +89,8 @@ class GetDirectMessagesTopicsByID:
         for i in r.dialogs:
             topics.append(await types.DirectMessagesTopic._parse(client=self, topic=i, users=users, chats=chats))
 
-        # NOTE: A topic exists only once its peer has written to the chat, and asking for a peer
-        #       without one answers with an empty `dialogs` vector rather than an error:
+        # A topic exists only once its peer has written to the chat, and asking for a peer
+        #  without one answers with an empty `dialogs` vector rather than an error:
         #
-        #       await app.get_direct_messages_topics_by_id(chat_id, user_id)  # -> None
+        #  await app.get_direct_messages_topics_by_id(chat_id, user_id)  # -> None
         return topics if is_iterable else topics[0] if topics else None

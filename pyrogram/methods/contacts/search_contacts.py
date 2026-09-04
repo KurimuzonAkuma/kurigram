@@ -26,7 +26,7 @@ class SearchContacts:
         self: "pyrogram.Client",
         query: str,
         limit: int = 0
-    ):
+    ) -> "types.FoundContacts":
         """Returns users or channels found by name substring and auxiliary data.
 
         .. include:: /_includes/usable-by/users.rst

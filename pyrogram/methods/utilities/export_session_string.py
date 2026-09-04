@@ -22,7 +22,7 @@ import pyrogram
 class ExportSessionString:
     async def export_session_string(
         self: "pyrogram.Client"
-    ):
+    ) -> str:
         """Export the current authorized session as a serialized string.
 
         Session strings are useful for storing in-memory authorized sessions in a portable, serialized string.

@@ -24,7 +24,7 @@ class SetInactiveSessionTTL:
     async def set_inactive_session_ttl(
         self: "pyrogram.Client",
         inactive_session_ttl_days: int
-    ):
+    ) -> bool:
         """Changes the period of inactivity after which sessions will automatically be terminated.
 
         .. include:: /_includes/usable-by/users.rst

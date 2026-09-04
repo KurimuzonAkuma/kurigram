@@ -34,7 +34,7 @@ class Object:
         """Bind a Client instance to this and to all nested Pyrogram objects.
 
         Parameters:
-            client (:obj:`~pyrogram.types.Client`):
+            client (:obj:`~pyrogram.Client`):
                 The Client instance to bind this object with. Useful to re-enable bound methods after serializing and
                 deserializing Pyrogram objects with ``repr`` and ``eval``.
         """

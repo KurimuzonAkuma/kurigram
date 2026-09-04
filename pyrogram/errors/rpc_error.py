@@ -34,7 +34,7 @@ STRING_PARAMETER_PREFIXES: Final[Tuple[str, ...]] = (
 PARAMETER: Final[Pattern[str]] = re.compile(r"_(\d+)")
 
 # Canonical: `compiler/errors/compiler.py`, which writes one row per code keyed `"_"`, holding the
-# name of the category class that code's errors subclass — `BadRequest` for 400, `Forbidden` for
+# name of the category class that code's errors subclass: `BadRequest` for 400, `Forbidden` for
 # 403. It is what an error whose message is not in the table falls back to.
 CATEGORY: Final[str] = "_"
 

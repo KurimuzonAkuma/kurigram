@@ -16,6 +16,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import List
+
 import pyrogram
 from pyrogram import raw, types, enums
 
@@ -24,7 +26,7 @@ class GetPrivacy:
     async def get_privacy(
         self: "pyrogram.Client",
         key: "enums.PrivacyKey"
-    ):
+    ) -> List["types.PrivacyRule"]:
         """Get account privacy rules.
 
         .. include:: /_includes/usable-by/users.rst

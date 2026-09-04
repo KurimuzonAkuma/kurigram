@@ -34,7 +34,7 @@ class AnswerInlineQuery:
         next_offset: str = "",
         switch_pm_text: str = "",
         switch_pm_parameter: str = ""
-    ):
+    ) -> bool:
         """Send answers to an inline query.
 
         A maximum of 50 results per query is allowed.

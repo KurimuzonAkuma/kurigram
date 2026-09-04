@@ -26,9 +26,9 @@ class InputCredentials(Object):
 
     It should be one of:
 
-    - :obj:`~pyrogram.types.InputInvoiceApplePay`
-    - :obj:`~pyrogram.types.InputInvoiceGooglePay`
-    - :obj:`~pyrogram.types.InputInvoiceNew`
+    - :obj:`~pyrogram.types.InputCredentialsApplePay`
+    - :obj:`~pyrogram.types.InputCredentialsGooglePay`
+    - :obj:`~pyrogram.types.InputCredentialsNew`
     - :obj:`~pyrogram.types.InputCredentialsSaved`
     """
     def __init__(self):

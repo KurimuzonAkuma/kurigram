@@ -20,6 +20,7 @@ from typing import Callable, Optional, Sequence, Union
 
 import pyrogram
 from pyrogram.filters import Filter
+from .handler_type import HandlerType
 
 
 class OnError:
@@ -28,7 +29,7 @@ class OnError:
         exceptions: Optional[Union[Exception, Sequence[Exception]]] = None,
         filters: Optional[Filter] = None,
         group: int = 0,
-    ) -> Callable:
+    ) -> Callable[[HandlerType], HandlerType]:
         """Decorator for handling unexpected errors.
 
         This does the same thing as :meth:`~pyrogram.Client.add_handler` using the
@@ -49,7 +50,7 @@ class OnError:
                 The group identifier, defaults to 0.
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
                 self.add_handler(pyrogram.handlers.ErrorHandler(func, exceptions, filters), group)
             else:

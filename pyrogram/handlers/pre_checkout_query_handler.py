@@ -37,7 +37,7 @@ class PreCheckoutQueryHandler(Handler):
             Pass a function that will be called when a new PreCheckoutQuery arrives. It takes *(client, pre_checkout_query)*
             as positional arguments (look at the section below for a detailed description).
 
-        filters (:obj:`Filters`):
+        filters (:obj:`~pyrogram.filters.Filter`):
             Pass one or more filters to allow only a subset of callback queries to be passed
             in your callback function.
 

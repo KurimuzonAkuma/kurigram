@@ -234,6 +234,7 @@ def pyrogram_api():
             copy_message
             copy_media_group
             send_photo
+            send_live_photo
             send_audio
             send_document
             send_screenshot_notification
@@ -1135,6 +1136,8 @@ def pyrogram_api():
             Message.answer
             Message.reply_photo
             Message.answer_photo
+            Message.reply_live_photo
+            Message.answer_live_photo
             Message.reply_poll
             Message.answer_poll
             Message.reply_dice
