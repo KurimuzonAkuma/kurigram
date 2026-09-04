@@ -3704,6 +3704,7 @@ class Message(Object, Update):
         game_short_name: str,
         disable_notification: Optional[bool] = None,
         effect_id: int = Optional[None],
+        protect_content: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
         reply_markup: Optional[
             Union[
@@ -3737,6 +3738,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
                 Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
@@ -3761,6 +3765,7 @@ class Message(Object, Update):
             message_thread_id=self.message_thread_id,
             effect_id=effect_id,
             reply_parameters=types.ReplyParameters(message_id=self.id),
+            protect_content=protect_content,
             allow_paid_broadcast=allow_paid_broadcast,
             reply_markup=reply_markup,
         )
@@ -3771,6 +3776,7 @@ class Message(Object, Update):
         disable_notification: Optional[bool] = None,
         effect_id: int = Optional[None],
         reply_parameters: Optional["types.ReplyParameters"] = None,
+        protect_content: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
         reply_markup: Optional[
             Union[
@@ -3810,6 +3816,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
                 Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
@@ -3834,6 +3843,7 @@ class Message(Object, Update):
             message_thread_id=self.message_thread_id,
             effect_id=effect_id,
             reply_parameters=reply_parameters,
+            protect_content=protect_content,
             allow_paid_broadcast=allow_paid_broadcast,
             reply_markup=reply_markup
         )
@@ -4478,6 +4488,9 @@ class Message(Object, Update):
         media: List[Union["types.InputMediaPhoto", "types.InputMediaVideo"]],
         disable_notification: Optional[bool] = None,
         effect_id: Optional[int] = None,
+        schedule_date: Optional[datetime] = None,
+        protect_content: Optional[bool] = None,
+        show_caption_above_media: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None,
     ) -> List["types.Message"]:
@@ -4503,6 +4516,15 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
                 Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
@@ -4526,6 +4548,9 @@ class Message(Object, Update):
             direct_messages_topic_id=self.direct_messages_topic_id,
             effect_id=effect_id,
             reply_parameters=types.ReplyParameters(message_id=self.id),
+            schedule_date=schedule_date,
+            protect_content=protect_content,
+            show_caption_above_media=show_caption_above_media,
             allow_paid_broadcast=allow_paid_broadcast,
             paid_message_star_count=paid_message_star_count,
             business_connection_id=self.business_connection_id,
@@ -4537,6 +4562,9 @@ class Message(Object, Update):
         disable_notification: Optional[bool] = None,
         effect_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
+        schedule_date: Optional[datetime] = None,
+        protect_content: Optional[bool] = None,
+        show_caption_above_media: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None
     ) -> List["types.Message"]:
@@ -4564,6 +4592,15 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
                 Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
@@ -4587,6 +4624,9 @@ class Message(Object, Update):
             direct_messages_topic_id=self.direct_messages_topic_id,
             effect_id=effect_id,
             reply_parameters=reply_parameters,
+            schedule_date=schedule_date,
+            protect_content=protect_content,
+            show_caption_above_media=show_caption_above_media,
             allow_paid_broadcast=allow_paid_broadcast,
             paid_message_star_count=paid_message_star_count,
             business_connection_id=self.business_connection_id
@@ -7879,6 +7919,11 @@ class Message(Object, Update):
         parse_mode: Optional["enums.ParseMode"] = None,
         caption_entities: Optional[List["types.MessageEntity"]] = None,
         disable_notification: Optional[bool] = None,
+        schedule_date: Optional[datetime] = None,
+        protect_content: Optional[bool] = None,
+        has_spoiler: Optional[bool] = None,
+        effect_id: Optional[int] = None,
+        show_caption_above_media: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None,
         suggested_post_parameters: Optional["types.SuggestedPostParameters"] = None,
@@ -7918,6 +7963,22 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            has_spoiler (``bool``, *optional*):
+                True, if the message media is covered by a spoiler animation.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
                 Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
@@ -7951,6 +8012,11 @@ class Message(Object, Update):
             message_thread_id=self.message_thread_id,
             direct_messages_topic_id=self.direct_messages_topic_id,
             reply_parameters=types.ReplyParameters(message_id=self.id),
+            schedule_date=schedule_date,
+            protect_content=protect_content,
+            has_spoiler=has_spoiler,
+            effect_id=effect_id,
+            show_caption_above_media=show_caption_above_media,
             business_connection_id=self.business_connection_id,
             allow_paid_broadcast=allow_paid_broadcast,
             paid_message_star_count=paid_message_star_count,
@@ -7966,6 +8032,11 @@ class Message(Object, Update):
         caption_entities: Optional[List["types.MessageEntity"]] = None,
         disable_notification: Optional[bool] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
+        schedule_date: Optional[datetime] = None,
+        protect_content: Optional[bool] = None,
+        has_spoiler: Optional[bool] = None,
+        effect_id: Optional[int] = None,
+        show_caption_above_media: Optional[bool] = None,
         allow_paid_broadcast: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None,
         suggested_post_parameters: Optional["types.SuggestedPostParameters"] = None,
@@ -8007,6 +8078,22 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            has_spoiler (``bool``, *optional*):
+                True, if the message media is covered by a spoiler animation.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
                 Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
@@ -8040,6 +8127,11 @@ class Message(Object, Update):
             message_thread_id=self.message_thread_id,
             direct_messages_topic_id=self.direct_messages_topic_id,
             reply_parameters=reply_parameters,
+            schedule_date=schedule_date,
+            protect_content=protect_content,
+            has_spoiler=has_spoiler,
+            effect_id=effect_id,
+            show_caption_above_media=show_caption_above_media,
             business_connection_id=self.business_connection_id,
             allow_paid_broadcast=allow_paid_broadcast,
             paid_message_star_count=paid_message_star_count,
@@ -8096,6 +8188,7 @@ class Message(Object, Update):
         result_id: str,
         disable_notification: Optional[bool] = None,
         paid_message_star_count: Optional[int] = None,
+        schedule_date: Optional[datetime] = None,
     ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_inline_bot_result` will automatically fill method attributes:
 
@@ -8118,6 +8211,9 @@ class Message(Object, Update):
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
             server answered with no message, None is returned.
@@ -8134,6 +8230,7 @@ class Message(Object, Update):
             direct_messages_topic_id=self.direct_messages_topic_id,
             reply_parameters=types.ReplyParameters(message_id=self.id),
             paid_message_star_count=paid_message_star_count,
+            schedule_date=schedule_date,
         )
 
     async def answer_inline_bot_result(
@@ -8142,7 +8239,8 @@ class Message(Object, Update):
         result_id: str,
         disable_notification: Optional[bool] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
-        paid_message_star_count: Optional[int] = None
+        paid_message_star_count: Optional[int] = None,
+        schedule_date: Optional[datetime] = None
     ) -> Optional["Message"]:
         """Shortcut for method :obj:`~pyrogram.Client.send_inline_bot_result` will automatically fill method attributes:
 
@@ -8167,6 +8265,9 @@ class Message(Object, Update):
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
+            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+                Date when the message will be automatically sent.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
             server answered with no message, None is returned.
@@ -8182,7 +8283,8 @@ class Message(Object, Update):
             message_thread_id=self.message_thread_id,
             direct_messages_topic_id=self.direct_messages_topic_id,
             reply_parameters=reply_parameters,
-            paid_message_star_count=paid_message_star_count
+            paid_message_star_count=paid_message_star_count,
+            schedule_date=schedule_date
         )
 
     async def reply_checklist(
