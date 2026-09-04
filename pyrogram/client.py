@@ -35,7 +35,7 @@ from importlib import import_module
 from io import BytesIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, List, Optional, Type, Union
+from typing import Any, AsyncGenerator, Callable, List, Optional, Sequence, Tuple, Type, Union
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
@@ -70,6 +70,18 @@ from .parser import Parser
 from .session.internals import MsgId
 
 log = logging.getLogger(__name__)
+
+
+def _plugin_handlers(target: Any) -> Optional[Sequence[Tuple[Handler, int]]]:
+    handlers = getattr(target, "handlers", None)
+
+    # A PyMongo collection answers any attribute with a sub-collection, so `hasattr` is
+    #  `True` and the loop below raises `TypeError: 'Collection' object is not iterable`.
+    #  https://github.com/mongodb/mongo-python-driver/blob/77cd7ab9f6dc48e72a3bae94d2cca2e4200e6978/pymongo/synchronous/collection.py#L270
+    if not isinstance(handlers, (list, tuple)):
+        return None
+
+    return handlers
 
 
 class Client(Methods):
@@ -1011,21 +1023,6 @@ class Client(Methods):
         else:
             return
 
-        def _extract_handlers(target_attr):
-            try:
-                handlers = getattr(target_attr, "handlers", None)
-            except Exception:
-                return []
-            if not isinstance(handlers, (list, tuple)):
-                return []
-            valid = []
-            for item in handlers:
-                if isinstance(item, (list, tuple)) and len(item) == 2:
-                    handler, group = item
-                    if isinstance(handler, Handler) and isinstance(group, int):
-                        valid.append((handler, group))
-            return valid
-
         if plugins.get("enabled", True):
             root = plugins["root"]
             include = plugins.get("include", [])
@@ -1039,14 +1036,19 @@ class Client(Methods):
                     module = import_module(module_path)
 
                     for name in vars(module).keys():
-                        target_attr = getattr(module, name, None)
-                        for handler, group in _extract_handlers(target_attr):
-                            self.add_handler(handler, group)
+                        # The name comes from the module's own `__dict__`, so it always resolves.
+                        target_attr = getattr(module, name)
+                        target_handlers = _plugin_handlers(target_attr)
 
-                            log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
-                                self.name, type(handler).__name__, name, group, module_path))
+                        if target_handlers is not None:
+                            for handler, group in target_handlers:
+                                if isinstance(handler, Handler) and isinstance(group, int):
+                                    self.add_handler(handler, group)
 
-                            count += 1
+                                    log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
+                                        self.name, type(handler).__name__, name, group, module_path))
+
+                                    count += 1
             else:
                 for path, handlers in include:
                     module_path = root + "." + path
@@ -1068,15 +1070,17 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        valid_handlers = _extract_handlers(target_attr)
-                        if valid_handlers:
-                            for handler, group in valid_handlers:
-                                self.add_handler(handler, group)
+                        target_handlers = _plugin_handlers(target_attr)
 
-                                log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
-                                    self.name, type(handler).__name__, name, group, module_path))
+                        if target_handlers is not None:
+                            for handler, group in target_handlers:
+                                if isinstance(handler, Handler) and isinstance(group, int):
+                                    self.add_handler(handler, group)
 
-                                count += 1
+                                    log.info('[{}] [LOAD] {}("{}") in group {} from "{}"'.format(
+                                        self.name, type(handler).__name__, name, group, module_path))
+
+                                    count += 1
                         elif warn_non_existent_functions:
                             log.warning('[{}] [LOAD] Ignoring non-existent function "{}" from "{}"'.format(
                                 self.name, name, module_path))
@@ -1102,15 +1106,17 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        valid_handlers = _extract_handlers(target_attr)
-                        if valid_handlers:
-                            for handler, group in valid_handlers:
-                                self.remove_handler(handler, group)
+                        target_handlers = _plugin_handlers(target_attr)
 
-                                log.info('[{}] [UNLOAD] {}("{}") from group {} in "{}"'.format(
-                                    self.name, type(handler).__name__, name, group, module_path))
+                        if target_handlers is not None:
+                            for handler, group in target_handlers:
+                                if isinstance(handler, Handler) and isinstance(group, int):
+                                    self.remove_handler(handler, group)
 
-                                count -= 1
+                                    log.info('[{}] [UNLOAD] {}("{}") from group {} in "{}"'.format(
+                                        self.name, type(handler).__name__, name, group, module_path))
+
+                                    count -= 1
                         elif warn_non_existent_functions:
                             log.warning('[{}] [UNLOAD] Ignoring non-existent function "{}" from "{}"'.format(
                                 self.name, name, module_path))

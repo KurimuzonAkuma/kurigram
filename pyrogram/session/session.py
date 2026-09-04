@@ -23,7 +23,7 @@ import os
 from enum import Enum, auto
 from hashlib import sha1
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Coroutine, Dict, List, Optional, Set
 
 import pyrogram
 from pyrogram import raw, utils
@@ -82,6 +82,7 @@ class Result:
 
 class Session:
     START_TIMEOUT = 2
+    STOP_TIMEOUT = 2
     WAIT_TIMEOUT = 15
     SLEEP_THRESHOLD = 10
     MAX_RETRIES = 10
@@ -138,6 +139,8 @@ class Session:
 
         self.recv_task: Optional[asyncio.Task] = None
 
+        self.pending_tasks: Set[asyncio.Task] = set()
+
         self.is_started = asyncio.Event()
         self.restart_lock = asyncio.Lock()
 
@@ -153,6 +156,34 @@ class Session:
             self._state = new_state
 
             log.debug("Session state changed: %s -> %s", old_state.name, new_state.name)
+
+    def _create_tracked_task(self, coroutine: Coroutine[Any, Any, Any]) -> asyncio.Task:
+        # The set is what `stop()` waits on, and it is also the strong reference the
+        #  loop does not hold: an unreferenced task can be collected mid-execution.
+        #  https://docs.python.org/3/library/asyncio-task.html#creating-tasks
+        task = self.client.loop.create_task(coroutine)
+
+        self.pending_tasks.add(task)
+        task.add_done_callback(self.pending_tasks.discard)
+
+        return task
+
+    async def _wait_pending_tasks(self) -> None:
+        # A tracked `handle_packet` spawns a tracked `handle_updates`, so one round can
+        #  leave a task behind. Every level is already running, so the loop ends.
+        while self.pending_tasks:
+            round_tasks = set(self.pending_tasks)
+            _, running = await asyncio.wait(round_tasks, timeout=self.STOP_TIMEOUT)
+
+            # `invoke` first waits `WAIT_TIMEOUT` for `is_started`, which stopping has
+            #  just cleared, and then another one for an answer that is not coming, so
+            #  a task caught mid-request would hold the shutdown for half a minute.
+            for task in running:
+                task.cancel()
+
+            for result in await asyncio.gather(*round_tasks, return_exceptions=True):
+                if isinstance(result, Exception):
+                    log.error("Task failed while the session was stopping", exc_info=result)
 
     async def start(self):
         if self._state in (SessionState.STARTED, SessionState.STARTING):
@@ -269,6 +300,8 @@ class Session:
         if self.recv_task:
             await self.recv_task
             self.recv_task = None
+
+        await self._wait_pending_tasks()
 
         await self._set_state(SessionState.STOPPED)
 
@@ -388,7 +421,7 @@ class Session:
                 msg_id = msg.body.msg_id
             else:
                 if self.client is not None:
-                    self.client.loop.create_task(self.client.handle_updates(msg.body))
+                    self._create_tracked_task(self.client.handle_updates(msg.body))
 
             if msg_id in self.results:
                 self.results[msg_id].value = getattr(msg.body, "result", msg.body)
@@ -475,7 +508,7 @@ class Session:
 
                 break
 
-            self.client.loop.create_task(self.handle_packet(packet))
+            self._create_tracked_task(self.handle_packet(packet))
 
         log.info("NetworkTask stopped")
 
