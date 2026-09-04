@@ -34,7 +34,7 @@ from importlib import import_module
 from io import BytesIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, List, Optional, Type, Union
+from typing import Any, AsyncGenerator, Callable, List, Optional, Sequence, Tuple, Type, Union
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
@@ -69,6 +69,19 @@ from .parser import Parser
 from .session.internals import MsgId
 
 log = logging.getLogger(__name__)
+
+
+def plugin_handlers(target: Any) -> Optional[Sequence[Tuple[Handler, int]]]:
+    """The handler pairs a plugin function carries, or `None` when it carries none.
+
+    Asking `hasattr(target, "handlers")` is not enough. An object with a catch-all
+    `__getattr__`, such as a Motor or PyMongo collection left at module level, answers
+    every attribute with another proxy, and iterating that raises
+    `TypeError: 'Collection' object is not iterable`.
+    """
+    handlers = getattr(target, "handlers", None)
+
+    return handlers if isinstance(handlers, (list, tuple)) else None
 
 
 class Client(Methods):
@@ -1018,8 +1031,10 @@ class Client(Methods):
                     for name in vars(module).keys():
                         # The name comes from the module's own `__dict__`, so it always resolves.
                         target_attr = getattr(module, name)
-                        if hasattr(target_attr, "handlers"):
-                            for handler, group in target_attr.handlers:
+                        target_handlers = plugin_handlers(target_attr)
+
+                        if target_handlers is not None:
+                            for handler, group in target_handlers:
                                 if isinstance(handler, Handler) and isinstance(group, int):
                                     self.add_handler(handler, group)
 
@@ -1048,8 +1063,10 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        if hasattr(target_attr, "handlers"):
-                            for handler, group in target_attr.handlers:
+                        target_handlers = plugin_handlers(target_attr)
+
+                        if target_handlers is not None:
+                            for handler, group in target_handlers:
                                 if isinstance(handler, Handler) and isinstance(group, int):
                                     self.add_handler(handler, group)
 
@@ -1082,8 +1099,10 @@ class Client(Methods):
 
                     for name in handlers:
                         target_attr = getattr(module, name, None)
-                        if hasattr(target_attr, "handlers"):
-                            for handler, group in target_attr.handlers:
+                        target_handlers = plugin_handlers(target_attr)
+
+                        if target_handlers is not None:
+                            for handler, group in target_handlers:
                                 if isinstance(handler, Handler) and isinstance(group, int):
                                     self.remove_handler(handler, group)
 
