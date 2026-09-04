@@ -74,11 +74,9 @@ log = logging.getLogger(__name__)
 def _plugin_handlers(target: Any) -> Optional[Sequence[Tuple[Handler, int]]]:
     handlers = getattr(target, "handlers", None)
 
-    # `hasattr` is not enough here. An object with a catch-all `__getattr__`, such as a
-    #  PyMongo collection left at module level, answers every attribute with another
-    #  proxy of itself, so the loop below reaches `for handler, group in <proxy>` and
-    #  raises `TypeError: 'Collection' object is not iterable`. `__getattr__` cannot
-    #  influence the type of what it returned, so ask about that instead.
+    # A PyMongo collection answers any attribute with a sub-collection, so `hasattr` is
+    #  `True` and the loop below raises `TypeError: 'Collection' object is not iterable`.
+    #  https://github.com/mongodb/mongo-python-driver/blob/77cd7ab9f6dc48e72a3bae94d2cca2e4200e6978/pymongo/synchronous/collection.py#L270
     if not isinstance(handlers, (list, tuple)):
         return None
 
