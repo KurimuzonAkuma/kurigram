@@ -16,18 +16,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from .object import Object
+from pyrogram import types
 
 
-class List(list):
-    __slots__ = []
+def test_a_list_of_plain_values_is_representable() -> None:
+    assert repr(types.List([1, "two"])) == "pyrogram.types.List([1,'two'])"
 
-    def __str__(self):
-        # noinspection PyCallByClass
-        return Object.__str__(self)
 
-    def __repr__(self) -> str:
-        # `Object.__repr__` reads `__dict__`, which only an `Object` has, so it raised
-        #  `AttributeError` on a list of ids or of nested `List`s. Every `Object` inherits
-        #  that same `__repr__` and none overrides it, so `repr` reaches it anyway.
-        return f"pyrogram.types.List([{','.join(repr(item) for item in self)}])"
+def test_a_nested_list_is_representable() -> None:
+    assert repr(types.List([types.List([1])])) == "pyrogram.types.List([pyrogram.types.List([1])])"
+
+
+def test_an_object_still_reports_its_own_shape() -> None:
+    username = types.Username(username="someone", active=True)
+
+    assert repr(types.List([username])) == f"pyrogram.types.List([{username!r}])"
+    assert "pyrogram.types.Username(" in repr(username)
