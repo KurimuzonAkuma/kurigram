@@ -57,6 +57,23 @@ class EditInlineReplyMarkup:
         """
 
         unpacked = utils.unpack_inline_message_id(inline_message_id)
+
+        # Attempt direct chat message edit first when peer and id are available in inline_message_id.
+        # This preserves custom emoji icons on buttons, which Telegram's EditInlineBotMessage server actively strips.
+        if isinstance(unpacked, raw.types.InputBotInlineMessageID64):
+            chat_id = utils.get_channel_id(abs(unpacked.owner_id)) if unpacked.owner_id < 0 else unpacked.owner_id
+            msg_id = unpacked.id
+            try:
+                res = await self.edit_message_reply_markup(
+                    chat_id=chat_id,
+                    message_id=msg_id,
+                    reply_markup=reply_markup,
+                )
+                if res:
+                    return True
+            except Exception:
+                pass
+
         dc_id = unpacked.dc_id
 
         session = await self.get_session(dc_id, is_media=True)

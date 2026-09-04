@@ -181,6 +181,13 @@ class RichBlock(Object):
                 credit=await types.RichText._parse(client, rich_block.caption),
             )
         if isinstance(rich_block, raw.types.PageBlockBlockquote):
+            if rich_block.collapsed:
+                return RichBlockExpandableBlockQuotation(
+                    blocks=types.List(
+                        [RichBlockParagraph(text=await types.RichText._parse(client, rich_block.text))]
+                    ),
+                    credit=await types.RichText._parse(client, rich_block.caption),
+                )
             return RichBlockBlockQuotation(
                 blocks=types.List(
                     [RichBlockParagraph(text=await types.RichText._parse(client, rich_block.text))]
@@ -681,6 +688,21 @@ class RichBlockBlockQuotation(RichBlock):
         self.credit = credit
 
 
+class RichBlockExpandableBlockQuotation(RichBlockBlockQuotation):
+    """A block quotation, which can be expanded or collapsed back, corresponding to the HTML tag ``<blockquote expandable>``.
+
+    Parameters:
+        blocks (List of :obj:`pyrogram.types.RichBlock`):
+            Content of the block.
+
+        credit (:obj:`~pyrogram.types.RichText`, *optional*):
+            Credit of the block.
+    """
+
+    def __init__(self, blocks: List["types.RichBlock"], credit: Optional["types.RichText"] = None):
+        super().__init__(blocks=blocks, credit=credit)
+
+
 class RichBlockPullQuotation(RichBlock):
     """A quotation with centered text, loosely corresponding to the HTML tag ``<aside>``.
 
@@ -752,6 +774,9 @@ class RichBlockTable(RichBlock):
         is_striped (``bool``, *optional*):
             True, if the table is striped.
 
+        is_compact (``bool``, *optional*):
+            True, if the table is compact.
+
         caption (:obj:`~pyrogram.types.RichBlockCaption`, *optional*):
             Caption of the block.
     """
@@ -761,6 +786,7 @@ class RichBlockTable(RichBlock):
         cells: List[List["types.RichBlockTableCell"]],
         is_bordered: Optional[bool] = None,
         is_striped: Optional[bool] = None,
+        is_compact: Optional[bool] = None,
         caption: Optional["types.RichBlockCaption"] = None,
     ):
         super().__init__()
@@ -768,6 +794,7 @@ class RichBlockTable(RichBlock):
         self.cells = cells
         self.is_bordered = is_bordered
         self.is_striped = is_striped
+        self.is_compact = is_compact
         self.caption = caption
 
     @staticmethod
@@ -789,6 +816,7 @@ class RichBlockTable(RichBlock):
             cells=cells,
             is_bordered=page_block.bordered,
             is_striped=page_block.striped,
+            is_compact=page_block.compact,
             caption=await types.RichText._parse(client, page_block.title),
         )
 
