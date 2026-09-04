@@ -130,3 +130,52 @@ async def test_a_finished_task_leaves_the_pending_set() -> None:
     await asyncio.sleep(0)
 
     assert session.pending_tasks == set()
+
+
+async def test_a_restart_queued_before_stop_does_not_reconnect() -> None:
+    session = _started_session()
+
+    started: bool = False
+
+    async def start() -> None:
+        nonlocal started
+
+        started = True
+
+    session.start = start
+
+    # The task is only scheduled here: it runs once the loop is yielded to, which is
+    #  after the stop below, and that is the order the client shuts down in.
+    restarting = session.client.loop.create_task(session.restart())
+
+    await session.stop()
+    await restarting
+
+    assert not started
+    assert session.state is SessionState.STOPPED
+
+
+async def test_a_restart_already_starting_is_stopped_again() -> None:
+    session = _started_session()
+
+    starting = asyncio.Event()
+    release = asyncio.Event()
+
+    async def start() -> None:
+        starting.set()
+        await release.wait()
+
+        session._state = SessionState.STARTED
+        session.is_started.set()
+
+    session.start = start
+    restarting = session.client.loop.create_task(session.restart())
+
+    await starting.wait()
+    await session.stop()
+
+    release.set()
+    await restarting
+
+    assert session.state is SessionState.STOPPED
+    assert not session.is_started.is_set()

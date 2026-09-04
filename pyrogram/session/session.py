@@ -144,6 +144,10 @@ class Session:
         self.is_started = asyncio.Event()
         self.restart_lock = asyncio.Lock()
 
+        # Never cleared: a stopped session is replaced rather than started again, since
+        #  every caller that stops one then asks for a new one (`pyrogram/client.py:1428`).
+        self._must_stay_stopped: bool = False
+
     @property
     def state(self) -> SessionState:
         """Get current session state"""
@@ -276,6 +280,14 @@ class Session:
                 log.exception(e)
 
     async def stop(self):
+        # `restart()` reads this, and the flag is set before the state check below so a
+        #  stop that arrives while a restart is already between its own `stop()` and
+        #  `start()` still counts.
+        self._must_stay_stopped = True
+
+        await self._stop()
+
+    async def _stop(self) -> None:
         if self._state in (SessionState.STOPPED, SessionState.STOPPING):
             log.debug("Session already stopped")
             return
@@ -318,8 +330,18 @@ class Session:
             if self.stored_msg_ids:
                self.recent_msg_ids = self.stored_msg_ids[:30]
 
-            await self.stop()
+            await self._stop()
+
+            if self._must_stay_stopped:
+                return
+
             await self.start()
+
+            # `stop()` does not take `restart_lock`, because `start()` calls `stop()` on
+            #  failure and would deadlock on it. So a stop landing inside `start()` is
+            #  undone here rather than prevented.
+            if self._must_stay_stopped:
+                await self._stop()
 
     async def handle_packet(self, packet):
         try:
