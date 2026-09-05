@@ -51,6 +51,6 @@ class BusinessConnectionHandler(Handler):
     """
 
     def __init__(
-        self, callback: Callable[["pyrogram.Client", "types.ManagedBotUpdated"], Any], filters=None
+        self, callback: Callable[["pyrogram.Client", "types.BusinessConnection"], Any], filters=None
     ):
         super().__init__(callback, filters)

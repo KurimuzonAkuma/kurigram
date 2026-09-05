@@ -45,11 +45,11 @@ class ChatBoostHandler(Handler):
         client (:obj:`~pyrogram.Client`):
             The Client itself, useful when you want to call other API methods inside the handler.
 
-        boost (:obj:`~pyrogram.types.ChatBoost`):
+        boost (:obj:`~pyrogram.types.ChatBoostUpdated`):
             The applied chat boost.
     """
 
     def __init__(
-        self, callback: Callable[["pyrogram.Client", "types.ChatBoost"], Any], filters=None
+        self, callback: Callable[["pyrogram.Client", "types.ChatBoostUpdated"], Any], filters=None
     ):
         super().__init__(callback, filters)
