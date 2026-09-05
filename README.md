@@ -90,6 +90,13 @@ Dev version
 pip install https://github.com/KurimuzonAkuma/kurigram/archive/dev.zip --force-reinstall
 ```
 
+Optional dependencies
+
+``` bash
+pip install kurigram[fast]     # TgCrypto and uvloop for better performance
+pip install kurigram[qrcode]   # QR code login support
+```
+
 ### Resources
 
 - Check out the [docs](https://docs.kurigram.icu) to learn more about Kurigram, get started right

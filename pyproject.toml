@@ -84,6 +84,10 @@ fast = [
     "uvloop<=0.22.1; sys_platform == 'darwin' or sys_platform == 'linux'",
 ]
 
+qrcode = [
+    "qrcode<=8.2",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-markers"
