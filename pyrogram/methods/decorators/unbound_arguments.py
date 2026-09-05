@@ -16,12 +16,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import NamedTuple, Optional, Sequence, Union
+from dataclasses import dataclass
+from typing import Optional, Sequence, Union
 
 from pyrogram.filters import Filter
 
 
-class UnboundArguments(NamedTuple):
+@dataclass(frozen=True)
+class UnboundArguments:
     filters: Optional[Filter]
     group: int
 
@@ -39,15 +41,19 @@ def unbound_arguments(
     keyword shifts nothing, and the two forms have to be told apart before either is read.
     """
     if isinstance(filters, int):
-        return UnboundArguments(receiver, filters)
+        return UnboundArguments(filters=receiver, group=filters)
 
-    return UnboundArguments(receiver if isinstance(receiver, Filter) else filters, group)
+    return UnboundArguments(
+        filters=receiver if isinstance(receiver, Filter) else filters,
+        group=group,
+    )
 
 
 ExceptionsType = Union[Exception, Sequence[Exception], None]
 
 
-class UnboundErrorArguments(NamedTuple):
+@dataclass(frozen=True)
+class UnboundErrorArguments:
     exceptions: ExceptionsType
     filters: Optional[Filter]
     group: int
@@ -66,9 +72,21 @@ def unbound_error_arguments(
     exceptions in `self`, the filter in `exceptions` and the group in `filters`.
     """
     if receiver is None:
-        return UnboundErrorArguments(exceptions, filters if isinstance(filters, Filter) else None, group)
+        return UnboundErrorArguments(
+            exceptions=exceptions,
+            filters=filters if isinstance(filters, Filter) else None,
+            group=group,
+        )
 
     if isinstance(exceptions, Filter):
-        return UnboundErrorArguments(receiver, exceptions, filters if isinstance(filters, int) else group)
+        return UnboundErrorArguments(
+            exceptions=receiver,
+            filters=exceptions,
+            group=filters if isinstance(filters, int) else group,
+        )
 
-    return UnboundErrorArguments(receiver, filters if isinstance(filters, Filter) else None, group)
+    return UnboundErrorArguments(
+        exceptions=receiver,
+        filters=filters if isinstance(filters, Filter) else None,
+        group=group,
+    )
