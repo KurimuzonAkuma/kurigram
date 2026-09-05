@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
+from typing import List, Optional
 
 import pyrogram
 from pyrogram import types, raw
@@ -81,7 +81,7 @@ class ShippingQuery(Object, Update):
     async def answer(
         self,
         ok: bool,
-        shipping_options: Optional["types.ShippingOptions"] = None,
+        shipping_options: Optional[List["types.ShippingOption"]] = None,
         error_message: Optional[str] = None
     ) -> bool:
         """Bound method *answer* of :obj:`~pyrogram.types.ShippingQuery`.
@@ -104,7 +104,7 @@ class ShippingQuery(Object, Update):
             ok (``bool``):
                 Pass True if delivery to the specified address is possible and False if there are any problems (for example, if delivery to the specified address is not possible).
 
-            shipping_options (:obj:`~pyrogram.types.ShippingOption`, *optional*):
+            shipping_options (List of :obj:`~pyrogram.types.ShippingOption`, *optional*):
                 Required if ok is True. A JSON-serialized array of available shipping options.
 
             error_message (``str``, *optional*):

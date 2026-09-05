@@ -739,7 +739,7 @@ def from_inline_bytes(data: bytes, file_name: Optional[str] = None) -> BytesIO:
     return b
 
 
-def obj_to_jsonvalue(obj) -> "raw.base.JsonValue":
+def obj_to_jsonvalue(obj) -> "raw.base.JSONValue":
     if obj is None:
         return raw.types.JsonNull()
     elif isinstance(obj, bool):
@@ -756,7 +756,7 @@ def obj_to_jsonvalue(obj) -> "raw.base.JsonValue":
     raise TypeError(f"Unsupported type: {type(obj)}")
 
 
-def jsonvalue_to_obj(obj: "raw.base.JsonValue"):
+def jsonvalue_to_obj(obj: "raw.base.JSONValue"):
     if isinstance(obj, raw.types.JsonNull):
         return None
     elif isinstance(obj, raw.types.JsonBool):

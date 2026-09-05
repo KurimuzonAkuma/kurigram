@@ -39,7 +39,7 @@ class PrivacyRule(Object):
 
     def __init__(
         self, *,
-        type: "types.PrivacyRuleType",
+        type: "enums.PrivacyRuleType",
         users: Optional[List["types.User"]] = None,
         chats: Optional[List["types.Chat"]] = None
     ):

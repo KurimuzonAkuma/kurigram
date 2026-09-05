@@ -268,7 +268,7 @@ class Client(Methods):
         init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
-            A dict is converted on connect; an already built JsonValue is sent as it is.
+            A dict is converted on connect; an already built JSONValue is sent as it is.
     """
 
     APP_VERSION = f"Pyrogram {__version__}"
@@ -339,7 +339,7 @@ class Client(Methods):
         fetch_topics: Optional[bool] = True,
         fetch_stories: Optional[bool] = True,
         fetch_stickers: Optional[bool] = True,
-        init_connection_params: Optional[Union[dict, "raw.base.JsonValue"]] = None,
+        init_connection_params: Optional[Union[dict, "raw.base.JSONValue"]] = None,
         connection_factory: Type[Connection] = Connection,
         protocol_factory: Type[TCP] = TCPAbridged,
         loop: Optional[asyncio.AbstractEventLoop] = None
