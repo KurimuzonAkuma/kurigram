@@ -25,7 +25,7 @@ import math
 import os
 from hashlib import md5
 from pathlib import PurePath
-from typing import List, Union, BinaryIO, Callable, Optional
+from typing import List, Union, BinaryIO, Callable, Optional, overload
 
 import pyrogram
 from pyrogram import StopTransmission
@@ -36,9 +36,43 @@ log = logging.getLogger(__name__)
 
 
 class SaveFile:
+    # The three shapes below are what the body already does. They are spelled out so a caller
+    #  storing the result into a required `InputFile` field is not asked to handle a `None`
+    #  the arguments it passed cannot produce. They leave `self` bare because `Client`
+    #  inherits this mixin, so the binding is the same without the annotation below.
+    @overload
+    async def save_file(
+        self,
+        path: None,
+        file_id: Optional[int] = None,
+        file_part: int = 0,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = ()
+    ) -> None: ...
+
+    @overload
+    async def save_file(
+        self,
+        path: Union[str, BinaryIO],
+        file_id: int,
+        file_part: int = 0,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = ()
+    ) -> None: ...
+
+    @overload
+    async def save_file(
+        self,
+        path: Union[str, BinaryIO],
+        file_id: None = None,
+        file_part: int = 0,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = ()
+    ) -> Union["raw.types.InputFile", "raw.types.InputFileBig"]: ...
+
     async def save_file(
         self: "pyrogram.Client",
-        path: Union[str, BinaryIO],
+        path: Optional[Union[str, BinaryIO]],
         file_id: Optional[int] = None,
         file_part: int = 0,
         progress: Optional[Callable] = None,

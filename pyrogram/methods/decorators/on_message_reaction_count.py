@@ -21,6 +21,7 @@ from typing import Callable, Optional, Union
 import pyrogram
 from pyrogram.filters import Filter
 from .handler_type import HandlerType
+from .unbound_arguments import unbound_arguments
 
 
 class OnMessageReactionCount:
@@ -51,10 +52,12 @@ class OnMessageReactionCount:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
 
+                arguments = unbound_arguments(self, filters=filters, group=group)
+
                 func.handlers.append(
                     (
-                        pyrogram.handlers.MessageReactionCountHandler(func, self),
-                        group if filters is None else filters
+                        pyrogram.handlers.MessageReactionCountHandler(func, arguments.filters),
+                        arguments.group
                     )
                 )
 

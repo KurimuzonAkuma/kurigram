@@ -51,7 +51,7 @@ class MessageReactionCountUpdated(Object, Update):
         chat: "types.Chat",
         message_id: int,
         date: datetime,
-        reactions: List["types.ReactionCount"]
+        reactions: List["types.Reaction"]
     ):
         super().__init__(client)
 

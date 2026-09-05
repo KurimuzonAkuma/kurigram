@@ -16,17 +16,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import pyrogram
 from pyrogram.filters import Filter
 from .handler_type import HandlerType
+from .unbound_arguments import unbound_arguments
 
 
 class OnRawUpdate:
     def on_raw_update(
-        self: Optional["OnRawUpdate"] = None,
-        filters=None,
+        self: Union["OnRawUpdate", Filter, None] = None,
+        filters: Optional[Filter] = None,
         group: int = 0,
     ) -> Callable[[HandlerType], HandlerType]:
         """Decorator for handling raw updates.
@@ -52,10 +53,12 @@ class OnRawUpdate:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
 
+                arguments = unbound_arguments(self, filters=filters, group=group)
+
                 func.handlers.append(
                     (
-                        pyrogram.handlers.RawUpdateHandler(func, self),
-                        group if filters is None else filters
+                        pyrogram.handlers.RawUpdateHandler(func, arguments.filters),
+                        arguments.group
                     )
                 )
 

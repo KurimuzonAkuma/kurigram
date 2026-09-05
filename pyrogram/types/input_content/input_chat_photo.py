@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import BinaryIO, Optional, Union
+from typing import BinaryIO, Optional, Union, cast
 
 import pyrogram
 from pyrogram import raw, utils
@@ -41,7 +41,7 @@ class InputChatPhoto(Object):
     ):
         super().__init__()
 
-    async def write(self, client: "pyrogram.Client") -> "raw.base.InputFile":
+    async def write(self, client: "pyrogram.Client") -> Union["raw.base.InputFile", "raw.base.InputPhoto"]:
         raise NotImplementedError
 
 
@@ -54,16 +54,18 @@ class InputChatPhotoPrevious(InputChatPhoto):
     """
     def __init__(
         self,
-        chat_photo_file_id: int
+        chat_photo_file_id: str
     ):
         super().__init__()
 
         self.chat_photo_file_id = chat_photo_file_id
 
-    async def write(self, client: "pyrogram.Client") -> "raw.types.InputPhoto":
+    async def write(self, client: "pyrogram.Client") -> "raw.base.InputPhoto":
         photo = utils.get_input_media_from_file_id(self.chat_photo_file_id, FileType.PHOTO)
-        
-        return photo.id
+
+        # The helper rejects any other file type when it is given one to expect, so the
+        #  document half of its return type is unreachable from here.
+        return cast("raw.types.InputMediaPhoto", photo).id
 
 
 class InputChatPhotoStatic(InputChatPhoto):

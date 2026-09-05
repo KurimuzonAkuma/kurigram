@@ -268,7 +268,7 @@ class Client(Methods):
         init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
-            A dict is converted on connect; an already built JsonValue is sent as it is.
+            A dict is converted on connect; an already built JSONValue is sent as it is.
     """
 
     APP_VERSION = f"Pyrogram {__version__}"
@@ -339,7 +339,7 @@ class Client(Methods):
         fetch_topics: Optional[bool] = True,
         fetch_stories: Optional[bool] = True,
         fetch_stickers: Optional[bool] = True,
-        init_connection_params: Optional[Union[dict, "raw.base.JsonValue"]] = None,
+        init_connection_params: Optional[Union[dict, "raw.base.JSONValue"]] = None,
         connection_factory: Type[Connection] = Connection,
         protocol_factory: Type[TCP] = TCPAbridged,
         loop: Optional[asyncio.AbstractEventLoop] = None
@@ -1041,6 +1041,17 @@ class Client(Methods):
                                         self.name, type(handler).__name__, name, group, module_path))
 
                                     count += 1
+
+                                else:
+                                    log.warning(
+                                        '[%s] [LOAD] Ignoring "%s" from "%s": expected a handler '
+                                        'in an int group, got %s in %s',
+                                        self.name,
+                                        name,
+                                        module_path,
+                                        type(handler).__name__,
+                                        type(group).__name__,
+                                    )
             else:
                 for path, handlers in include:
                     module_path = root + "." + path
@@ -1073,6 +1084,17 @@ class Client(Methods):
                                         self.name, type(handler).__name__, name, group, module_path))
 
                                     count += 1
+
+                                else:
+                                    log.warning(
+                                        '[%s] [LOAD] Ignoring "%s" from "%s": expected a handler '
+                                        'in an int group, got %s in %s',
+                                        self.name,
+                                        name,
+                                        module_path,
+                                        type(handler).__name__,
+                                        type(group).__name__,
+                                    )
                         elif warn_non_existent_functions:
                             log.warning('[{}] [LOAD] Ignoring non-existent function "{}" from "{}"'.format(
                                 self.name, name, module_path))
@@ -1109,6 +1131,17 @@ class Client(Methods):
                                         self.name, type(handler).__name__, name, group, module_path))
 
                                     count -= 1
+
+                                else:
+                                    log.warning(
+                                        '[%s] [UNLOAD] Ignoring "%s" from "%s": expected a handler '
+                                        'in an int group, got %s in %s',
+                                        self.name,
+                                        name,
+                                        module_path,
+                                        type(handler).__name__,
+                                        type(group).__name__,
+                                    )
                         elif warn_non_existent_functions:
                             log.warning('[{}] [UNLOAD] Ignoring non-existent function "{}" from "{}"'.format(
                                 self.name, name, module_path))

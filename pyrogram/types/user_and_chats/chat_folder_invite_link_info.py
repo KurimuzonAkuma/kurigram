@@ -42,7 +42,7 @@ class ChatFolderInviteLinkInfo(Object):
     def __init__(
         self,
         *,
-        chat_folder_info: "types.ChatFolderInfo",
+        chat_folder_info: "types.Folder",
         missing_chats: Optional[List["types.Chat"]] = None,
         added_chats: Optional[List["types.Chat"]] = None,
     ):

@@ -18,11 +18,12 @@
 
 import inspect
 from pathlib import Path
-from typing import Callable, List, Set
+from typing import Callable, Final, List, Set
 
 import pytest
 
 import pyrogram
+from pyrogram import filters
 from pyrogram.methods import decorators
 from pyrogram.methods.decorators.handler_type import HandlerType
 
@@ -36,6 +37,19 @@ def _decorator_names() -> List[str]:
                 names.add(method_name)
 
     return sorted(names)
+
+
+# `on_error` takes an `exceptions` argument between the two, so it shifts differently
+#  and is covered on its own below.
+_FILTERED_SIGNATURE: Final[List[str]] = ["self", "filters", "group"]
+
+
+def _filtered_decorator_names() -> List[str]:
+    return [
+        name
+        for name in _decorator_names()
+        if list(inspect.signature(getattr(pyrogram.Client, name)).parameters) == _FILTERED_SIGNATURE
+    ]
 
 
 def _module_names() -> List[str]:
@@ -65,3 +79,95 @@ def test_decorator_binds_the_callback_signature_to_one_type_variable(decorator_n
     decorator = getattr(pyrogram.Client, decorator_name)
 
     assert inspect.signature(decorator).return_annotation == Callable[[HandlerType], HandlerType]
+
+
+@pytest.fixture
+def handler() -> HandlerType:
+    async def callback(client: pyrogram.Client, update: pyrogram.types.Update) -> None: ...
+
+    return callback
+
+
+# The decorators are methods, so an unbound call shifts the arguments one slot to the left
+#  and a call by keyword does not. All three forms are documented, so all three are checked.
+@pytest.mark.parametrize("decorator_name", _filtered_decorator_names())
+def test_the_positional_form_stores_the_filter_and_the_group(
+    decorator_name: str,
+    handler: HandlerType,
+) -> None:
+    getattr(pyrogram.Client, decorator_name)(filters.text, 1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.filters is filters.text
+
+
+@pytest.mark.parametrize("decorator_name", _filtered_decorator_names())
+def test_the_mixed_form_stores_the_filter_and_the_group(
+    decorator_name: str,
+    handler: HandlerType,
+) -> None:
+    getattr(pyrogram.Client, decorator_name)(filters.text, group=1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.filters is filters.text
+
+
+@pytest.mark.parametrize("decorator_name", _filtered_decorator_names())
+def test_the_keyword_form_stores_the_filter_and_the_group(
+    decorator_name: str,
+    handler: HandlerType,
+) -> None:
+    getattr(pyrogram.Client, decorator_name)(filters=filters.text, group=1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.filters is filters.text
+
+
+@pytest.mark.parametrize("decorator_name", sorted(set(_decorator_names()) - set(_filtered_decorator_names())))
+def test_a_decorator_called_with_no_arguments_stores_the_default_group(
+    decorator_name: str,
+    handler: HandlerType,
+) -> None:
+    getattr(pyrogram.Client, decorator_name)()(handler)
+
+    (_, group), = handler.handlers
+
+    assert group == 0
+
+
+# `on_error` carries an `exceptions` argument its siblings do not, so an unbound call
+#  shifts three slots instead of two.
+def test_on_error_reads_the_positional_form(handler: HandlerType) -> None:
+    pyrogram.Client.on_error(ValueError, filters.text, 1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.exceptions == (ValueError,)
+    assert built.filters is filters.text
+
+
+def test_on_error_reads_the_keyword_form(handler: HandlerType) -> None:
+    pyrogram.Client.on_error(exceptions=ValueError, filters=filters.text, group=1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.exceptions == (ValueError,)
+    assert built.filters is filters.text
+
+
+def test_on_error_keeps_the_only_exception_it_was_given(handler: HandlerType) -> None:
+    pyrogram.Client.on_error(ValueError)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 0
+    assert built.exceptions == (ValueError,)
+    assert built.filters is None
