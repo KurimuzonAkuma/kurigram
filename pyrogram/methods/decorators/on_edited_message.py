@@ -21,6 +21,7 @@ from typing import Callable, Optional, Union
 import pyrogram
 from pyrogram.filters import Filter
 from .handler_type import HandlerType
+from .unbound_arguments import unbound_arguments
 
 
 class OnEditedMessage:
@@ -52,10 +53,12 @@ class OnEditedMessage:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
 
+                arguments = unbound_arguments(self, filters=filters, group=group)
+
                 func.handlers.append(
                     (
-                        pyrogram.handlers.EditedMessageHandler(func, self),
-                        group if filters is None else filters
+                        pyrogram.handlers.EditedMessageHandler(func, arguments.filters),
+                        arguments.group
                     )
                 )
 
