@@ -22,9 +22,10 @@ import pyrogram
 from pyrogram import raw, types
 
 from ..object import Object
+from ..update import Update
 
 
-class ManagedBotUpdated(Object):
+class ManagedBotUpdated(Object, Update):
     """This object contains information about the creation or token update of a bot that is managed by the current bot.
 
     Parameters:

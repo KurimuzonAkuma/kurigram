@@ -21,9 +21,10 @@ from typing import Optional, Union
 
 from pyrogram import types, raw, utils
 from ..object import Object
+from ..update import Update
 
 
-class BusinessConnection(Object):
+class BusinessConnection(Object, Update):
     """Business information of a user.
 
     Parameters:

@@ -19,9 +19,10 @@
 from pyrogram import raw, types
 
 from ..object import Object
+from ..update import Update
 
 
-class PurchasedPaidMedia(Object):
+class PurchasedPaidMedia(Object, Update):
     """This object represents information about purchased paid media.
 
     Parameters:

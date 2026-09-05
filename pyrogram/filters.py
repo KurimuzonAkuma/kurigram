@@ -23,6 +23,7 @@ from typing import Callable, Final, FrozenSet, List, Optional, Pattern, Tuple, T
 import pyrogram
 from pyrogram import enums
 from pyrogram.types import (
+    BusinessConnection,
     CallbackQuery,
     Chat,
     ChatBoostUpdated,
@@ -31,11 +32,13 @@ from pyrogram.types import (
     ChosenInlineResult,
     InlineKeyboardMarkup,
     InlineQuery,
+    ManagedBotUpdated,
     Message,
     MessageGenerationStopped,
     MessageReactionCountUpdated,
     MessageReactionUpdated,
     PreCheckoutQuery,
+    PurchasedPaidMedia,
     ReplyKeyboardMarkup,
     ShippingQuery,
     Story,
@@ -158,6 +161,7 @@ _WITH_A_SENDER: Final[Tuple[Type[Update], ...]] = (
     InlineQuery,
     Message,
     PreCheckoutQuery,
+    PurchasedPaidMedia,
     ShippingQuery,
     Story,
 )
@@ -178,18 +182,23 @@ _WITH_A_SENDER_CHAT: Final[Tuple[Type[Update], ...]] = (Message, Story)
 
 _CAN_BE_OUTGOING: Final[Tuple[Type[Update], ...]] = (Message, Story)
 
-# Three more shapes, one update type each, that the tuples above cannot express: the
-#  attribute is there, but not under the name the tuples read.
+# Three more shapes that the tuples above cannot express: the attribute is there, but not
+#  under the name the tuples read.
 #
 #  `UpdateUserStatus` is parsed into the `User` whose status changed and nothing else
-#  (`User._parse_user_status`), so that update *is* its own sender; `MessageReactionUpdated`
-#  spells the reacting user `user` and the anonymous one `actor_chat`; `ChatBoostUpdated`
-#  keeps the booster one level down, in `boost.from_user`.
+#  (`User._parse_user_status`), so that update *is* its own sender; `MessageReactionUpdated`,
+#  `BusinessConnection` and `ManagedBotUpdated` spell the sender `user`, and the first also
+#  spells the anonymous one `actor_chat`; `ChatBoostUpdated` keeps the booster one level
+#  down, in `boost.from_user`.
 #
 #  Reading them here rather than renaming the attributes leaves the public API untouched.
 _IS_ITS_OWN_SENDER: Final[Tuple[Type[Update], ...]] = (User,)
 
-_WITH_A_SENDER_NAMED_USER: Final[Tuple[Type[Update], ...]] = (MessageReactionUpdated,)
+_WITH_A_SENDER_NAMED_USER: Final[Tuple[Type[Update], ...]] = (
+    BusinessConnection,
+    ManagedBotUpdated,
+    MessageReactionUpdated,
+)
 
 _WITH_A_SENDER_CHAT_NAMED_ACTOR_CHAT: Final[Tuple[Type[Update], ...]] = (MessageReactionUpdated,)
 
