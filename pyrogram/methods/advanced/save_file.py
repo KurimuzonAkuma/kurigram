@@ -36,13 +36,15 @@ log = logging.getLogger(__name__)
 
 
 class SaveFile:
-    # The three shapes below are what the body already does. They are spelled out so a caller
-    #  storing the result into a required `InputFile` field is not asked to handle a `None`
-    #  the arguments it passed cannot produce. They leave `self` bare because `Client`
-    #  inherits this mixin, so the binding is the same without the annotation below.
+    # The three shapes below are what the body already does, so a caller storing the result
+    #  into a required `InputFile` field is not asked to handle a `None` the arguments it
+    #  passed cannot produce.
+    #
+    # Each repeats the implementation's `self`: a bare one reads as `SaveFile`, which is
+    #  wider than `Client`, and an overload the implementation does not accept is an error.
     @overload
     async def save_file(
-        self,
+        self: "pyrogram.Client",
         path: None,
         file_id: Optional[int] = None,
         file_part: int = 0,
@@ -52,7 +54,7 @@ class SaveFile:
 
     @overload
     async def save_file(
-        self,
+        self: "pyrogram.Client",
         path: Union[str, BinaryIO],
         file_id: int,
         file_part: int = 0,
@@ -62,7 +64,7 @@ class SaveFile:
 
     @overload
     async def save_file(
-        self,
+        self: "pyrogram.Client",
         path: Union[str, BinaryIO],
         file_id: None = None,
         file_part: int = 0,
