@@ -35,7 +35,7 @@ class TLObject(Generic[ReturnType]):
         return cast(TLObject, objects[int.from_bytes(b.read(4), "little")]).read(b, *args)
 
     def write(self, *args: Any) -> bytes:
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def default(obj: "TLObject") -> Union[str, Dict[str, str]]:
@@ -98,4 +98,4 @@ class TLObject(Generic[ReturnType]):
         return len(self.write())
 
     def __call__(self, *args: Any, **kwargs: Any) -> ReturnType:
-        pass
+        raise NotImplementedError

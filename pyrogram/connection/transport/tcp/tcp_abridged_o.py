@@ -65,23 +65,35 @@ class TCPAbridgedO(TCP):
         self.marker_event.set()
 
     async def send(self, data: bytes, *args) -> None:
+        encrypt = self.encrypt
+
+        if encrypt is None:
+            msg = "`send()` requires `connect()` to have run first"
+            raise RuntimeError(msg)
+
         length = len(data) // 4
         data = (
             bytes([length]) if length <= 126 else b"\x7f" + length.to_bytes(3, "little")
         ) + data
         payload = await self.loop.run_in_executor(
-            self.crypto_executor, aes.ctr256_encrypt, data, *self.encrypt
+            self.crypto_executor, aes.ctr256_encrypt, data, *encrypt
         )
 
         await super().send(payload)
 
     async def recv(self, length: int = 0) -> Optional[bytes]:
+        decrypt = self.decrypt
+
+        if decrypt is None:
+            msg = "`recv()` requires `connect()` to have run first"
+            raise RuntimeError(msg)
+
         length = await super().recv(1)
 
         if length is None:
             return None
 
-        length = aes.ctr256_decrypt(length, *self.decrypt)
+        length = aes.ctr256_decrypt(length, *decrypt)
 
         if length == b"\x7f":
             length = await super().recv(3)
@@ -89,7 +101,7 @@ class TCPAbridgedO(TCP):
             if length is None:
                 return None
 
-            length = aes.ctr256_decrypt(length, *self.decrypt)
+            length = aes.ctr256_decrypt(length, *decrypt)
 
         data = await super().recv(int.from_bytes(length, "little") * 4)
 
@@ -97,5 +109,5 @@ class TCPAbridgedO(TCP):
             return None
 
         return await self.loop.run_in_executor(
-            self.crypto_executor, aes.ctr256_decrypt, data, *self.decrypt
+            self.crypto_executor, aes.ctr256_decrypt, data, *decrypt
         )

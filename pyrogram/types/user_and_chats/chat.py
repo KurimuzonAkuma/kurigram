@@ -920,11 +920,11 @@ class Chat(Object):
             is_business_bot=user.bot_business,
             verification_status=types.VerificationStatus._parse(user),
             username=user.username or (user.usernames[0].username if user.usernames else None),
-            usernames=types.List([types.Username._parse(r) for r in user.usernames]) or None,
+            usernames=types.List([types.Username._parse(r) for r in user.usernames or []]) or None,
             first_name=user.first_name,
             last_name=user.last_name,
             photo=await types.ChatPhoto._parse(client, user.photo, peer_id, user.access_hash),
-            restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason])
+            restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason or []])
             or None,
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
             emoji_status=types.EmojiStatus._parse(client, user.emoji_status),

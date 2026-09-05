@@ -55,17 +55,17 @@ class TCPFull(TCP):
         await super().send(data, wait_for_marker=False)
 
     async def recv(self, length: int = 0) -> Optional[bytes]:
-        length = await super().recv(4)
+        length_bytes = await super().recv(4)
 
-        if length is None:
+        if length_bytes is None:
             return None
 
-        packet = await super().recv(unpack("<I", length)[0] - 4)
+        packet = await super().recv(unpack("<I", length_bytes)[0] - 4)
 
         if packet is None:
             return None
 
-        packet = length + packet
+        packet = length_bytes + packet
         checksum = packet[-4:]
         packet = packet[:-4]
 

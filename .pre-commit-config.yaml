@@ -12,3 +12,12 @@ repos:
         #  so the hook checks everything rather than only what is staged.
         pass_filenames: false
         always_run: true
+
+      - id: typecheck
+        name: ty
+        # Needs the generated `pyrogram.raw.*` tree on disk, so run `make api` at least
+        #  once (and after any change under compiler/api/source) before committing.
+        entry: make typecheck
+        language: system
+        pass_filenames: false
+        always_run: true

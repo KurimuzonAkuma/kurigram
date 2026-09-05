@@ -67,6 +67,7 @@ dev = [
     "pytest-timeout<=2.4.0",
     "ruff<=0.16.3",
     "twine<=6.2.0",
+    "ty<=0.0.78",
 ]
 
 docs = [
@@ -137,3 +138,27 @@ select = [
     "F822",   # Undefined name in `__all__`.
     "RUF013", # Implicit `Optional`, e.g. `def method(chat_id: int = None)`.
 ]
+
+[tool.ty.src]
+# `pyrogram/raw/{base,functions,types,all.py}` and `pyrogram/errors/exceptions` are
+#  written by `make api`; `pyrogram/raw/core` is hand-written and stays in scope. A CLI
+#  `--exclude` changes tree traversal and gives a different diagnostic count, so the
+#  exclude has to live here to be reproducible.
+exclude = [
+    "pyrogram/raw/base",
+    "pyrogram/raw/functions",
+    "pyrogram/raw/types",
+    "pyrogram/raw/all.py",
+    "pyrogram/errors/exceptions",
+]
+
+[tool.ty.rules]
+# This ignore list is a ceiling, not a target: it is exactly the set of rules the tree
+#  fails today, so the check can only regress on rules not listed here, and the list is
+#  meant to shrink one rule at a time, the same pattern `[tool.ruff.lint].select` uses.
+invalid-argument-type = "ignore"
+invalid-assignment = "ignore"
+invalid-method-override = "ignore"
+invalid-return-type = "ignore"
+no-matching-overload = "ignore"
+unresolved-attribute = "ignore"

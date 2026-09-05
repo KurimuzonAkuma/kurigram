@@ -100,8 +100,7 @@ class InlineQuery(Object, Update):
             chat_type=chat_type,
             location=types.Location(
                 longitude=inline_query.geo.long,
-                latitude=inline_query.geo.lat,
-                client=client
+                latitude=inline_query.geo.lat
             ) if inline_query.geo else None,
             client=client
         )

@@ -81,7 +81,7 @@ class Start:
             if not is_authorized:
                 if use_qr:
                     try:
-                        import qrcode
+                        import qrcode  # ty: ignore[unresolved-import] - optional, not a project dependency
                         await self.authorize_qr(except_ids=except_ids)
                     except ImportError:
                         log.warning("qrcode package not found, falling back to authorization prompt")

@@ -78,7 +78,7 @@ class AddContact:
                 last_name=last_name,
                 phone=phone_number,
                 add_phone_privacy_exception=share_phone_number,
-                note=await note.write() if note else None
+                note=await note.write(self) if note else None
             )
         )
 

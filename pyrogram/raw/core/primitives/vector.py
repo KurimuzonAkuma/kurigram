@@ -59,7 +59,7 @@ class Vector(bytes, TLObject):
             for _ in range(count)
         )
 
-    def __new__(cls, value: list, t: Any = None) -> bytes:  # type: ignore
+    def __new__(cls, value: list, t: Any = None) -> bytes:
         return b"".join(
             [Int(cls.ID, False), Int(len(value))]
             + [cast(bytes, t(i)) if t else i.write() for i in value]

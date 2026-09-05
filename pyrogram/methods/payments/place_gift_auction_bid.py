@@ -86,7 +86,7 @@ class PlaceGiftAuctionBid:
             hide_name=is_private,
             update_bid=False,
             peer=await self.resolve_peer(user_id or "me"),
-            message=await text.write() if text else None
+            message=await text.write(self) if text else None
         )
 
         form = await self.invoke(

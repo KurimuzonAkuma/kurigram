@@ -377,7 +377,7 @@ class Story(Object, Update):
             raw.types.PrivacyValueDisallowAll: enums.StoriesPrivacyRules.SELECTED_USERS,
         }
 
-        for priv in story.privacy:
+        for priv in story.privacy or []:
             privacy = privacy_map.get(type(priv), None)
 
             if isinstance(priv, raw.types.PrivacyValueAllowUsers):
@@ -389,7 +389,7 @@ class Story(Object, Update):
             elif isinstance(priv, raw.types.PrivacyValueDisallowChatParticipants):
                 disallowed_users = types.List([await types.Chat._parse_chat_chat(client, chats.get(chat_id, None)) for chat_id in priv.chats])
 
-        entities = [e for e in [await types.MessageEntity._parse(client, entity, {}) for entity in story.entities] if e]
+        entities = [e for e in [await types.MessageEntity._parse(client, entity, {}) for entity in story.entities or []] if e]
 
         return Story(
             id=story.id,

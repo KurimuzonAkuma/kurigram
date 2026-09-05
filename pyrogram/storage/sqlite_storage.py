@@ -22,7 +22,7 @@ import sqlite3
 import struct
 import time
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
 from pyrogram import raw
 
@@ -155,7 +155,7 @@ class SQLiteStorage(Storage):
         use_wal: Optional[bool] = False,
     ):
         self.name = name
-        self.conn = None  # type: sqlite3.Connection
+        self._conn: Optional[sqlite3.Connection] = None
 
         self.session_string = session_string
         self.in_memory = in_memory
@@ -165,6 +165,21 @@ class SQLiteStorage(Storage):
             self.database = ":memory:"
         else:
             self.database = workdir / (self.name + self.FILE_EXTENSION)
+
+    @property
+    def conn(self) -> sqlite3.Connection:
+        # Every method below this point runs only after open() has set a real
+        #  connection; raising here narrows the type once for all of them
+        #  instead of repeating the same guard at every call site.
+        if self._conn is None:
+            msg = "`SQLiteStorage.conn` accessed before `open()`"
+            raise RuntimeError(msg)
+
+        return self._conn
+
+    @conn.setter
+    def conn(self, value: Optional[sqlite3.Connection]) -> None:
+        self._conn = value
 
     async def update(self):
         version = await self.version()
@@ -447,32 +462,35 @@ class SQLiteStorage(Storage):
             else await self._set(table, attr, value)
         )
 
-    async def dc_id(self, value: int = object):
+    # `object` (the class, not an instance) is the sentinel for "no value passed"
+    #  (read the column instead of writing to it), so every accessor's parameter type
+    #  has to include it alongside the column's real type.
+    async def dc_id(self, value: Union[int, Type[object]] = object):
         return await self._accessor("sessions", "dc_id", value)
 
-    async def server_address(self, value: str = object):
+    async def server_address(self, value: Union[str, Type[object]] = object):
         return await self._accessor("sessions", "server_address", value)
 
-    async def port(self, value: int = object):
+    async def port(self, value: Union[int, Type[object]] = object):
         return await self._accessor("sessions", "port", value)
 
-    async def api_id(self, value: int = object):
+    async def api_id(self, value: Union[int, Type[object]] = object):
         return await self._accessor("sessions", "api_id", value)
 
-    async def test_mode(self, value: bool = object):
+    async def test_mode(self, value: Union[bool, Type[object]] = object):
         return await self._accessor("sessions", "test_mode", value)
 
-    async def auth_key(self, value: bytes = object):
+    async def auth_key(self, value: Union[bytes, Type[object]] = object):
         return await self._accessor("sessions", "auth_key", value)
 
-    async def date(self, value: int = object):
+    async def date(self, value: Union[int, Type[object]] = object):
         return await self._accessor("sessions", "date", value)
 
-    async def user_id(self, value: int = object):
+    async def user_id(self, value: Union[int, Type[object]] = object):
         return await self._accessor("sessions", "user_id", value)
 
-    async def is_bot(self, value: bool = object):
+    async def is_bot(self, value: Union[bool, Type[object]] = object):
         return await self._accessor("sessions", "is_bot", value)
 
-    async def version(self, value: int = object):
+    async def version(self, value: Union[int, Type[object]] = object):
         return await self._accessor("version", "number", value)

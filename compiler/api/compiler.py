@@ -144,7 +144,7 @@ def get_type_hint(type: str) -> str:
         ns, name = type.split(".") if "." in type else ("", type)
         type = '"raw.base.' + ".".join([ns, name]).strip(".") + '"'
 
-        return f'{type}{" = None" if is_flag else ""}'
+        return f"Optional[{type}] = None" if is_flag else type
 
 
 def sort_args(args):

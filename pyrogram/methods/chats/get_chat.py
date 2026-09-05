@@ -102,5 +102,7 @@ class GetChat:
 
             return await types.Chat._parse_chat(
                 self,
-                r.chats[0] if isinstance(r, raw.types.messages.Chats) else r[0]
+                r.chats[0]
+                if isinstance(r, (raw.types.messages.Chats, raw.types.messages.ChatsSlice))
+                else r[0]
             )

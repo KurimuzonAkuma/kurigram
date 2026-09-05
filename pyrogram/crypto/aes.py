@@ -22,7 +22,7 @@ from typing import Optional
 log = logging.getLogger(__name__)
 
 try:
-    import tgcrypto
+    import tgcrypto  # ty: ignore[unresolved-import] - optional dependency, extra `fast`
 
     log.info("Using TgCrypto")
 

@@ -71,7 +71,7 @@ class SearchMessages:
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         query: Optional[str] = "",
-        offset: Optional[int] = 0,
+        offset: int = 0,
         offset_id: Optional[int] = 0,
         min_date: Optional[datetime] = utils.zero_datetime(),
         max_date: Optional[datetime] = utils.zero_datetime(),

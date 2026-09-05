@@ -20,7 +20,7 @@ import asyncio
 import inspect
 import logging
 from collections import OrderedDict
-from typing import Dict, Union
+from typing import Dict, Optional, Tuple, Union
 
 import pyrogram
 from pyrogram import raw, utils
@@ -129,7 +129,7 @@ class Dispatcher:
         self.handler_worker_tasks = []
         self.locks_list = []
 
-        self.updates_queue = asyncio.Queue()
+        self.updates_queue: "asyncio.Queue[Optional[Tuple[raw.base.Update, Dict[int, raw.base.User], Dict[int, raw.base.Chat]]]]" = asyncio.Queue()
         self.groups = OrderedDict()
 
         async def message_parser(update, users, chats):

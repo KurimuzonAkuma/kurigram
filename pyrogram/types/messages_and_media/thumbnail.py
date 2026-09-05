@@ -72,7 +72,7 @@ class Thumbnail(Object):
 
             file_type = FileType.PHOTO
         elif isinstance(media, raw.types.Document):
-            raw_thumbs = media.thumbs
+            raw_thumbs = media.thumbs or []
             file_type = FileType.THUMBNAIL
         else:
             return

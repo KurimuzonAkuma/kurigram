@@ -498,7 +498,7 @@ class Folder(Object):
             :obj:`~pyrogram.types.FolderInviteLink`: On success, information about the invite link is returned.
         """
         if chat_ids is None:
-            chat_ids = [i.id for i in self.included_chats]
+            chat_ids = [i.id for i in self.included_chats or []]
 
         return await self._client.create_folder_invite_link(
             chat_folder_id=self.id,

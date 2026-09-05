@@ -28,7 +28,7 @@ from pyrogram.methods.invite_links.get_chat_admins_with_invite_links import (
 _CHAT_ID: Final[int] = -1001234567890
 
 
-class Client(GetChatAdminsWithInviteLinks):
+class FakeClient(GetChatAdminsWithInviteLinks):
     """A client that answers `messages.GetAdminsWithInvites` with the admins it was given."""
 
     def __init__(self, admins: List[raw.types.ChatAdminWithInvites]) -> None:
@@ -59,7 +59,7 @@ async def test_every_admin_is_parsed() -> None:
     # The call used to hand `types.List` a generator expression, and PEP 530 makes one
     #  holding an `await` an async generator: `list()` refused it with
     #  `TypeError: 'async_generator' object is not iterable`, so the method never returned.
-    client = Client(
+    client = FakeClient(
         [
             raw.types.ChatAdminWithInvites(
                 admin_id=7, invites_count=3, revoked_invites_count=1
@@ -79,6 +79,6 @@ async def test_every_admin_is_parsed() -> None:
 
 @pytest.mark.asyncio
 async def test_a_chat_with_no_such_admin_answers_with_an_empty_list() -> None:
-    admins = await Client([]).get_chat_admins_with_invite_links(_CHAT_ID)
+    admins = await FakeClient([]).get_chat_admins_with_invite_links(_CHAT_ID)
 
     assert admins == []

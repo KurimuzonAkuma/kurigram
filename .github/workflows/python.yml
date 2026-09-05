@@ -45,11 +45,20 @@ jobs:
         with:
           python-version: "3.14"
 
-      # The generated packages are excluded from the check, so this job needs no `make api`.
       - name: Install dependencies
         run: |
           make venv-dev
 
+      # `ruff` excludes the generated packages, so this step alone needs no `make api`.
       - name: Run ruff
         run: |
           make lint
+
+      # Unlike `ruff`, `ty` resolves `pyrogram.raw.*`, so it needs the generated tree.
+      - name: Generate API
+        run: |
+          make api
+
+      - name: Run ty
+        run: |
+          make typecheck

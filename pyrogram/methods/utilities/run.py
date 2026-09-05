@@ -65,6 +65,10 @@ class Run:
             run(idle())
             run(self.stop())
         else:
-            self.start(use_qr=use_qr, except_ids=except_ids)
+            # `self.start`/`self.stop` are declared `async def`, so `ty` sees a plain
+            #  coroutine function here: it can't know `pyrogram.sync` (pyrogram/sync.py)
+            #  may have patched them into blocking sync wrappers, which is exactly what
+            #  the `iscoroutinefunction` check above is testing for.
+            self.start(use_qr=use_qr, except_ids=except_ids)  # ty: ignore[unused-awaitable]
             run(idle())
-            self.stop()
+            self.stop()  # ty: ignore[unused-awaitable]

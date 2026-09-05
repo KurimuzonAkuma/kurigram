@@ -16,10 +16,33 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional, Union
+from typing import Callable, Dict, Final, Optional, Union
 
 import pyrogram
 from pyrogram import raw, enums
+
+# Every `enums.ChatAction` member maps to exactly one raw constructor here, so
+#  building the raw action never has to inspect the enum member's name at
+#  runtime, and each lambda is checked against its own concrete raw type
+#  instead of the `raw.base.SendMessageAction` union `action.value` carries.
+_ACTIONS: Final[Dict["enums.ChatAction", Callable[[], "raw.base.SendMessageAction"]]] = {
+    enums.ChatAction.TYPING: raw.types.SendMessageTypingAction,
+    enums.ChatAction.UPLOAD_PHOTO: lambda: raw.types.SendMessageUploadPhotoAction(progress=0),
+    enums.ChatAction.RECORD_VIDEO: raw.types.SendMessageRecordVideoAction,
+    enums.ChatAction.UPLOAD_VIDEO: lambda: raw.types.SendMessageUploadVideoAction(progress=0),
+    enums.ChatAction.RECORD_AUDIO: raw.types.SendMessageRecordAudioAction,
+    enums.ChatAction.UPLOAD_AUDIO: lambda: raw.types.SendMessageUploadAudioAction(progress=0),
+    enums.ChatAction.UPLOAD_DOCUMENT: lambda: raw.types.SendMessageUploadDocumentAction(progress=0),
+    enums.ChatAction.FIND_LOCATION: raw.types.SendMessageGeoLocationAction,
+    enums.ChatAction.RECORD_VIDEO_NOTE: raw.types.SendMessageRecordRoundAction,
+    enums.ChatAction.UPLOAD_VIDEO_NOTE: lambda: raw.types.SendMessageUploadRoundAction(progress=0),
+    enums.ChatAction.PLAYING: raw.types.SendMessageGamePlayAction,
+    enums.ChatAction.CHOOSE_CONTACT: raw.types.SendMessageChooseContactAction,
+    enums.ChatAction.SPEAKING: raw.types.SpeakingInGroupCallAction,
+    enums.ChatAction.IMPORT_HISTORY: lambda: raw.types.SendMessageHistoryImportAction(progress=0),
+    enums.ChatAction.CHOOSE_STICKER: raw.types.SendMessageChooseStickerAction,
+    enums.ChatAction.CANCEL: raw.types.SendMessageCancelAction,
+}
 
 
 class SendChatAction:
@@ -69,17 +92,10 @@ class SendChatAction:
                 await app.send_chat_action(chat_id, enums.ChatAction.CANCEL)
         """
 
-        action_name = action.name.lower()
-
-        if "upload" in action_name or "history" in action_name:
-            action = action.value(progress=0)
-        else:
-            action = action.value()
-
         return await self.invoke(
             raw.functions.messages.SetTyping(
                 peer=await self.resolve_peer(chat_id),
-                action=action
+                action=_ACTIONS[action]()
             ),
             business_connection_id=business_connection_id
         )

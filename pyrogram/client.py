@@ -468,7 +468,10 @@ class Client(Methods):
 
     def __exit__(self, *args):
         try:
-            self.stop()
+            # `Client.stop` is only a plain coroutine function here when `pyrogram.sync`
+            #  hasn't patched it into a blocking sync wrapper (see pyrogram/sync.py);
+            #  `ty` can't see that runtime substitution.
+            self.stop()  # ty: ignore[unused-awaitable]
         except ConnectionError:
             pass
 
@@ -665,7 +668,7 @@ class Client(Methods):
         return signed_up
 
     async def authorize_qr(self, except_ids: List[int] = []) -> "User":
-        from qrcode import QRCode
+        from qrcode import QRCode  # ty: ignore[unresolved-import] - optional, not a project dependency
 
         qr_login = QRLogin(self, except_ids)
         await qr_login.recreate()
@@ -889,8 +892,8 @@ class Client(Methods):
                                             max_id=update.message.id
                                         )]
                                     ),
-                                    pts=pts - pts_count,
-                                    limit=pts,
+                                    pts=update.pts - update.pts_count,
+                                    limit=update.pts,
                                     force=False
                                 )
                             )
@@ -1194,19 +1197,27 @@ class Client(Methods):
             file_type = file_id.file_type
 
             if file_type == FileType.CHAT_PHOTO:
-                if file_id.chat_id > 0:
+                # `read_photo_tail()` only sets `chat_id` for the `CHAT_PHOTO` thumbnail sources,
+                #  so a `FileId` of this `file_type` always carries one.
+                chat_id = file_id.chat_id
+
+                if chat_id is None:
+                    msg = "Unexpected error. `CHAT_PHOTO` must always carry a `chat_id`"
+                    raise RuntimeError(msg)
+
+                if chat_id > 0:
                     peer = raw.types.InputPeerUser(
-                        user_id=file_id.chat_id,
+                        user_id=chat_id,
                         access_hash=file_id.chat_access_hash
                     )
                 else:
                     if file_id.chat_access_hash == 0:
                         peer = raw.types.InputPeerChat(
-                            chat_id=-file_id.chat_id
+                            chat_id=-chat_id
                         )
                     else:
                         peer = raw.types.InputPeerChannel(
-                            channel_id=utils.get_channel_id(file_id.chat_id),
+                            channel_id=utils.get_channel_id(chat_id),
                             access_hash=file_id.chat_access_hash
                         )
 

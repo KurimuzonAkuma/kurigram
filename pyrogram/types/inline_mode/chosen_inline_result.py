@@ -85,8 +85,7 @@ class ChosenInlineResult(Object, Update):
             query=chosen_inline_result.query,
             location=types.Location(
                 longitude=chosen_inline_result.geo.long,
-                latitude=chosen_inline_result.geo.lat,
-                client=client
+                latitude=chosen_inline_result.geo.lat
             ) if chosen_inline_result.geo else None,
             inline_message_id=utils.pack_inline_message_id(
                 chosen_inline_result.msg_id

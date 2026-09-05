@@ -74,5 +74,9 @@ class BusinessRecipients(Object):
             contacts=getattr(recipients, "contacts", None),
             non_contacts=getattr(recipients, "non_contacts", None),
             exclude_selected=getattr(recipients, "exclude_selected", None),
-            users=types.List([await types.User._parse(client, users[i]) for i in recipients.users]) or None if getattr(recipients, "users", None) else None
+            users=(
+                types.List([await types.User._parse(client, users[i]) for i in recipients.users or []]) or None
+                if users and getattr(recipients, "users", None)
+                else None
+            )
         )

@@ -79,8 +79,10 @@ class SendReaction:
                 # Retract a reaction
                 await app.send_reaction(chat_id, message_id=message_id)
         """
+        reactions: Optional[List[Union["raw.types.ReactionCustomEmoji", "raw.types.ReactionEmoji"]]]
+
         if isinstance(emoji, list):
-            emoji = [
+            reactions = [
                     raw.types.ReactionCustomEmoji(document_id=i)
                     if isinstance(i, int)
                     else raw.types.ReactionEmoji(emoticon=i)
@@ -88,21 +90,21 @@ class SendReaction:
             ] if emoji else None
         else:
             if isinstance(emoji, int):
-                emoji = [raw.types.ReactionCustomEmoji(document_id=emoji)]
+                reactions = [raw.types.ReactionCustomEmoji(document_id=emoji)]
             else:
-                emoji = [raw.types.ReactionEmoji(emoticon=emoji)] if emoji else None
+                reactions = [raw.types.ReactionEmoji(emoticon=emoji)] if emoji else None
 
         if story_id:
             rpc = raw.functions.stories.SendReaction(
                 peer=await self.resolve_peer(chat_id),
                 story_id=story_id,
-                reaction=emoji[0] if emoji else raw.types.ReactionEmpty(),
+                reaction=reactions[0] if reactions else raw.types.ReactionEmpty(),
             )
         else:
             rpc = raw.functions.messages.SendReaction(
                 peer=await self.resolve_peer(chat_id),
                 msg_id=message_id,
-                reaction=emoji,
+                reaction=reactions,
                 big=big
             )
 

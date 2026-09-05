@@ -7,6 +7,7 @@ ENV_TEST := .env.test
 LOAD_ENV_TEST := set -a; if [ -f $(ENV_TEST) ]; then . ./$(ENV_TEST); fi; set +a;
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
+TY := $(VENV)/bin/ty
 TAG = v$(shell grep -E '__version__ = ".*"' pyrogram/__init__.py | cut -d\" -f2)
 
 RM := rm -rf
@@ -18,7 +19,7 @@ BLUE   := \033[0;34m
 BOLD   := \033[1m
 RESET  := \033[0m
 
-.PHONY: venv venv-dev venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag lint test test-unit test-integration
+.PHONY: venv venv-dev venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag lint typecheck test test-unit test-integration
 
 venv:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -81,6 +82,14 @@ docs-archive:
 #  the `pre-commit` hook both run this recipe instead of spelling the check out again.
 lint:
 	$(PYTHON) -m ruff check
+
+# The rule set and the excludes live in `pyproject.toml`, same as `lint`. Unlike `lint`,
+#  this needs `pyrogram.raw.*` to resolve, so `make api` has to have been run first.
+# `ty` only auto-detects a project's virtual environment when it's named `.venv`; ours
+#  is plain `venv` (see $(VENV) above), so point it there explicitly or it silently
+#  falls back to the system interpreter and can't resolve any installed dependency.
+typecheck:
+	$(TY) check --python $(VENV)
 
 # `make venv` installs the package alone, so the runner needs `make venv-dev` first.
 test:

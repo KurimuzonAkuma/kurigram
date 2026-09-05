@@ -28,5 +28,5 @@ class Double(bytes, TLObject):
     def read(cls, data: BytesIO, *args: Any) -> float:
         return cast(float, unpack("d", data.read(8))[0])
 
-    def __new__(cls, value: float) -> bytes:  # type: ignore
+    def __new__(cls, value: float) -> bytes:
         return pack("d", value)

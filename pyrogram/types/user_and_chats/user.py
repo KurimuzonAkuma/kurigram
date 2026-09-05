@@ -718,13 +718,13 @@ class User(Object, Update):
             last_name=user.last_name,
             **User._parse_status(user.status, user.bot),
             username=user.username or (user.usernames[0].username if user.usernames else None),
-            usernames=types.List([types.Username._parse(r) for r in user.usernames]) or None,
+            usernames=types.List([types.Username._parse(r) for r in user.usernames or []]) or None,
             language_code=user.lang_code,
             emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
             dc_id=getattr(user.photo, "dc_id", None),
             phone_number=user.phone,
             photo=await types.ChatPhoto._parse(client, user.photo, user.id, user.access_hash),
-            restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason])
+            restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason or []])
             or None,
             accent_color_id=accent_color_id,
             background_custom_emoji_id=background_custom_emoji_id,

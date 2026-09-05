@@ -37,7 +37,7 @@ class Bytes(bytes, TLObject):
 
         return x
 
-    def __new__(cls, value: bytes) -> bytes:  # type: ignore
+    def __new__(cls, value: bytes) -> bytes:
         length = len(value)
 
         if length <= 253:
