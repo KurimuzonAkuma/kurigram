@@ -139,3 +139,35 @@ def test_a_decorator_called_with_no_arguments_stores_the_default_group(
     (_, group), = handler.handlers
 
     assert group == 0
+
+
+# `on_error` carries an `exceptions` argument its siblings do not, so an unbound call
+#  shifts three slots instead of two.
+def test_on_error_reads_the_positional_form(handler: HandlerType) -> None:
+    pyrogram.Client.on_error(ValueError, filters.text, 1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.exceptions == (ValueError,)
+    assert built.filters is filters.text
+
+
+def test_on_error_reads_the_keyword_form(handler: HandlerType) -> None:
+    pyrogram.Client.on_error(exceptions=ValueError, filters=filters.text, group=1)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 1
+    assert built.exceptions == (ValueError,)
+    assert built.filters is filters.text
+
+
+def test_on_error_keeps_the_only_exception_it_was_given(handler: HandlerType) -> None:
+    pyrogram.Client.on_error(ValueError)(handler)
+
+    (built, group), = handler.handlers
+
+    assert group == 0
+    assert built.exceptions == (ValueError,)
+    assert built.filters is None

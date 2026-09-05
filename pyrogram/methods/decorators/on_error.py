@@ -21,11 +21,12 @@ from typing import Callable, Optional, Sequence, Union
 import pyrogram
 from pyrogram.filters import Filter
 from .handler_type import HandlerType
+from .unbound_arguments import unbound_error_arguments
 
 
 class OnError:
     def on_error(
-        self: Optional[Union["OnError", Filter]] = None,
+        self: Optional[Union["OnError", Exception, Sequence[Exception]]] = None,
         exceptions: Optional[Union[Exception, Sequence[Exception]]] = None,
         filters: Optional[Filter] = None,
         group: int = 0,
@@ -57,8 +58,18 @@ class OnError:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
 
+                arguments = unbound_error_arguments(
+                    self,
+                    exceptions=exceptions,
+                    filters=filters,
+                    group=group,
+                )
+
                 func.handlers.append(
-                    (pyrogram.handlers.ErrorHandler(func, exceptions, filters), group)
+                    (
+                        pyrogram.handlers.ErrorHandler(func, arguments.exceptions, arguments.filters),
+                        arguments.group
+                    )
                 )
 
             return func

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import NamedTuple, Optional, Union
+from typing import NamedTuple, Optional, Sequence, Union
 
 from pyrogram.filters import Filter
 
@@ -42,3 +42,33 @@ def unbound_arguments(
         return UnboundArguments(receiver, filters)
 
     return UnboundArguments(receiver if isinstance(receiver, Filter) else filters, group)
+
+
+ExceptionsType = Union[Exception, Sequence[Exception], None]
+
+
+class UnboundErrorArguments(NamedTuple):
+    exceptions: ExceptionsType
+    filters: Optional[Filter]
+    group: int
+
+
+def unbound_error_arguments(
+    receiver: ExceptionsType,
+    *,
+    exceptions: Union[ExceptionsType, Filter],
+    filters: Union[Filter, int, None],
+    group: int,
+) -> UnboundErrorArguments:
+    """Read what `@Client.on_error(...)` was given, whichever way it was written.
+
+    `on_error` takes one argument more than its siblings, so an unbound call leaves the
+    exceptions in `self`, the filter in `exceptions` and the group in `filters`.
+    """
+    if receiver is None:
+        return UnboundErrorArguments(exceptions, filters if isinstance(filters, Filter) else None, group)
+
+    if isinstance(exceptions, Filter):
+        return UnboundErrorArguments(receiver, exceptions, filters if isinstance(filters, int) else group)
+
+    return UnboundErrorArguments(receiver, filters if isinstance(filters, Filter) else None, group)
