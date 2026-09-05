@@ -257,7 +257,11 @@ def test_a_subscript_is_read_through_the_wrapper_python_38_puts_around_it() -> N
     on 3.8 alone and the sweep passes there over nothing.
     """
     inner = ast.parse('"types.Chat"', mode="eval").body
-    wrapped = ast.Subscript(value=ast.Name(id="Optional", ctx=ast.Load()), slice=ast.Index(value=inner), ctx=ast.Load())
+
+    # TODO: Delete this test and the unwrapping in `subscript_of()` when the floor moves
+    #       off 3.8. Nothing else reads `ast.Index`, and 3.9 stopped emitting it.
+    index = ast.Index(value=inner)  # ty: ignore[deprecated] - the 3.8 node is what this test is for
+    wrapped = ast.Subscript(value=ast.Name(id="Optional", ctx=ast.Load()), slice=index, ctx=ast.Load())
     ast.fix_missing_locations(wrapped)
 
     assert subscript_of(wrapped) is inner
