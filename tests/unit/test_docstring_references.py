@@ -23,17 +23,11 @@ and carries on, so a dead reference looks almost right and nothing reports it.
 """
 
 import ast
-import importlib
 import pathlib
 import re
 from typing import Final, Iterator, List, NamedTuple, Optional, Pattern, Set, Tuple
 
-_REPOSITORY_ROOT: Final[pathlib.Path] = pathlib.Path(__file__).resolve().parents[2]
-_PACKAGE_ROOT: Final[pathlib.Path] = _REPOSITORY_ROOT / "pyrogram"
-
-# The generated tree is rewritten wholesale by `make api` from the TL schema, so a repair
-#  there lives until the next schema update and no longer.
-_GENERATED_TREE: Final[pathlib.Path] = _PACKAGE_ROOT / "raw"
+from tests.unit.name_resolution import REPOSITORY_ROOT, hand_written_files, resolves
 
 # `:obj:`Message`` and `:py:obj:`Message`` are the same role, the second one naming the
 #  domain the first one inherits.
@@ -56,7 +50,7 @@ class Reference(NamedTuple):
     def __str__(self) -> str:
         body = self.target if self.label is None else "{} <{}>".format(self.label, self.target)
 
-        return "{}:{}: {}".format(self.path.relative_to(_REPOSITORY_ROOT), self.line, body)
+        return "{}:{}: {}".format(self.path.relative_to(REPOSITORY_ROOT), self.line, body)
 
 
 def components(dotted: str) -> List[str]:
@@ -112,37 +106,13 @@ def docstrings_of(path: pathlib.Path) -> Iterator[Tuple[str, int]]:
 def hand_written_references() -> List[Reference]:
     references: List[Reference] = []
 
-    for path in sorted(_PACKAGE_ROOT.rglob("*.py")):
-        if _GENERATED_TREE in path.parents:
-            continue
-
+    for path in hand_written_files():
         for docstring, first_line in docstrings_of(path):
             for offset, line in enumerate(docstring.splitlines()):
                 for label, target in references_in(line):
                     references.append(Reference(target, path, first_line + offset, label))
 
     return references
-
-
-def resolves(target: str) -> bool:
-    """Import the longest prefix of `target`, then walk the rest of it with `getattr`."""
-    parts = target.split(".")
-
-    for cut in range(len(parts), 0, -1):
-        try:
-            resolved = importlib.import_module(".".join(parts[:cut]))
-        except ImportError:
-            continue
-
-        for name in parts[cut:]:
-            if not hasattr(resolved, name):
-                return False
-
-            resolved = getattr(resolved, name)
-
-        return True
-
-    return False
 
 
 def test_every_cross_reference_in_a_docstring_resolves() -> None:
