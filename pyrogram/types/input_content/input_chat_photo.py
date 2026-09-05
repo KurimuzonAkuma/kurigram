@@ -54,7 +54,7 @@ class InputChatPhotoPrevious(InputChatPhoto):
     """
     def __init__(
         self,
-        chat_photo_file_id: int
+        chat_photo_file_id: str
     ):
         super().__init__()
 
