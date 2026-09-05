@@ -33,12 +33,12 @@ from pyrogram import Client, filters
 from pyrogram.client import _plugin_handlers
 from pyrogram.handlers import MessageHandler
 
-_PLUGIN_SOURCE: Final[str] = '''
+_PLUGIN_SOURCE: Final[str] = """
 from pyrogram import Client
 
 
 class AnyAttribute:
-    """Answers every attribute with another instance, the way a PyMongo collection does."""
+    # Answers every attribute with another instance, the way a PyMongo collection does.
 
     def __getattr__(self, name):
         return AnyAttribute()
@@ -50,25 +50,25 @@ collection = AnyAttribute()
 @Client.on_message()
 async def greet(client, message):
     pass
-'''
+"""
 
 
-_KEYWORD_PLUGIN_SOURCE: Final[str] = '''
+_KEYWORD_PLUGIN_SOURCE: Final[str] = """
 from pyrogram import Client, filters
 
 
 @Client.on_message(filters=filters.text, group=1)
 async def greet(client, message):
     pass
-'''
+"""
 
-_REFUSED_PLUGIN_SOURCE: Final[str] = '''
+_REFUSED_PLUGIN_SOURCE: Final[str] = """
 async def greet(client, message):
     pass
 
 
 greet.handlers = [("not a handler", 0)]
-'''
+"""
 
 
 class PluginWriter(Protocol):
